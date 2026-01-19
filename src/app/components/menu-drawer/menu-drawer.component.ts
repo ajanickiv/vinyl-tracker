@@ -12,13 +12,13 @@ import { PlaybackService } from '../../services/playback.service';
     styleUrls: ['./menu-drawer.component.scss']
 })
 export class MenuDrawerComponent {
-    isOpen = input.required<boolean>();
-    close = output<void>();
-
-    lastSyncDate = signal<Date | null>(null);
     collectionStats = signal<any>(null);
+    lastSyncDate = signal<Date | null>(null);
     syncing = signal(false);
     syncMessage = signal('');
+
+    isOpen = input.required<boolean>();
+    close = output<void>();
 
     constructor(
         private db: DatabaseService,
@@ -28,12 +28,35 @@ export class MenuDrawerComponent {
         this.loadMenuData();
     }
 
+    closeDrawer() {
+        this.close.emit();
+    }
+
+    getTimeSinceSync(): string {
+        const lastSync = this.lastSyncDate();
+        if (!lastSync) return 'Never';
+
+        const now = new Date();
+        const diffMs = now.getTime() - lastSync.getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) return 'Today';
+        if (diffDays === 1) return 'Yesterday';
+        if (diffDays < 7) return `${diffDays} days ago`;
+        if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+        return `${Math.floor(diffDays / 30)} months ago`;
+    }
+
     async loadMenuData() {
         const lastSync = await this.db.getLastSyncDate();
         this.lastSyncDate.set(lastSync);
 
         const stats = await this.playbackService.getCollectionStats();
         this.collectionStats.set(stats);
+    }
+
+    onBackdropClick() {
+        this.closeDrawer();
     }
 
     async resync() {
@@ -53,28 +76,5 @@ export class MenuDrawerComponent {
             this.syncing.set(false);
             this.syncMessage.set('');
         }, 3000);
-    }
-
-    getTimeSinceSync(): string {
-        const lastSync = this.lastSyncDate();
-        if (!lastSync) return 'Never';
-
-        const now = new Date();
-        const diffMs = now.getTime() - lastSync.getTime();
-        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 0) return 'Today';
-        if (diffDays === 1) return 'Yesterday';
-        if (diffDays < 7) return `${diffDays} days ago`;
-        if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-        return `${Math.floor(diffDays / 30)} months ago`;
-    }
-
-    closeDrawer() {
-        this.close.emit();
-    }
-
-    onBackdropClick() {
-        this.closeDrawer();
     }
 }

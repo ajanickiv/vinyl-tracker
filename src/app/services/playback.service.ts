@@ -9,6 +9,38 @@ export class PlaybackService {
 
     constructor(private db: DatabaseService) { }
 
+
+    /**
+     * Get overall collection statistics
+     */
+    async getCollectionStats(): Promise<{
+        totalReleases: number;
+        totalPlays: number;
+        neverPlayed: number;
+        mostPlayed?: Release;
+        leastPlayed?: Release;
+    }> {
+        const allReleases = await this.db.getAllReleases();
+
+        const totalReleases = allReleases.length;
+        const totalPlays = allReleases.reduce((sum, r) => sum + r.playCount, 0);
+        const neverPlayed = allReleases.filter(r => r.playCount === 0).length;
+
+        const sortedByPlayCount = [...allReleases].sort((a, b) => b.playCount - a.playCount);
+        const mostPlayed = sortedByPlayCount[0];
+
+        const playedReleases = allReleases.filter(r => r.playCount > 0);
+        const leastPlayed = playedReleases.sort((a, b) => a.playCount - b.playCount)[0];
+
+        return {
+            totalReleases,
+            totalPlays,
+            neverPlayed,
+            mostPlayed,
+            leastPlayed
+        };
+    }
+
     /**
      * Mark a release as played
      * Increments play count and updates last played date
@@ -70,34 +102,4 @@ export class PlaybackService {
         };
     }
 
-    /**
-     * Get overall collection statistics
-     */
-    async getCollectionStats(): Promise<{
-        totalReleases: number;
-        totalPlays: number;
-        neverPlayed: number;
-        mostPlayed?: Release;
-        leastPlayed?: Release;
-    }> {
-        const allReleases = await this.db.getAllReleases();
-
-        const totalReleases = allReleases.length;
-        const totalPlays = allReleases.reduce((sum, r) => sum + r.playCount, 0);
-        const neverPlayed = allReleases.filter(r => r.playCount === 0).length;
-
-        const sortedByPlayCount = [...allReleases].sort((a, b) => b.playCount - a.playCount);
-        const mostPlayed = sortedByPlayCount[0];
-
-        const playedReleases = allReleases.filter(r => r.playCount > 0);
-        const leastPlayed = playedReleases.sort((a, b) => a.playCount - b.playCount)[0];
-
-        return {
-            totalReleases,
-            totalPlays,
-            neverPlayed,
-            mostPlayed,
-            leastPlayed
-        };
-    }
 }

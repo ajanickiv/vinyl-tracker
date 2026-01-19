@@ -27,6 +27,19 @@ export class VinylPlayerComponent implements OnInit {
         await this.getNewRecommendation();
     }
 
+    closeMenu() {
+        this.menuOpen.set(false);
+    }
+
+    getFormatString(release: Release): string {
+        return release.basicInfo.formats?.join(', ') || 'Unknown';
+    }
+
+    getFormattedDate(date?: Date): string {
+        if (!date) return 'Never';
+        return new Date(date).toLocaleDateString();
+    }
+
     async getNewRecommendation() {
         this.isLoading.set(true);
         const recommendation = await this.recommendationService.getRecommendation();
@@ -60,20 +73,8 @@ export class VinylPlayerComponent implements OnInit {
         await this.getNewRecommendation();
     }
 
-    getFormattedDate(date?: Date): string {
-        if (!date) return 'Never';
-        return new Date(date).toLocaleDateString();
-    }
-
-    getFormatString(release: Release): string {
-        return release.basicInfo.formats?.join(', ') || 'Unknown';
-    }
-
     toggleMenu() {
         this.menuOpen.set(!this.menuOpen());
     }
 
-    closeMenu() {
-        this.menuOpen.set(false);
-    }
 }

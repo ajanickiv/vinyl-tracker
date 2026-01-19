@@ -20,6 +20,22 @@ export class DiscogsService {
   ) { }
 
   /**
+   * Clear all synced data (useful for re-syncing from scratch)
+   */
+  async clearSyncedData(): Promise<void> {
+    await this.db.clearAllData();
+    console.log('All synced data cleared');
+  }
+
+  /**
+ * Check if user has any synced data
+ */
+  async hasSyncedData(): Promise<boolean> {
+    const count = await this.db.getCollectionCount();
+    return count > 0;
+  }
+
+  /**
    * Fetch and sync the entire collection from Discogs
    */
   async syncCollection(): Promise<{ success: boolean; totalSynced: number; error?: string }> {
@@ -60,6 +76,45 @@ export class DiscogsService {
         error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
+  }
+
+  /**
+   * Convert Discogs API format to our Release model
+   */
+  private convertToRelease(discogsRelease: DiscogsRelease): Release {
+    const basicInfo = discogsRelease.basic_information;
+
+    return {
+      id: basicInfo.id,
+      instanceId: discogsRelease.instance_id,
+      basicInfo: {
+        title: basicInfo.title,
+        artists: basicInfo.artists.map(a => a.name),
+        year: basicInfo.year,
+        formats: basicInfo.formats.map(f => {
+          const descriptions = f.descriptions ? ` (${f.descriptions.join(', ')})` : '';
+          return `${f.name}${descriptions}`;
+        }),
+        thumb: basicInfo.thumb,
+        coverImage: basicInfo.cover_image,
+        labels: basicInfo.labels.map(l => l.name),
+        genres: basicInfo.genres,
+        styles: basicInfo.styles
+      },
+      playCount: 0,
+      lastPlayedDate: undefined,
+      dateAdded: new Date(),
+      dateAddedToCollection: new Date(discogsRelease.date_added),
+      notes: discogsRelease.notes?.[0]?.value,
+      rating: discogsRelease.rating > 0 ? discogsRelease.rating : undefined
+    };
+  }
+
+  /**
+   * Utility function to delay execution (for rate limiting)
+   */
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   /**
@@ -113,58 +168,4 @@ export class DiscogsService {
     }
   }
 
-  /**
-   * Convert Discogs API format to our Release model
-   */
-  private convertToRelease(discogsRelease: DiscogsRelease): Release {
-    const basicInfo = discogsRelease.basic_information;
-
-    return {
-      id: basicInfo.id,
-      instanceId: discogsRelease.instance_id,
-      basicInfo: {
-        title: basicInfo.title,
-        artists: basicInfo.artists.map(a => a.name),
-        year: basicInfo.year,
-        formats: basicInfo.formats.map(f => {
-          const descriptions = f.descriptions ? ` (${f.descriptions.join(', ')})` : '';
-          return `${f.name}${descriptions}`;
-        }),
-        thumb: basicInfo.thumb,
-        coverImage: basicInfo.cover_image,
-        labels: basicInfo.labels.map(l => l.name),
-        genres: basicInfo.genres,
-        styles: basicInfo.styles
-      },
-      playCount: 0,
-      lastPlayedDate: undefined,
-      dateAdded: new Date(),
-      dateAddedToCollection: new Date(discogsRelease.date_added),
-      notes: discogsRelease.notes?.[0]?.value,
-      rating: discogsRelease.rating > 0 ? discogsRelease.rating : undefined
-    };
-  }
-
-  /**
-   * Utility function to delay execution (for rate limiting)
-   */
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  /**
-   * Check if user has any synced data
-   */
-  async hasSyncedData(): Promise<boolean> {
-    const count = await this.db.getCollectionCount();
-    return count > 0;
-  }
-
-  /**
-   * Clear all synced data (useful for re-syncing from scratch)
-   */
-  async clearSyncedData(): Promise<void> {
-    await this.db.clearAllData();
-    console.log('All synced data cleared');
-  }
 }

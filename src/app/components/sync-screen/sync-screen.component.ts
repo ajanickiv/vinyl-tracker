@@ -12,6 +12,7 @@ import { DiscogsService } from '../../services/discogs.service';
 export class SyncScreenComponent {
     syncing = signal(false);
     syncProgress = signal('');
+    
     syncComplete = output<void>();
 
     constructor(private discogsService: DiscogsService) { }
