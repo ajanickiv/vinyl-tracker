@@ -1,0 +1,306 @@
+.vinyl-player-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #311D00 0%, #CC5500 50%, #311D00 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.loading,
+.empty-state {
+    text-align: center;
+    color: white;
+    font-size: 1.125rem;
+}
+
+.player {
+    width: 100%;
+    max-width: 28rem;
+}
+
+.player-header {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 10;
+}
+
+.menu-button {
+    background: rgba(255, 60, 0, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 60, 0, 0.3);
+    color: white;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+
+    &:hover {
+        background: rgba(255, 60, 0, 0.4);
+        transform: scale(1.1);
+    }
+}
+
+.menu-icon {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+// ===== Turntable =====
+.turntable-wrapper {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.turntable-base {
+    position: relative;
+  background: linear-gradient(135deg, #2a6a8a 0%, #1f4d66 100%);
+    border-radius: 0.5rem;
+    padding: 2rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+}
+
+// ===== Record =====
+.record {
+    position: relative;
+    margin: 0 auto;
+    width: 16rem;
+    height: 16rem;
+}
+
+.vinyl-disc {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1f2937 0%, #000000 50%, #1f2937 100%);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+.grooves {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    opacity: 0.3;
+}
+
+.groove {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid #374151;
+}
+
+// ===== Album Art =====
+.album-art {
+    position: absolute;
+    inset: 2rem;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.8);
+
+    &.spinning {
+        animation: spinRecord 2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+.vinyl-texture {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 0%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.3) 100%);
+    mix-blend-mode: overlay;
+}
+
+// ===== Center Label - Browns Orange =====
+.center-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FF3C00 0%, #CC5500 100%);
+    border: 4px solid #000000;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.center-hole {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background-color: #000000;
+}
+
+// ===== Tonearm =====
+.tonearm {
+    position: absolute;
+    top: 2rem;
+    right: 1rem;
+    transform-origin: bottom right;
+    transition: transform 2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+    &.playing {
+        transform: rotate(-25deg);
+    }
+}
+
+.arm {
+    position: relative;
+    width: 8rem;
+    height: 0.5rem;
+    background: linear-gradient(to right, #9ca3af, #4b5563);
+    border-radius: 9999px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    transform: rotate(-45deg);
+}
+
+.headshell {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    width: 1rem;
+    height: 1rem;
+    background-color: #d1d5db;
+    border-radius: 0.125rem;
+    transform: translateY(-50%);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.pivot {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 1.5rem;
+    height: 1.5rem;
+    background-color: #374151;
+    border-radius: 50%;
+    transform: translateY(-50%);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+// ===== Album Info =====
+.album-info {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: white;
+}
+
+.artist {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.title {
+    font-size: 1.25rem;
+    color: #311D00;
+    margin-bottom: 0.5rem;
+}
+
+.meta {
+    font-size: 0.875rem;
+    color: #e5e7eb;
+}
+
+// ===== Stats =====
+.stats {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+    color: white;
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #311D00;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #e5e7eb;
+}
+
+// ===== Action Buttons - Browns Colors =====
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.btn-primary,
+.btn-secondary {
+    width: 100%;
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: none;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        transform: scale(1.05);
+    }
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+}
+
+.btn-primary {
+    background: linear-gradient(to right, #FF3C00, #CC5500);
+    color: white;
+
+    &:hover:not(:disabled) {
+        background: linear-gradient(to right, #CC5500, #AA4400);
+    }
+}
+
+.btn-secondary {
+    background-color: #311D00;
+    border: 1px solid #CC5500;
+    color: white;
+
+    &:hover:not(:disabled) {
+        background-color: #442800;
+    }
+}
+
+.btn-icon {
+    font-size: 1.25rem;
+}
+
+// ===== Animations =====
+@keyframes spinRecord {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(1080deg);
+    }
+}

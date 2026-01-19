@@ -1,0 +1,39 @@
+<div class="sync-screen">
+    <div class="sync-content">
+        <div class="logo">
+            <div class="vinyl-icon">
+                <div class="vinyl-circle"></div>
+                <div class="vinyl-center"></div>
+            </div>
+        </div>
+
+        <h1 class="title">Welcome to Vinyl Tracker</h1>
+        <p class="subtitle">Track your listening habits for your Discogs collection</p>
+
+        @if (!syncing()) {
+        <div class="info-section">
+            <h2>Getting Started</h2>
+            <ul class="feature-list">
+                <li>Sync your Discogs collection</li>
+                <li>Get personalized album recommendations</li>
+                <li>Track play counts and history</li>
+                <li>Discover neglected gems in your collection</li>
+            </ul>
+        </div>
+
+        <button class="sync-button" (click)="startSync()">
+            <span class="button-icon">🎵</span>
+            Sync from Discogs
+        </button>
+
+        <p class="disclaimer">
+            Your play data is stored locally on this device only.
+        </p>
+        } @else {
+        <div class="sync-status">
+            <div class="spinner"></div>
+            <p class="status-text">{{ syncProgress() }}</p>
+        </div>
+        }
+    </div>
+</div>
