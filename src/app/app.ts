@@ -13,12 +13,12 @@ import { DatabaseService } from './services/database.service';
     } @else {
       <app-sync-screen (syncComplete)="onSyncComplete()"></app-sync-screen>
     }
-  `
+  `,
 })
 export class AppComponent implements OnInit {
   hasSyncedData = signal(false);
 
-  constructor(private db: DatabaseService) { }
+  constructor(private db: DatabaseService) {}
 
   async ngOnInit() {
     const count = await this.db.getCollectionCount();

@@ -1,0 +1,24 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+.angular
+
+# Package files
+package-lock.json
+yarn.lock
+
+# Environment files
+.env
+.env.*
+
+# Coverage
+coverage
+
+# IDE
+.vscode
+.idea
+
+# Misc
+*.log

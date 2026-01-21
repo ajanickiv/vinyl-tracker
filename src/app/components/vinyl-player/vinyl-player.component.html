@@ -1,91 +1,95 @@
 <div class="vinyl-player-container">
-    <div class="player-header">
-        <button class="menu-button" (click)="toggleMenu()">
-            <span class="menu-icon">⋮</span>
-        </button>
-    </div>
+  <div class="player-header">
+    <button class="menu-button" (click)="toggleMenu()">
+      <span class="menu-icon">⋮</span>
+    </button>
+  </div>
 
-    <app-menu-drawer [isOpen]="menuOpen()" (close)="closeMenu()"></app-menu-drawer>
+  <app-menu-drawer [isOpen]="menuOpen()" (close)="closeMenu()"></app-menu-drawer>
 
-    @if (isLoading()) {
+  @if (isLoading()) {
     <div class="loading">
-        <p>Loading recommendation...</p>
+      <p>Loading recommendation...</p>
     </div>
-    } @else if (currentRelease()) {
+  } @else if (currentRelease()) {
     <div class="player">
-        <!-- Vinyl Record Player -->
-        <div class="turntable-wrapper">
-            <div class="turntable-base">
-                <!-- Record -->
-                <div class="record">
-                    <!-- Vinyl disc background -->
-                    <div class="vinyl-disc"></div>
+      <!-- Vinyl Record Player -->
+      <div class="turntable-wrapper">
+        <div class="turntable-base">
+          <!-- Record -->
+          <div class="record">
+            <!-- Vinyl disc background -->
+            <div class="vinyl-disc"></div>
 
-                    <!-- Grooves effect -->
-                    <div class="grooves">
-                        @for (groove of [0,1,2,3,4,5,6,7,8,9,10,11]; track groove) {
-                        <div class="groove" [style.inset.%]="groove * 8"></div>
-                        }
-                    </div>
-
-                    <!-- Album Art - spins on play -->
-                    <div class="album-art" [class.spinning]="isSpinning()">
-                        <img [src]="currentRelease()!.basicInfo.coverImage || currentRelease()!.basicInfo.thumb"
-                            [alt]="currentRelease()!.basicInfo.title" />
-                        <div class="vinyl-texture"></div>
-                    </div>
-
-                    <!-- Center label -->
-                    <div class="center-label">
-                        <div class="center-hole"></div>
-                    </div>
-                </div>
-
-                <!-- Tonearm/Stylus -->
-                <div class="tonearm" [class.playing]="isSpinning()">
-                    <div class="arm"></div>
-                    <div class="headshell"></div>
-                    <div class="pivot"></div>
-                </div>
+            <!-- Grooves effect -->
+            <div class="grooves">
+              @for (groove of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]; track groove) {
+                <div class="groove" [style.inset.%]="groove * 8"></div>
+              }
             </div>
-        </div>
 
-        <!-- Album Info -->
-        <div class="album-info">
-            <h2 class="artist">{{ currentRelease()!.basicInfo.artists.join(', ') }}</h2>
-            <h3 class="title">{{ currentRelease()!.basicInfo.title }}</h3>
-            <p class="meta">{{ currentRelease()!.basicInfo.year }} • {{ getFormatString(currentRelease()!) }}</p>
-        </div>
-
-        <!-- Stats -->
-        <div class="stats">
-            <div class="stat">
-                <div class="stat-value">{{ currentRelease()!.playCount }}</div>
-                <div class="stat-label">Plays</div>
+            <!-- Album Art - spins on play -->
+            <div class="album-art" [class.spinning]="isSpinning()">
+              <img
+                [src]="currentRelease()!.basicInfo.coverImage || currentRelease()!.basicInfo.thumb"
+                [alt]="currentRelease()!.basicInfo.title"
+              />
+              <div class="vinyl-texture"></div>
             </div>
-            <div class="stat">
-                <div class="stat-value">{{ getFormattedDate(currentRelease()!.lastPlayedDate) }}</div>
-                <div class="stat-label">Last Played</div>
+
+            <!-- Center label -->
+            <div class="center-label">
+              <div class="center-hole"></div>
             </div>
-        </div>
+          </div>
 
-        <!-- Action Buttons -->
-        <div class="actions">
-            <button class="btn-primary" (click)="markAsPlayed()" [disabled]="isSpinning()">
-                <span class="btn-icon">▶</span>
-                {{ isSpinning() ? 'Playing...' : 'Mark as Played' }}
-            </button>
-
-            <button class="btn-secondary" (click)="skipToNext()" [disabled]="isSpinning()">
-                <span class="btn-icon">⏭</span>
-                Skip / Get Another
-            </button>
+          <!-- Tonearm/Stylus -->
+          <div class="tonearm" [class.playing]="isSpinning()">
+            <div class="arm"></div>
+            <div class="headshell"></div>
+            <div class="pivot"></div>
+          </div>
         </div>
+      </div>
+
+      <!-- Album Info -->
+      <div class="album-info">
+        <h2 class="artist">{{ currentRelease()!.basicInfo.artists.join(', ') }}</h2>
+        <h3 class="title">{{ currentRelease()!.basicInfo.title }}</h3>
+        <p class="meta">
+          {{ currentRelease()!.basicInfo.year }} • {{ getFormatString(currentRelease()!) }}
+        </p>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-value">{{ currentRelease()!.playCount }}</div>
+          <div class="stat-label">Plays</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">{{ getFormattedDate(currentRelease()!.lastPlayedDate) }}</div>
+          <div class="stat-label">Last Played</div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="actions">
+        <button class="btn-primary" (click)="markAsPlayed()" [disabled]="isSpinning()">
+          <span class="btn-icon">▶</span>
+          {{ isSpinning() ? 'Playing...' : 'Mark as Played' }}
+        </button>
+
+        <button class="btn-secondary" (click)="skipToNext()" [disabled]="isSpinning()">
+          <span class="btn-icon">⏭</span>
+          Skip / Get Another
+        </button>
+      </div>
     </div>
-    } @else {
+  } @else {
     <div class="empty-state">
-        <p>No releases found in your collection.</p>
-        <p>Please sync your Discogs collection first.</p>
+      <p>No releases found in your collection.</p>
+      <p>Please sync your Discogs collection first.</p>
     </div>
-    }
+  }
 </div>

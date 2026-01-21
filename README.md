@@ -27,6 +27,7 @@ A personal listening tracker for your Discogs vinyl collection. Get personalized
 ### Using the App
 
 **Main Screen:**
+
 - The app displays a vinyl record with album art from your collection
 - You'll see the artist, album title, year, format, play count, and last played date
 - Two main actions:
@@ -34,6 +35,7 @@ A personal listening tracker for your Discogs vinyl collection. Get personalized
   - **Skip / Get Another** - Get a new recommendation without logging a play
 
 **Recommendation Algorithm:**
+
 - **Never played items** are always recommended first (random selection)
 - Once all items have been played at least once, the algorithm uses **weighted random selection**:
   - Items with **lower play counts** have higher weight
@@ -42,6 +44,7 @@ A personal listening tracker for your Discogs vinyl collection. Get personalized
   - Formula: `weight = (1 / playCount) * log(daysSincePlay + 1)`
 
 **Menu Drawer:**
+
 - Tap the menu icon (⋮) in the top-right to access:
   - **Sync status** - See when you last synced with Discogs
   - **Re-sync** - Pull new additions from Discogs (preserves your play data)
@@ -50,6 +53,7 @@ A personal listening tracker for your Discogs vinyl collection. Get personalized
 ### Re-syncing Your Collection
 
 When you add new records to your Discogs collection:
+
 1. Open the menu drawer
 2. Tap "Re-sync from Discogs"
 3. New releases are added to your local database
@@ -66,12 +70,14 @@ When you add new records to your Discogs collection:
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone <repository-url>
    cd vinyl-tracker
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
@@ -85,11 +91,12 @@ When you add new records to your Discogs collection:
        production: false,
        discogsToken: 'YOUR_TOKEN_HERE',
        discogsUsername: 'YOUR_USERNAME_HERE',
-       discogsApiUrl: 'https://api.discogs.com'
+       discogsApiUrl: 'https://api.discogs.com',
      };
      ```
 
 4. Run the development server:
+
    ```bash
    ng serve
    ```
@@ -153,6 +160,7 @@ All data is stored locally in your browser using IndexedDB:
 ## API Rate Limiting
 
 The Discogs API allows 60 requests per minute for authenticated users. The sync service:
+
 - Fetches 100 releases per page (maximum allowed)
 - Waits 1 second between page requests
 - Displays progress during sync
@@ -166,6 +174,7 @@ For a collection of 500 releases, expect sync to take approximately 30-45 second
 The app uses Cleveland Browns colors by default. To customize:
 
 Edit the SCSS variables in component stylesheets:
+
 - Brown: `#311D00`
 - Orange: `#FF3C00`
 - Burnt Orange: `#CC5500`
@@ -194,11 +203,13 @@ const recencyFactor = Math.sqrt(daysSincePlay);
 ### Netlify (Recommended)
 
 1. Build the production app:
+
    ```bash
    ng build --configuration production
    ```
 
 2. Create a `_redirects` file in `dist/vinyl-tracker/browser/`:
+
    ```
    /*    /index.html   200
    ```
@@ -215,6 +226,7 @@ const recencyFactor = Math.sqrt(daysSincePlay);
 ### Other Platforms
 
 The app is a static Angular application and can be deployed to:
+
 - Vercel
 - GitHub Pages
 - AWS S3 + CloudFront
@@ -233,20 +245,24 @@ The app is a static Angular application and can be deployed to:
 ## Troubleshooting
 
 **Sync fails with authentication error:**
+
 - Verify your Discogs token is valid
 - Check that your username is correct in environment config
 
 **Collection not loading:**
+
 - Open browser DevTools → Application → IndexedDB
 - Check if `DiscogsTrackerDB` exists with data
 - Try clearing the database and re-syncing
 
 **Recommendations seem skewed:**
+
 - The algorithm is working as designed - items with very low play counts will dominate
 - Play more of your collection to balance things out
 - Or adjust the weighting formula in `recommendation.service.ts`
 
 **App won't load after deployment:**
+
 - Ensure the `_redirects` file is present for client-side routing
 - Check browser console for errors
 

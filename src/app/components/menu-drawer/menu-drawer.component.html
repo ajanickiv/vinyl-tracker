@@ -1,68 +1,77 @@
 <div class="drawer-container" [class.open]="isOpen()">
-    <!-- Backdrop -->
-    <div class="backdrop" (click)="onBackdropClick()"></div>
+  <!-- Backdrop -->
+  <div class="backdrop" (click)="onBackdropClick()"></div>
 
-    <!-- Drawer -->
-    <div class="drawer">
-        <div class="drawer-header">
-            <h2>Menu</h2>
-            <button class="close-button" (click)="closeDrawer()">✕</button>
-        </div>
-
-        <div class="drawer-content">
-            <!-- Sync Section -->
-            <div class="menu-section">
-                <h3>Collection Sync</h3>
-                <div class="sync-info">
-                    <p class="sync-status">Last synced: <strong>{{ getTimeSinceSync() }}</strong></p>
-                    <button class="resync-button" (click)="resync()" [disabled]="syncing()">
-                        <span class="button-icon">↻</span>
-                        {{ syncing() ? 'Syncing...' : 'Re-sync from Discogs' }}
-                    </button>
-                    @if (syncMessage()) {
-                    <p class="sync-message">{{ syncMessage() }}</p>
-                    }
-                </div>
-            </div>
-
-            <!-- Stats Section -->
-            @if (collectionStats()) {
-            <div class="menu-section">
-                <h3>Collection Stats</h3>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-value">{{ collectionStats().totalReleases }}</div>
-                        <div class="stat-label">Total Releases</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">{{ collectionStats().totalPlays }}</div>
-                        <div class="stat-label">Total Plays</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">{{ collectionStats().neverPlayed }}</div>
-                        <div class="stat-label">Never Played</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">
-                            {{ ((collectionStats().totalReleases - collectionStats().neverPlayed) /
-                            collectionStats().totalReleases * 100).toFixed(0) }}%
-                        </div>
-                        <div class="stat-label">Collection Played</div>
-                    </div>
-                </div>
-            </div>
-
-            @if (collectionStats().mostPlayed) {
-            <div class="menu-section">
-                <h3>Most Played</h3>
-                <div class="album-highlight">
-                    <p class="album-title">{{ collectionStats().mostPlayed.basicInfo.title }}</p>
-                    <p class="album-artist">{{ collectionStats().mostPlayed.basicInfo.artists.join(', ') }}</p>
-                    <p class="play-count">{{ collectionStats().mostPlayed.playCount }} plays</p>
-                </div>
-            </div>
-            }
-            }
-        </div>
+  <!-- Drawer -->
+  <div class="drawer">
+    <div class="drawer-header">
+      <h2>Menu</h2>
+      <button class="close-button" (click)="closeDrawer()">✕</button>
     </div>
+
+    <div class="drawer-content">
+      <!-- Sync Section -->
+      <div class="menu-section">
+        <h3>Collection Sync</h3>
+        <div class="sync-info">
+          <p class="sync-status">
+            Last synced: <strong>{{ getTimeSinceSync() }}</strong>
+          </p>
+          <button class="resync-button" (click)="resync()" [disabled]="syncing()">
+            <span class="button-icon">↻</span>
+            {{ syncing() ? 'Syncing...' : 'Re-sync from Discogs' }}
+          </button>
+          @if (syncMessage()) {
+            <p class="sync-message">{{ syncMessage() }}</p>
+          }
+        </div>
+      </div>
+
+      <!-- Stats Section -->
+      @if (collectionStats()) {
+        <div class="menu-section">
+          <h3>Collection Stats</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-value">{{ collectionStats().totalReleases }}</div>
+              <div class="stat-label">Total Releases</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">{{ collectionStats().totalPlays }}</div>
+              <div class="stat-label">Total Plays</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">{{ collectionStats().neverPlayed }}</div>
+              <div class="stat-label">Never Played</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">
+                {{
+                  (
+                    ((collectionStats().totalReleases - collectionStats().neverPlayed) /
+                      collectionStats().totalReleases) *
+                    100
+                  ).toFixed(0)
+                }}%
+              </div>
+              <div class="stat-label">Collection Played</div>
+            </div>
+          </div>
+        </div>
+
+        @if (collectionStats().mostPlayed) {
+          <div class="menu-section">
+            <h3>Most Played</h3>
+            <div class="album-highlight">
+              <p class="album-title">{{ collectionStats().mostPlayed.basicInfo.title }}</p>
+              <p class="album-artist">
+                {{ collectionStats().mostPlayed.basicInfo.artists.join(', ') }}
+              </p>
+              <p class="play-count">{{ collectionStats().mostPlayed.playCount }} plays</p>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </div>
 </div>

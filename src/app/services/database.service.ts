@@ -8,7 +8,7 @@ export interface AppMetadata {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class DatabaseService extends Dexie {
   releases!: Table<Release, number>;
@@ -19,7 +19,7 @@ export class DatabaseService extends Dexie {
 
     this.version(1).stores({
       releases: 'id, playCount, lastPlayedDate, dateAdded',
-      metadata: 'key'
+      metadata: 'key',
     });
   }
 
@@ -59,5 +59,4 @@ export class DatabaseService extends Dexie {
   async updateRelease(id: number, changes: Partial<Release>): Promise<number> {
     return await this.releases.update(id, changes);
   }
-
 }

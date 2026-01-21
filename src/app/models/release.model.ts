@@ -1,6 +1,6 @@
 export interface Release {
-  id: number;              // Discogs release ID (primary key)
-  instanceId: number;      // Discogs collection instance ID
+  id: number; // Discogs release ID (primary key)
+  instanceId: number; // Discogs collection instance ID
   basicInfo: {
     title: string;
     artists: string[];

@@ -7,7 +7,7 @@ import { Release } from '../models/release.model';
 import { DiscogsCollectionResponse, DiscogsRelease } from '../models/discogs-api.model';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class DiscogsService {
   private apiUrl = environment.discogsApiUrl;
@@ -16,8 +16,8 @@ export class DiscogsService {
 
   constructor(
     private http: HttpClient,
-    private db: DatabaseService
-  ) { }
+    private db: DatabaseService,
+  ) {}
 
   /**
    * Clear all synced data (useful for re-syncing from scratch)
@@ -28,8 +28,8 @@ export class DiscogsService {
   }
 
   /**
- * Check if user has any synced data
- */
+   * Check if user has any synced data
+   */
   async hasSyncedData(): Promise<boolean> {
     const count = await this.db.getCollectionCount();
     return count > 0;
@@ -73,7 +73,7 @@ export class DiscogsService {
       return {
         success: false,
         totalSynced: 0,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -89,24 +89,24 @@ export class DiscogsService {
       instanceId: discogsRelease.instance_id,
       basicInfo: {
         title: basicInfo.title,
-        artists: basicInfo.artists.map(a => a.name),
+        artists: basicInfo.artists.map((a) => a.name),
         year: basicInfo.year,
-        formats: basicInfo.formats.map(f => {
+        formats: basicInfo.formats.map((f) => {
           const descriptions = f.descriptions ? ` (${f.descriptions.join(', ')})` : '';
           return `${f.name}${descriptions}`;
         }),
         thumb: basicInfo.thumb,
         coverImage: basicInfo.cover_image,
-        labels: basicInfo.labels.map(l => l.name),
+        labels: basicInfo.labels.map((l) => l.name),
         genres: basicInfo.genres,
-        styles: basicInfo.styles
+        styles: basicInfo.styles,
       },
       playCount: 0,
       lastPlayedDate: undefined,
       dateAdded: new Date(),
       dateAddedToCollection: new Date(discogsRelease.date_added),
       notes: discogsRelease.notes?.[0]?.value,
-      rating: discogsRelease.rating > 0 ? discogsRelease.rating : undefined
+      rating: discogsRelease.rating > 0 ? discogsRelease.rating : undefined,
     };
   }
 
@@ -114,7 +114,7 @@ export class DiscogsService {
    * Utility function to delay execution (for rate limiting)
    */
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -123,18 +123,18 @@ export class DiscogsService {
   private async fetchCollectionPage(page: number): Promise<DiscogsCollectionResponse> {
     const url = `${this.apiUrl}/users/${this.username}/collection/folders/0/releases`;
     const headers = new HttpHeaders({
-      'Authorization': `Discogs token=${this.token}`,
-      'User-Agent': 'DiscogsTracker/1.0'
+      Authorization: `Discogs token=${this.token}`,
+      'User-Agent': 'DiscogsTracker/1.0',
     });
 
     const params = {
       page: page.toString(),
-      per_page: '100' // Max allowed by Discogs
+      per_page: '100', // Max allowed by Discogs
     };
 
     try {
       const response = await firstValueFrom(
-        this.http.get<DiscogsCollectionResponse>(url, { headers, params })
+        this.http.get<DiscogsCollectionResponse>(url, { headers, params }),
       );
       return response;
     } catch (error) {
@@ -159,7 +159,7 @@ export class DiscogsService {
           basicInfo: release.basicInfo,
           dateAddedToCollection: release.dateAddedToCollection,
           notes: release.notes,
-          rating: release.rating
+          rating: release.rating,
         });
       } else {
         // New release, add with default tracking values
@@ -167,5 +167,4 @@ export class DiscogsService {
       }
     }
   }
-
 }
