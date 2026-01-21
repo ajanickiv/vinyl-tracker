@@ -1,23 +1,23 @@
-import { TestBed } from '@angular/core/testing';
-import { App } from './app';
+import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
+import { AppComponent } from './app';
+import { DatabaseService } from './services/database.service';
 
-describe('App', () => {
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [App],
-    }).compileComponents();
+describe('AppComponent', () => {
+  let spectator: Spectator<AppComponent>;
+  const createComponent = createComponentFactory({
+    component: AppComponent,
+    mocks: [DatabaseService],
   });
 
-  it('should create the app', () => {
-    const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
+  beforeEach(() => {
+    spectator = createComponent();
   });
 
-  it('should render title', async () => {
-    const fixture = TestBed.createComponent(App);
-    await fixture.whenStable();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, vinyl-tracker');
+  it('should create', () => {
+    expect(spectator.component).toBeTruthy();
+  });
+
+  it('should initialize with hasSyncedData as false', () => {
+    expect(spectator.component.hasSyncedData()).toBe(false);
   });
 });
