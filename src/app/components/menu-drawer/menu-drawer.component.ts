@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DatabaseService } from '../../services/database.service';
 import { DiscogsService } from '../../services/discogs.service';
 import { PlaybackService } from '../../services/playback.service';
+import { CollectionStats } from '../../models/collection-stats.model';
 
 @Component({
   selector: 'app-menu-drawer',
@@ -12,7 +13,7 @@ import { PlaybackService } from '../../services/playback.service';
   styleUrls: ['./menu-drawer.component.scss'],
 })
 export class MenuDrawerComponent {
-  collectionStats = signal<any>(null);
+  collectionStats = signal<CollectionStats | null>(null);
   lastSyncDate = signal<Date | null>(null);
   syncing = signal(false);
   syncMessage = signal('');

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { DatabaseService } from './database.service';
 import { Release } from '../models/release.model';
+import { CollectionStats } from '../models/collection-stats.model';
 
 @Injectable({
   providedIn: 'root',
@@ -11,13 +12,7 @@ export class PlaybackService {
   /**
    * Get overall collection statistics
    */
-  async getCollectionStats(): Promise<{
-    totalReleases: number;
-    totalPlays: number;
-    neverPlayed: number;
-    mostPlayed?: Release;
-    leastPlayed?: Release;
-  }> {
+  async getCollectionStats(): Promise<CollectionStats> {
     const allReleases = await this.db.getAllReleases();
 
     const totalReleases = allReleases.length;

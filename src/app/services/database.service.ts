@@ -4,7 +4,7 @@ import { Release } from '../models/release.model';
 
 export interface AppMetadata {
   key: string;
-  value: any;
+  value: string;
 }
 
 @Injectable({
