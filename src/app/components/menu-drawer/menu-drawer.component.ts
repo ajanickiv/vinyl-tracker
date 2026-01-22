@@ -1,5 +1,7 @@
-import { Component, signal, input, output } from '@angular/core';
+import { Component, signal, input, output, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Subject } from 'rxjs';
+import { takeUntil, tap } from 'rxjs/operators';
 import { DatabaseService } from '../../services/database.service';
 import { DiscogsService } from '../../services/discogs.service';
 import { PlaybackService } from '../../services/playback.service';
@@ -12,7 +14,7 @@ import { CollectionStats } from '../../models/collection-stats.model';
   templateUrl: './menu-drawer.component.html',
   styleUrls: ['./menu-drawer.component.scss'],
 })
-export class MenuDrawerComponent {
+export class MenuDrawerComponent implements OnDestroy {
   collectionStats = signal<CollectionStats | null>(null);
   lastSyncDate = signal<Date | null>(null);
   syncing = signal(false);
@@ -21,12 +23,19 @@ export class MenuDrawerComponent {
   isOpen = input.required<boolean>();
   close = output<void>();
 
+  private destroy$ = new Subject<void>();
+
   constructor(
     private db: DatabaseService,
     private discogsService: DiscogsService,
     private playbackService: PlaybackService,
   ) {
     this.loadMenuData();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   closeDrawer() {
@@ -48,34 +57,42 @@ export class MenuDrawerComponent {
     return `${Math.floor(diffDays / 30)} months ago`;
   }
 
-  async loadMenuData() {
-    const lastSync = await this.db.getLastSyncDate();
-    this.lastSyncDate.set(lastSync);
+  loadMenuData(): void {
+    this.db.getLastSyncDate().then((lastSync) => {
+      this.lastSyncDate.set(lastSync);
+    });
 
-    const stats = await this.playbackService.getCollectionStats();
-    this.collectionStats.set(stats);
+    this.playbackService
+      .getCollectionStats()
+      .pipe(
+        tap((stats) => {
+          this.collectionStats.set(stats);
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe();
   }
 
   onBackdropClick() {
     this.closeDrawer();
   }
 
-  async resync() {
+  resync(): void {
     this.syncing.set(true);
     this.syncMessage.set('Syncing...');
 
-    const result = await this.discogsService.syncCollection();
+    this.discogsService.syncCollection().then((result) => {
+      if (result.success) {
+        this.syncMessage.set(`✅ Synced ${result.totalSynced} releases!`);
+        this.loadMenuData();
+      } else {
+        this.syncMessage.set(`❌ Sync failed: ${result.error}`);
+      }
 
-    if (result.success) {
-      this.syncMessage.set(`✅ Synced ${result.totalSynced} releases!`);
-      await this.loadMenuData();
-    } else {
-      this.syncMessage.set(`❌ Sync failed: ${result.error}`);
-    }
-
-    setTimeout(() => {
-      this.syncing.set(false);
-      this.syncMessage.set('');
-    }, 3000);
+      setTimeout(() => {
+        this.syncing.set(false);
+        this.syncMessage.set('');
+      }, 3000);
+    });
   }
 }

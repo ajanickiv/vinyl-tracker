@@ -1,4 +1,6 @@
 import { Injectable } from '@angular/core';
+import { Observable, from, of, forkJoin } from 'rxjs';
+import { map, catchError, switchMap } from 'rxjs/operators';
 import { DatabaseService } from './database.service';
 import { Release } from '../models/release.model';
 
@@ -11,92 +13,113 @@ export class RecommendationService {
   /**
    * Get multiple recommendations at once
    */
-  async getMultipleRecommendations(count: number): Promise<Release[]> {
-    const recommendations: Release[] = [];
-    const usedIds = new Set<number>();
+  getMultipleRecommendations(count: number): Observable<Release[]> {
+    const recommendations$: Observable<Release | null>[] = [];
 
     for (let i = 0; i < count; i++) {
-      const recommendation = await this.getRecommendation();
-      if (recommendation && !usedIds.has(recommendation.id)) {
-        recommendations.push(recommendation);
-        usedIds.add(recommendation.id);
-      }
+      recommendations$.push(this.getRecommendation());
     }
 
-    return recommendations;
+    return forkJoin(recommendations$).pipe(
+      map((recommendations) => {
+        const usedIds = new Set<number>();
+        return recommendations.filter((rec): rec is Release => {
+          if (rec && !usedIds.has(rec.id)) {
+            usedIds.add(rec.id);
+            return true;
+          }
+          return false;
+        });
+      })
+    );
   }
 
   /**
    * Get a recommendation using weighted random selection
    * Priority: never-played items first, then weighted by play count and recency
    */
-  async getRecommendation(): Promise<Release | null> {
-    try {
-      // Step 1: Check for never-played items
-      const neverPlayed = await this.db.releases.where('playCount').equals(0).toArray();
+  getRecommendation(): Observable<Release | null> {
+    return from(this.db.releases.where('playCount').equals(0).toArray()).pipe(
+      switchMap((neverPlayed) => {
+        if (neverPlayed.length > 0) {
+          console.log(`Found ${neverPlayed.length} never-played items`);
+          return of(this.pickRandom(neverPlayed));
+        }
 
-      if (neverPlayed.length > 0) {
-        console.log(`Found ${neverPlayed.length} never-played items`);
-        return this.pickRandom(neverPlayed);
-      }
+        // All items have been played at least once
+        return from(this.db.getAllReleases()).pipe(
+          map((allReleases) => {
+            if (allReleases.length === 0) {
+              console.log('No releases in collection');
+              return null;
+            }
 
-      // Step 2: All items have been played at least once
-      // Get all releases and calculate weights
-      const allReleases = await this.db.getAllReleases();
-
-      if (allReleases.length === 0) {
-        console.log('No releases in collection');
-        return null;
-      }
-
-      console.log('All items played at least once, using weighted random selection');
-      return this.weightedRandomPick(allReleases);
-    } catch (error) {
-      console.error('Failed to get recommendation:', error);
-      return null;
-    }
+            console.log('All items played at least once, using weighted random selection');
+            return this.weightedRandomPick(allReleases);
+          })
+        );
+      }),
+      catchError((error) => {
+        console.error('Failed to get recommendation:', error);
+        return of(null);
+      })
+    );
   }
 
   /**
    * Get recommendations filtered by format (e.g., "Vinyl", "CD")
    */
-  async getRecommendationByFormat(format: string): Promise<Release | null> {
-    const allReleases = await this.db.getAllReleases();
-    const filtered = allReleases.filter((r) =>
-      r.basicInfo.formats?.some((f) => f.includes(format)),
+  getRecommendationByFormat(format: string): Observable<Release | null> {
+    return from(this.db.getAllReleases()).pipe(
+      map((allReleases) => {
+        const filtered = allReleases.filter((r) =>
+          r.basicInfo.formats?.some((f) => f.includes(format)),
+        );
+
+        if (filtered.length === 0) {
+          console.log(`No releases found for format: ${format}`);
+          return null;
+        }
+
+        const neverPlayed = filtered.filter((r) => r.playCount === 0);
+        if (neverPlayed.length > 0) {
+          return this.pickRandom(neverPlayed);
+        }
+
+        return this.weightedRandomPick(filtered);
+      }),
+      catchError((error) => {
+        console.error('Failed to get recommendation by format:', error);
+        return of(null);
+      })
     );
-
-    if (filtered.length === 0) {
-      console.log(`No releases found for format: ${format}`);
-      return null;
-    }
-
-    const neverPlayed = filtered.filter((r) => r.playCount === 0);
-    if (neverPlayed.length > 0) {
-      return this.pickRandom(neverPlayed);
-    }
-
-    return this.weightedRandomPick(filtered);
   }
 
   /**
    * Get recommendations filtered by genre
    */
-  async getRecommendationByGenre(genre: string): Promise<Release | null> {
-    const allReleases = await this.db.getAllReleases();
-    const filtered = allReleases.filter((r) => r.basicInfo.genres?.includes(genre));
+  getRecommendationByGenre(genre: string): Observable<Release | null> {
+    return from(this.db.getAllReleases()).pipe(
+      map((allReleases) => {
+        const filtered = allReleases.filter((r) => r.basicInfo.genres?.includes(genre));
 
-    if (filtered.length === 0) {
-      console.log(`No releases found for genre: ${genre}`);
-      return null;
-    }
+        if (filtered.length === 0) {
+          console.log(`No releases found for genre: ${genre}`);
+          return null;
+        }
 
-    const neverPlayed = filtered.filter((r) => r.playCount === 0);
-    if (neverPlayed.length > 0) {
-      return this.pickRandom(neverPlayed);
-    }
+        const neverPlayed = filtered.filter((r) => r.playCount === 0);
+        if (neverPlayed.length > 0) {
+          return this.pickRandom(neverPlayed);
+        }
 
-    return this.weightedRandomPick(filtered);
+        return this.weightedRandomPick(filtered);
+      }),
+      catchError((error) => {
+        console.error('Failed to get recommendation by genre:', error);
+        return of(null);
+      })
+    );
   }
 
   /**

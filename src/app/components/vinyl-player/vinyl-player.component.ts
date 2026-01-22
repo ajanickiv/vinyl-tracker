@@ -1,5 +1,7 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Subject, of, timer } from 'rxjs';
+import { takeUntil, tap, catchError, switchMap } from 'rxjs/operators';
 import { RecommendationService } from '../../services/recommendation.service';
 import { PlaybackService } from '../../services/playback.service';
 import { Release } from '../../models/release.model';
@@ -12,22 +14,46 @@ import { MenuDrawerComponent } from '../menu-drawer/menu-drawer.component';
   templateUrl: './vinyl-player.component.html',
   styleUrls: ['./vinyl-player.component.scss'],
 })
-export class VinylPlayerComponent implements OnInit {
+export class VinylPlayerComponent implements OnDestroy {
   currentRelease = signal<Release | null>(null);
   isSpinning = signal(false);
   isLoading = signal(true);
   menuOpen = signal(false);
 
+  private destroy$ = new Subject<void>();
+
   constructor(
     private recommendationService: RecommendationService,
     private playbackService: PlaybackService,
-  ) {}
-
-  async ngOnInit() {
-    await this.getNewRecommendation();
+  ) {
+    this.loadInitialRecommendation();
   }
 
-  closeMenu() {
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private loadInitialRecommendation(): void {
+    this.isLoading.set(true);
+    this.recommendationService
+      .getRecommendation()
+      .pipe(
+        tap((release) => {
+          this.currentRelease.set(release);
+          this.isLoading.set(false);
+        }),
+        catchError((error) => {
+          console.error('Failed to load initial recommendation:', error);
+          this.isLoading.set(false);
+          return of(null);
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe();
+  }
+
+  closeMenu(): void {
     this.menuOpen.set(false);
   }
 
@@ -40,40 +66,62 @@ export class VinylPlayerComponent implements OnInit {
     return new Date(date).toLocaleDateString();
   }
 
-  async getNewRecommendation() {
+  getNewRecommendation(): void {
     this.isLoading.set(true);
-    const recommendation = await this.recommendationService.getRecommendation();
-    this.currentRelease.set(recommendation);
-    this.isLoading.set(false);
+    this.recommendationService
+      .getRecommendation()
+      .pipe(
+        tap((release) => {
+          this.currentRelease.set(release);
+          this.isLoading.set(false);
+        }),
+        catchError((error) => {
+          console.error('Failed to get recommendation:', error);
+          this.isLoading.set(false);
+          return of(null);
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe();
   }
 
-  async markAsPlayed() {
+  markAsPlayed(): void {
     const release = this.currentRelease();
     if (!release || this.isSpinning()) return;
 
     this.isSpinning.set(true);
 
-    // Wait for spin animation to complete (2 seconds)
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    const updated = await this.playbackService.markAsPlayed(release.id);
-
-    if (updated) {
-      this.currentRelease.set(updated);
-    }
-
-    this.isSpinning.set(false);
-
-    // auto-load next recommendation after marking as played
-    await this.getNewRecommendation();
+    // Wait for spin animation to complete (2 seconds), then mark as played
+    timer(2000)
+      .pipe(
+        switchMap(() => this.playbackService.markAsPlayed(release.id)),
+        tap((updated) => {
+          if (updated) {
+            this.currentRelease.set(updated);
+          }
+          this.isSpinning.set(false);
+        }),
+        switchMap(() => this.recommendationService.getRecommendation()),
+        tap((newRelease) => {
+          this.currentRelease.set(newRelease);
+          this.isLoading.set(false);
+        }),
+        catchError((error) => {
+          console.error('Failed to mark as played:', error);
+          this.isSpinning.set(false);
+          return of(null);
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe();
   }
 
-  async skipToNext() {
+  skipToNext(): void {
     if (this.isSpinning()) return;
-    await this.getNewRecommendation();
+    this.getNewRecommendation();
   }
 
-  toggleMenu() {
+  toggleMenu(): void {
     this.menuOpen.set(!this.menuOpen());
   }
 }

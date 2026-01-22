@@ -56,6 +56,12 @@ module.exports = [
     },
   },
   {
+    files: ['**/*.spec.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+  {
     files: ['**/*.html'],
     languageOptions: {
       parser: angularTemplateParser,
