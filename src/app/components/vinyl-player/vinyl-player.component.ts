@@ -6,6 +6,7 @@ import { RecommendationService } from '../../services/recommendation.service';
 import { PlaybackService } from '../../services/playback.service';
 import { Release } from '../../models/release.model';
 import { MenuDrawerComponent } from '../menu-drawer/menu-drawer.component';
+import { SPIN_ANIMATION_DURATION_MS } from '../../constants/timing.constants';
 
 @Component({
   selector: 'app-vinyl-player',
@@ -35,6 +36,10 @@ export class VinylPlayerComponent implements OnDestroy {
   }
 
   private loadInitialRecommendation(): void {
+    this.fetchRecommendation();
+  }
+
+  private fetchRecommendation(): void {
     this.isLoading.set(true);
     this.recommendationService
       .getRecommendation()
@@ -44,7 +49,7 @@ export class VinylPlayerComponent implements OnDestroy {
           this.isLoading.set(false);
         }),
         catchError((error) => {
-          console.error('Failed to load initial recommendation:', error);
+          console.error('Failed to get recommendation:', error);
           this.isLoading.set(false);
           return of(null);
         }),
@@ -67,22 +72,7 @@ export class VinylPlayerComponent implements OnDestroy {
   }
 
   getNewRecommendation(): void {
-    this.isLoading.set(true);
-    this.recommendationService
-      .getRecommendation()
-      .pipe(
-        tap((release) => {
-          this.currentRelease.set(release);
-          this.isLoading.set(false);
-        }),
-        catchError((error) => {
-          console.error('Failed to get recommendation:', error);
-          this.isLoading.set(false);
-          return of(null);
-        }),
-        takeUntil(this.destroy$),
-      )
-      .subscribe();
+    this.fetchRecommendation();
   }
 
   markAsPlayed(): void {
@@ -91,8 +81,8 @@ export class VinylPlayerComponent implements OnDestroy {
 
     this.isSpinning.set(true);
 
-    // Wait for spin animation to complete (2 seconds), then mark as played
-    timer(2000)
+    // Wait for spin animation to complete, then mark as played
+    timer(SPIN_ANIMATION_DURATION_MS)
       .pipe(
         switchMap(() => this.playbackService.markAsPlayed(release.id)),
         tap((updated) => {

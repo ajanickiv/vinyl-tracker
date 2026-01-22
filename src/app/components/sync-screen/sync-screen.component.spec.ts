@@ -1,6 +1,7 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
 import { SyncScreenComponent } from './sync-screen.component';
 import { DiscogsService } from '../../services/discogs.service';
+import { SYNC_TRANSITION_DELAY_MS } from '../../constants/timing.constants';
 
 describe('SyncScreenComponent', () => {
   let spectator: Spectator<SyncScreenComponent>;
@@ -78,8 +79,8 @@ describe('SyncScreenComponent', () => {
       // Should not emit immediately
       expect(syncCompleteSpy).not.toHaveBeenCalled();
 
-      // Should emit after 1500ms delay
-      jest.advanceTimersByTime(1500);
+      // Should emit after transition delay
+      jest.advanceTimersByTime(SYNC_TRANSITION_DELAY_MS);
       expect(syncCompleteSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -94,7 +95,7 @@ describe('SyncScreenComponent', () => {
 
       expect(spectator.component.syncing()).toBe(true);
 
-      jest.advanceTimersByTime(1500);
+      jest.advanceTimersByTime(SYNC_TRANSITION_DELAY_MS);
       expect(spectator.component.syncing()).toBe(true);
     });
 

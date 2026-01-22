@@ -3,8 +3,11 @@ import { of } from 'rxjs';
 import { VinylPlayerComponent } from './vinyl-player.component';
 import { RecommendationService } from '../../services/recommendation.service';
 import { PlaybackService } from '../../services/playback.service';
+import { DatabaseService } from '../../services/database.service';
+import { DiscogsService } from '../../services/discogs.service';
 import { Release } from '../../models/release.model';
 import { MenuDrawerComponent } from '../menu-drawer/menu-drawer.component';
+import { SPIN_ANIMATION_DURATION_MS } from '../../constants/timing.constants';
 
 describe('VinylPlayerComponent', () => {
   let spectator: Spectator<VinylPlayerComponent>;
@@ -18,6 +21,12 @@ describe('VinylPlayerComponent', () => {
     markAsPlayed: jest.Mock;
     getCollectionStats: jest.Mock;
     getPlayStats: jest.Mock;
+  };
+  let mockDatabaseService: {
+    getLastSyncDate: jest.Mock;
+  };
+  let mockDiscogsService: {
+    syncCollection: jest.Mock;
   };
 
   const createComponent = createComponentFactory({
@@ -62,10 +71,20 @@ describe('VinylPlayerComponent', () => {
       getPlayStats: jest.fn().mockReturnValue(of(null)),
     };
 
+    mockDatabaseService = {
+      getLastSyncDate: jest.fn().mockResolvedValue(null),
+    };
+
+    mockDiscogsService = {
+      syncCollection: jest.fn().mockResolvedValue({ success: true, totalSynced: 0 }),
+    };
+
     spectator = createComponent({
       providers: [
         { provide: RecommendationService, useValue: mockRecommendationService },
         { provide: PlaybackService, useValue: mockPlaybackService },
+        { provide: DatabaseService, useValue: mockDatabaseService },
+        { provide: DiscogsService, useValue: mockDiscogsService },
       ],
     });
   });
@@ -184,8 +203,8 @@ describe('VinylPlayerComponent', () => {
       // Should not be called immediately
       expect(mockPlaybackService.markAsPlayed).not.toHaveBeenCalled();
 
-      // Fast-forward 2 seconds
-      jest.advanceTimersByTime(2000);
+      // Fast-forward spin animation duration
+      jest.advanceTimersByTime(SPIN_ANIMATION_DURATION_MS);
       spectator.detectChanges();
 
       expect(mockPlaybackService.markAsPlayed).toHaveBeenCalledWith(mockRelease.id);

@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 import { DatabaseService } from './database.service';
 import { Release } from '../models/release.model';
 import { DiscogsCollectionResponse, DiscogsRelease } from '../models/discogs-api.model';
+import { DISCOGS_API_DELAY_MS } from '../constants/timing.constants';
 
 @Injectable({
   providedIn: 'root',
@@ -59,8 +60,7 @@ export class DiscogsService {
         await this.processReleases(pageData.releases);
 
         // Respect rate limits - Discogs allows 60 requests per minute
-        // Wait 1 second between requests to be safe
-        await this.delay(1000);
+        await this.delay(DISCOGS_API_DELAY_MS);
       }
 
       await this.db.setLastSyncDate(new Date());

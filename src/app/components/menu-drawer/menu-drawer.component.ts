@@ -6,6 +6,7 @@ import { DatabaseService } from '../../services/database.service';
 import { DiscogsService } from '../../services/discogs.service';
 import { PlaybackService } from '../../services/playback.service';
 import { CollectionStats } from '../../models/collection-stats.model';
+import { SYNC_MESSAGE_DISPLAY_MS } from '../../constants/timing.constants';
 
 @Component({
   selector: 'app-menu-drawer',
@@ -58,9 +59,14 @@ export class MenuDrawerComponent implements OnDestroy {
   }
 
   loadMenuData(): void {
-    this.db.getLastSyncDate().then((lastSync) => {
-      this.lastSyncDate.set(lastSync);
-    });
+    this.db
+      .getLastSyncDate()
+      .then((lastSync) => {
+        this.lastSyncDate.set(lastSync);
+      })
+      .catch((error) => {
+        console.error('Failed to load last sync date:', error);
+      });
 
     this.playbackService
       .getCollectionStats()
@@ -81,18 +87,25 @@ export class MenuDrawerComponent implements OnDestroy {
     this.syncing.set(true);
     this.syncMessage.set('Syncing...');
 
-    this.discogsService.syncCollection().then((result) => {
-      if (result.success) {
-        this.syncMessage.set(`✅ Synced ${result.totalSynced} releases!`);
-        this.loadMenuData();
-      } else {
-        this.syncMessage.set(`❌ Sync failed: ${result.error}`);
-      }
-
-      setTimeout(() => {
-        this.syncing.set(false);
-        this.syncMessage.set('');
-      }, 3000);
-    });
+    this.discogsService
+      .syncCollection()
+      .then((result) => {
+        if (result.success) {
+          this.syncMessage.set(`✅ Synced ${result.totalSynced} releases!`);
+          this.loadMenuData();
+        } else {
+          this.syncMessage.set(`❌ Sync failed: ${result.error}`);
+        }
+      })
+      .catch((error) => {
+        console.error('Sync error:', error);
+        this.syncMessage.set('❌ Sync failed: Unexpected error');
+      })
+      .finally(() => {
+        setTimeout(() => {
+          this.syncing.set(false);
+          this.syncMessage.set('');
+        }, SYNC_MESSAGE_DISPLAY_MS);
+      });
   }
 }

@@ -4,6 +4,7 @@ import { map, catchError, switchMap } from 'rxjs/operators';
 import { DatabaseService } from './database.service';
 import { Release } from '../models/release.model';
 import { CollectionStats } from '../models/collection-stats.model';
+import { PlayStats } from '../models/play-stats.model';
 
 @Injectable({
   providedIn: 'root',
@@ -17,18 +18,31 @@ export class PlaybackService {
   getCollectionStats(): Observable<CollectionStats> {
     return from(this.db.getAllReleases()).pipe(
       map((allReleases) => {
-        const totalReleases = allReleases.length;
-        const totalPlays = allReleases.reduce((sum, r) => sum + r.playCount, 0);
-        const neverPlayed = allReleases.filter((r) => r.playCount === 0).length;
+        let totalPlays = 0;
+        let neverPlayed = 0;
+        let mostPlayed: Release | undefined;
+        let leastPlayed: Release | undefined;
 
-        const sortedByPlayCount = [...allReleases].sort((a, b) => b.playCount - a.playCount);
-        const mostPlayed = sortedByPlayCount[0];
+        for (const release of allReleases) {
+          totalPlays += release.playCount;
 
-        const playedReleases = allReleases.filter((r) => r.playCount > 0);
-        const leastPlayed = playedReleases.sort((a, b) => a.playCount - b.playCount)[0];
+          if (release.playCount === 0) {
+            neverPlayed++;
+          } else {
+            // Track least played (only among played releases)
+            if (!leastPlayed || release.playCount < leastPlayed.playCount) {
+              leastPlayed = release;
+            }
+          }
+
+          // Track most played
+          if (!mostPlayed || release.playCount > mostPlayed.playCount) {
+            mostPlayed = release;
+          }
+        }
 
         return {
-          totalReleases,
+          totalReleases: allReleases.length,
           totalPlays,
           neverPlayed,
           mostPlayed,
@@ -90,11 +104,7 @@ export class PlaybackService {
   /**
    * Get play statistics for a release
    */
-  getPlayStats(releaseId: number): Observable<{
-    playCount: number;
-    lastPlayedDate?: Date;
-    daysSinceLastPlayed?: number;
-  } | null> {
+  getPlayStats(releaseId: number): Observable<PlayStats | null> {
     return from(this.db.getRelease(releaseId)).pipe(
       map((release) => {
         if (!release) {

@@ -141,6 +141,22 @@ describe('MenuDrawerComponent', () => {
 
       expect(spectator.component.lastSyncDate()).toBeNull();
     }));
+
+    it('should handle empty collection stats without division by zero', () => {
+      const playbackService = mockPlaybackService;
+      const emptyStats: CollectionStats = {
+        totalReleases: 0,
+        totalPlays: 0,
+        neverPlayed: 0,
+      };
+      playbackService.getCollectionStats.mockReturnValue(of(emptyStats));
+
+      spectator.component.loadMenuData();
+      spectator.detectChanges();
+
+      const statValue = spectator.query('.stat-item:last-child .stat-value');
+      expect(statValue?.textContent?.trim()).toBe('0%');
+    });
   });
 
   describe('closeDrawer', () => {

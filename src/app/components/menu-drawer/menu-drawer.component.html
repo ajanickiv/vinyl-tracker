@@ -47,9 +47,12 @@
             <div class="stat-item">
               <div class="stat-value">
                 {{
-                  (((stats.totalReleases - stats.neverPlayed) / stats.totalReleases) * 100).toFixed(
-                    0
-                  )
+                  stats.totalReleases > 0
+                    ? (
+                        ((stats.totalReleases - stats.neverPlayed) / stats.totalReleases) *
+                        100
+                      ).toFixed(0)
+                    : 0
                 }}%
               </div>
               <div class="stat-label">Collection Played</div>

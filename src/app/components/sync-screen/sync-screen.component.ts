@@ -1,6 +1,7 @@
 import { Component, signal, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DiscogsService } from '../../services/discogs.service';
+import { SYNC_TRANSITION_DELAY_MS } from '../../constants/timing.constants';
 
 @Component({
   selector: 'app-sync-screen',
@@ -29,7 +30,7 @@ export class SyncScreenComponent {
       // Wait a moment to show success message
       setTimeout(() => {
         this.syncComplete.emit();
-      }, 1500);
+      }, SYNC_TRANSITION_DELAY_MS);
     } else {
       this.syncProgress.set(`❌ Sync failed: ${result.error}`);
       this.syncing.set(false);
