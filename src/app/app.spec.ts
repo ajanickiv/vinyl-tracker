@@ -26,11 +26,13 @@ describe('AppComponent', () => {
     const playbackService = spectator.inject(PlaybackService);
 
     recommendationService.getRecommendation.mockReturnValue(of(null));
-    playbackService.getCollectionStats.mockReturnValue(of({
-      totalReleases: 0,
-      totalPlays: 0,
-      neverPlayed: 0,
-    }));
+    playbackService.getCollectionStats.mockReturnValue(
+      of({
+        totalReleases: 0,
+        totalPlays: 0,
+        neverPlayed: 0,
+      }),
+    );
   });
 
   it('should create', () => {

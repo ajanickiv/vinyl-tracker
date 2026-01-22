@@ -44,7 +44,7 @@ export class PlaybackService {
           mostPlayed: undefined,
           leastPlayed: undefined,
         });
-      })
+      }),
     );
   }
 
@@ -70,20 +70,20 @@ export class PlaybackService {
           this.db.updateRelease(releaseId, {
             playCount: updatedRelease.playCount,
             lastPlayedDate: updatedRelease.lastPlayedDate,
-          })
+          }),
         ).pipe(
           map(() => {
             console.log(
               `✅ Marked as played: ${release.basicInfo.title} (play count: ${updatedRelease.playCount})`,
             );
             return updatedRelease;
-          })
+          }),
         );
       }),
       catchError((error) => {
         console.error('Failed to mark as played:', error);
         return of(null);
-      })
+      }),
     );
   }
 
@@ -117,7 +117,7 @@ export class PlaybackService {
       catchError((error) => {
         console.error('Failed to get play stats:', error);
         return of(null);
-      })
+      }),
     );
   }
 }

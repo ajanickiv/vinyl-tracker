@@ -68,7 +68,7 @@ export class MenuDrawerComponent implements OnDestroy {
         tap((stats) => {
           this.collectionStats.set(stats);
         }),
-        takeUntil(this.destroy$)
+        takeUntil(this.destroy$),
       )
       .subscribe();
   }

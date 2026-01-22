@@ -30,7 +30,7 @@ export class RecommendationService {
           }
           return false;
         });
-      })
+      }),
     );
   }
 
@@ -56,13 +56,13 @@ export class RecommendationService {
 
             console.log('All items played at least once, using weighted random selection');
             return this.weightedRandomPick(allReleases);
-          })
+          }),
         );
       }),
       catchError((error) => {
         console.error('Failed to get recommendation:', error);
         return of(null);
-      })
+      }),
     );
   }
 
@@ -91,7 +91,7 @@ export class RecommendationService {
       catchError((error) => {
         console.error('Failed to get recommendation by format:', error);
         return of(null);
-      })
+      }),
     );
   }
 
@@ -118,7 +118,7 @@ export class RecommendationService {
       catchError((error) => {
         console.error('Failed to get recommendation by genre:', error);
         return of(null);
-      })
+      }),
     );
   }
 

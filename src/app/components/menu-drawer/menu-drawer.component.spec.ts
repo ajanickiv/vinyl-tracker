@@ -230,7 +230,6 @@ describe('MenuDrawerComponent', () => {
   });
 
   describe('resync', () => {
-
     it('should set syncing to true when resync starts', () => {
       const discogsService = mockDiscogsService;
       discogsService.syncCollection.mockReturnValue(new Promise(() => {}));

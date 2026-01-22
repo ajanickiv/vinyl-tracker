@@ -48,7 +48,7 @@ export class VinylPlayerComponent implements OnDestroy {
           this.isLoading.set(false);
           return of(null);
         }),
-        takeUntil(this.destroy$)
+        takeUntil(this.destroy$),
       )
       .subscribe();
   }
@@ -80,7 +80,7 @@ export class VinylPlayerComponent implements OnDestroy {
           this.isLoading.set(false);
           return of(null);
         }),
-        takeUntil(this.destroy$)
+        takeUntil(this.destroy$),
       )
       .subscribe();
   }
@@ -111,7 +111,7 @@ export class VinylPlayerComponent implements OnDestroy {
           this.isSpinning.set(false);
           return of(null);
         }),
-        takeUntil(this.destroy$)
+        takeUntil(this.destroy$),
       )
       .subscribe();
   }
