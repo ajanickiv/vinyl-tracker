@@ -1,4 +1,4 @@
-import { Component, signal, input, output, OnDestroy } from '@angular/core';
+import { Component, signal, input, output, OnDestroy, isDevMode } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
 import { takeUntil, tap } from 'rxjs/operators';
@@ -20,9 +20,13 @@ export class MenuDrawerComponent implements OnDestroy {
   lastSyncDate = signal<Date | null>(null);
   syncing = signal(false);
   syncMessage = signal('');
+  clearing = signal(false);
+
+  readonly isDevMode = isDevMode();
 
   isOpen = input.required<boolean>();
   close = output<void>();
+  dataCleared = output<void>();
 
   private destroy$ = new Subject<void>();
 
@@ -106,6 +110,22 @@ export class MenuDrawerComponent implements OnDestroy {
           this.syncing.set(false);
           this.syncMessage.set('');
         }, SYNC_MESSAGE_DISPLAY_MS);
+      });
+  }
+
+  clearData(): void {
+    this.clearing.set(true);
+    this.discogsService
+      .clearSyncedData()
+      .then(() => {
+        this.dataCleared.emit();
+        this.closeDrawer();
+      })
+      .catch((error) => {
+        console.error('Failed to clear data:', error);
+      })
+      .finally(() => {
+        this.clearing.set(false);
       });
   }
 }

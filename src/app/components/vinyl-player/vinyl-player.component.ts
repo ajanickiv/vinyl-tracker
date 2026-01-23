@@ -114,4 +114,9 @@ export class VinylPlayerComponent implements OnDestroy {
   toggleMenu(): void {
     this.menuOpen.set(!this.menuOpen());
   }
+
+  onDataCleared(): void {
+    // Reload the page to show the sync screen
+    window.location.reload();
+  }
 }

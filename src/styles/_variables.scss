@@ -1,0 +1,82 @@
+// ==============================================
+// Color Variables
+// ==============================================
+
+// Primary Brand Colors (Copper Theme)
+$color-primary: #c9845c;
+$color-primary-dark: #a86d4a;
+$color-primary-darker: #8a5a3d;
+
+// Background Colors (Charcoal Theme)
+$color-background: #1c1c1c;
+$color-background-light: #2a2a2a;
+
+// Turntable Colors (User's turntable: #3986b3)
+$color-turntable-light: #3986b3;
+$color-turntable-dark: #2a6a8f;
+
+// Vinyl Record Colors
+$color-vinyl-dark: #1a1a1a;
+$color-vinyl-black: #000000;
+
+// Neutral Colors (Grays)
+$color-gray-900: #1f1f1f;
+$color-gray-700: #3a3a3a;
+$color-gray-600: #4a4a4a;
+$color-gray-400: #8a8a8a;
+$color-gray-300: #b0b0b0;
+$color-gray-200: #d0d0d0;
+
+// Base Colors
+$color-white: white;
+$color-black: #000000;
+
+// ==============================================
+// Semantic Color Aliases
+// ==============================================
+
+// Text Colors
+$text-primary: $color-white;
+$text-accent: $color-primary;
+$text-muted: $color-gray-200;
+$text-subdued: $color-gray-300;
+$text-dark: $color-primary;
+
+// Border Colors
+$border-primary: $color-primary-dark;
+$border-accent: $color-primary;
+
+// ==============================================
+// Gradients
+// ==============================================
+
+$gradient-background: linear-gradient(135deg, $color-background 0%, $color-gray-700 50%, $color-background 100%);
+$gradient-drawer: linear-gradient(135deg, $color-background 0%, $color-background-light 100%);
+$gradient-button-primary: linear-gradient(to right, $color-primary, $color-primary-dark);
+$gradient-button-primary-hover: linear-gradient(to right, $color-primary-dark, $color-primary-darker);
+$gradient-vinyl: linear-gradient(135deg, $color-vinyl-dark 0%, $color-vinyl-black 50%, $color-vinyl-dark 100%);
+$gradient-vinyl-label: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
+$gradient-turntable: linear-gradient(135deg, $color-turntable-light 0%, $color-turntable-dark 100%);
+$gradient-tonearm: linear-gradient(to right, $color-gray-400, $color-gray-600);
+
+// ==============================================
+// Shadows
+// ==============================================
+
+$shadow-sm: 0 4px 6px -1px rgba($color-black, 0.3);
+$shadow-md: 0 10px 15px -3px rgba($color-black, 0.5);
+$shadow-lg: 0 20px 25px -5px rgba($color-black, 0.5);
+$shadow-xl: 0 25px 50px -12px rgba($color-black, 0.8);
+
+// ==============================================
+// Component-specific Colors (as rgba)
+// ==============================================
+
+// Use these for semi-transparent overlays
+$overlay-backdrop: rgba($color-black, 0.5);
+$overlay-light: rgba($color-black, 0.3);
+$overlay-card: rgba($color-primary, 0.1);
+$overlay-card-border: rgba($color-primary, 0.2);
+$overlay-menu-button: rgba($color-background-light, 0.4);
+$overlay-menu-button-border: rgba($color-gray-600, 0.5);
+$overlay-menu-button-hover: rgba($color-background-light, 0.6);

@@ -73,6 +73,20 @@
           </div>
         }
       }
+
+      <!-- Dev Tools Section (only in dev mode) -->
+      @if (isDevMode) {
+        <div class="menu-section dev-section">
+          <h3>Dev Tools</h3>
+          <div class="dev-info">
+            <p class="dev-warning">These options are only visible in development mode.</p>
+            <button class="clear-button" (click)="clearData()" [disabled]="clearing()">
+              <span class="button-icon">🗑</span>
+              {{ clearing() ? 'Clearing...' : 'Clear All Data' }}
+            </button>
+          </div>
+        </div>
+      }
     </div>
   </div>
 </div>
