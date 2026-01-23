@@ -27,6 +27,64 @@
         </div>
       </div>
 
+      <!-- Filters Section -->
+      <div class="menu-section">
+        <h3>Filters</h3>
+        <div class="filters-container">
+          <!-- Box Set Toggle -->
+          <div class="filter-group">
+            <label class="toggle-label">
+              <span class="toggle-text">Exclude Box Sets</span>
+              <button
+                class="toggle-button"
+                [class.active]="filterService.filters().excludeBoxSets"
+                (click)="toggleExcludeBoxSets()"
+              >
+                <span class="toggle-track">
+                  <span class="toggle-thumb"></span>
+                </span>
+              </button>
+            </label>
+          </div>
+
+          <!-- Genre Chips -->
+          @if (availableGenres().length > 0) {
+            <div class="filter-group">
+              <p class="filter-label">Genres</p>
+              <div class="chip-container">
+                @for (genre of availableGenres(); track genre) {
+                  <button
+                    class="chip"
+                    [class.selected]="isGenreSelected(genre)"
+                    (click)="toggleGenre(genre)"
+                  >
+                    {{ genre }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Decade Chips -->
+          @if (availableDecades().length > 0) {
+            <div class="filter-group">
+              <p class="filter-label">Decades</p>
+              <div class="chip-container">
+                @for (decade of availableDecades(); track decade) {
+                  <button
+                    class="chip"
+                    [class.selected]="isDecadeSelected(decade)"
+                    (click)="toggleDecade(decade)"
+                  >
+                    {{ decade }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
       <!-- Stats Section -->
       @if (collectionStats(); as stats) {
         <div class="menu-section">

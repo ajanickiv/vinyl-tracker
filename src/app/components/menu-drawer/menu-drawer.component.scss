@@ -195,6 +195,109 @@
   font-size: 0.875rem;
 }
 
+// Filters Section
+.filters-container {
+  background: $overlay-card;
+  border: 1px solid $overlay-card-border;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.filter-group {
+  margin-bottom: 1rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.filter-label {
+  color: $text-muted;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+// Toggle Switch
+.toggle-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.toggle-text {
+  color: $text-primary;
+  font-size: 0.875rem;
+}
+
+.toggle-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.toggle-track {
+  display: block;
+  width: 3rem;
+  height: 1.5rem;
+  background: $color-gray-600;
+  border-radius: 0.75rem;
+  position: relative;
+  transition: background 0.2s;
+
+  .toggle-button.active & {
+    background: $color-primary;
+  }
+}
+
+.toggle-thumb {
+  display: block;
+  width: 1.25rem;
+  height: 1.25rem;
+  background: $text-primary;
+  border-radius: 50%;
+  position: absolute;
+  top: 0.125rem;
+  left: 0.125rem;
+  transition: transform 0.2s;
+
+  .toggle-button.active & {
+    transform: translateX(1.5rem);
+  }
+}
+
+// Chip Styles
+.chip-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip {
+  background: transparent;
+  border: 1px solid $overlay-card-border;
+  color: $text-muted;
+  padding: 0.375rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: $color-primary;
+    color: $text-primary;
+  }
+
+  &.selected {
+    background: $color-primary;
+    border-color: $color-primary;
+    color: $text-primary;
+  }
+}
+
 // Dev Tools Section
 .dev-section {
   margin-top: auto;

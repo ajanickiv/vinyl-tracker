@@ -1,11 +1,14 @@
 import { fakeAsync, flush } from '@angular/core/testing';
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
+import { signal } from '@angular/core';
 import { of } from 'rxjs';
 import { MenuDrawerComponent } from './menu-drawer.component';
 import { DatabaseService } from '../../services/database.service';
 import { DiscogsService } from '../../services/discogs.service';
 import { PlaybackService } from '../../services/playback.service';
+import { FilterService } from '../../services/filter.service';
 import { CollectionStats } from '../../models/collection-stats.model';
+import { DEFAULT_FILTERS } from '../../models/filter.model';
 
 describe('MenuDrawerComponent', () => {
   let spectator: Spectator<MenuDrawerComponent>;
@@ -23,6 +26,13 @@ describe('MenuDrawerComponent', () => {
   };
   let mockDiscogsService: {
     syncCollection: jest.Mock;
+    clearSyncedData: jest.Mock;
+  };
+  let mockFilterService: {
+    filters: ReturnType<typeof signal>;
+    setExcludeBoxSets: jest.Mock;
+    toggleGenre: jest.Mock;
+    toggleDecade: jest.Mock;
   };
 
   const createComponent = createComponentFactory({
@@ -55,6 +65,14 @@ describe('MenuDrawerComponent', () => {
 
     mockDiscogsService = {
       syncCollection: jest.fn().mockResolvedValue({ success: true, totalSynced: 0 }),
+      clearSyncedData: jest.fn().mockResolvedValue(undefined),
+    };
+
+    mockFilterService = {
+      filters: signal({ ...DEFAULT_FILTERS }),
+      setExcludeBoxSets: jest.fn(),
+      toggleGenre: jest.fn(),
+      toggleDecade: jest.fn(),
     };
 
     spectator = createComponent({
@@ -65,6 +83,7 @@ describe('MenuDrawerComponent', () => {
         { provide: DatabaseService, useValue: mockDatabaseService },
         { provide: PlaybackService, useValue: mockPlaybackService },
         { provide: DiscogsService, useValue: mockDiscogsService },
+        { provide: FilterService, useValue: mockFilterService },
       ],
     });
   });
@@ -393,6 +412,324 @@ describe('MenuDrawerComponent', () => {
       expect(spectator.component.syncMessage()).toBe('');
 
       jest.useRealTimers();
+    });
+
+    it('should handle unexpected sync error', async () => {
+      jest.useFakeTimers();
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const discogsService = mockDiscogsService;
+      discogsService.syncCollection.mockRejectedValue(new Error('Unexpected error'));
+
+      spectator.component.resync();
+
+      await jest.runAllTimersAsync();
+
+      expect(consoleSpy).toHaveBeenCalledWith('Sync error:', expect.any(Error));
+      expect(spectator.component.syncMessage()).toBe('');
+      expect(spectator.component.syncing()).toBe(false);
+
+      consoleSpy.mockRestore();
+      jest.useRealTimers();
+    });
+  });
+
+  describe('loadMenuData error handling', () => {
+    it('should handle getLastSyncDate error gracefully', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      mockDatabaseService.getLastSyncDate.mockRejectedValue(new Error('Database error'));
+
+      spectator.component.loadMenuData();
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to load last sync date:', expect.any(Error));
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('loadFilterOptions', () => {
+    const mockReleasesWithFilters = [
+      {
+        id: 1,
+        instanceId: 1,
+        basicInfo: {
+          title: 'Album 1',
+          artists: ['Artist 1'],
+          year: 1985,
+          formats: ['Vinyl'],
+          thumb: '',
+          coverImage: '',
+          labels: [],
+          genres: ['Rock', 'Pop'],
+          styles: [],
+        },
+        playCount: 0,
+        dateAdded: new Date(),
+        dateAddedToCollection: new Date(),
+        notes: '',
+        rating: 0,
+      },
+      {
+        id: 2,
+        instanceId: 2,
+        basicInfo: {
+          title: 'Album 2',
+          artists: ['Artist 2'],
+          year: 1992,
+          formats: ['Vinyl'],
+          thumb: '',
+          coverImage: '',
+          labels: [],
+          genres: ['Jazz', 'Rock'],
+          styles: [],
+        },
+        playCount: 0,
+        dateAdded: new Date(),
+        dateAddedToCollection: new Date(),
+        notes: '',
+        rating: 0,
+      },
+      {
+        id: 3,
+        instanceId: 3,
+        basicInfo: {
+          title: 'Album 3',
+          artists: ['Artist 3'],
+          year: 0, // No year
+          formats: ['Vinyl'],
+          thumb: '',
+          coverImage: '',
+          labels: [],
+          genres: undefined,
+          styles: [],
+        },
+        playCount: 0,
+        dateAdded: new Date(),
+        dateAddedToCollection: new Date(),
+        notes: '',
+        rating: 0,
+      },
+    ];
+
+    it('should extract unique genres from releases', async () => {
+      mockDatabaseService.getAllReleases.mockResolvedValue(mockReleasesWithFilters);
+
+      spectator.component.loadMenuData();
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const genres = spectator.component.availableGenres();
+      expect(genres).toContain('Rock');
+      expect(genres).toContain('Pop');
+      expect(genres).toContain('Jazz');
+      expect(genres.length).toBe(3);
+    });
+
+    it('should sort genres alphabetically', async () => {
+      mockDatabaseService.getAllReleases.mockResolvedValue(mockReleasesWithFilters);
+
+      spectator.component.loadMenuData();
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const genres = spectator.component.availableGenres();
+      expect(genres).toEqual(['Jazz', 'Pop', 'Rock']);
+    });
+
+    it('should extract unique decades from releases', async () => {
+      mockDatabaseService.getAllReleases.mockResolvedValue(mockReleasesWithFilters);
+
+      spectator.component.loadMenuData();
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const decades = spectator.component.availableDecades();
+      expect(decades).toContain('1980s');
+      expect(decades).toContain('1990s');
+      expect(decades.length).toBe(2);
+    });
+
+    it('should sort decades chronologically', async () => {
+      mockDatabaseService.getAllReleases.mockResolvedValue(mockReleasesWithFilters);
+
+      spectator.component.loadMenuData();
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const decades = spectator.component.availableDecades();
+      expect(decades).toEqual(['1980s', '1990s']);
+    });
+
+    it('should skip releases without year for decades', async () => {
+      mockDatabaseService.getAllReleases.mockResolvedValue(mockReleasesWithFilters);
+
+      spectator.component.loadMenuData();
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const decades = spectator.component.availableDecades();
+      // Album 3 has year 0, should not create a '0s' decade
+      expect(decades).not.toContain('0s');
+    });
+
+    it('should handle releases with undefined genres', async () => {
+      mockDatabaseService.getAllReleases.mockResolvedValue(mockReleasesWithFilters);
+
+      spectator.component.loadMenuData();
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      // Should not throw and should still have genres from other releases
+      expect(spectator.component.availableGenres().length).toBe(3);
+    });
+
+    it('should handle getAllReleases error gracefully', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      mockDatabaseService.getAllReleases.mockRejectedValue(new Error('Database error'));
+
+      spectator.component.loadMenuData();
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to load filter options:', expect.any(Error));
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('filter toggle methods', () => {
+    it('should toggle excludeBoxSets and emit filtersChanged', () => {
+      const filtersChangedSpy = jest.fn();
+      spectator.component.filtersChanged.subscribe(filtersChangedSpy);
+      mockFilterService.filters.set({ ...DEFAULT_FILTERS, excludeBoxSets: true });
+
+      spectator.component.toggleExcludeBoxSets();
+
+      expect(mockFilterService.setExcludeBoxSets).toHaveBeenCalledWith(false);
+      expect(filtersChangedSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should toggle genre and emit filtersChanged', () => {
+      const filtersChangedSpy = jest.fn();
+      spectator.component.filtersChanged.subscribe(filtersChangedSpy);
+
+      spectator.component.toggleGenre('Rock');
+
+      expect(mockFilterService.toggleGenre).toHaveBeenCalledWith('Rock');
+      expect(filtersChangedSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should toggle decade and emit filtersChanged', () => {
+      const filtersChangedSpy = jest.fn();
+      spectator.component.filtersChanged.subscribe(filtersChangedSpy);
+
+      spectator.component.toggleDecade('1980s');
+
+      expect(mockFilterService.toggleDecade).toHaveBeenCalledWith('1980s');
+      expect(filtersChangedSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return true for selected genre', () => {
+      mockFilterService.filters.set({ ...DEFAULT_FILTERS, genres: ['Rock', 'Jazz'] });
+
+      expect(spectator.component.isGenreSelected('Rock')).toBe(true);
+      expect(spectator.component.isGenreSelected('Jazz')).toBe(true);
+    });
+
+    it('should return false for unselected genre', () => {
+      mockFilterService.filters.set({ ...DEFAULT_FILTERS, genres: ['Rock'] });
+
+      expect(spectator.component.isGenreSelected('Jazz')).toBe(false);
+    });
+
+    it('should return true for selected decade', () => {
+      mockFilterService.filters.set({ ...DEFAULT_FILTERS, decades: ['1980s', '1990s'] });
+
+      expect(spectator.component.isDecadeSelected('1980s')).toBe(true);
+      expect(spectator.component.isDecadeSelected('1990s')).toBe(true);
+    });
+
+    it('should return false for unselected decade', () => {
+      mockFilterService.filters.set({ ...DEFAULT_FILTERS, decades: ['1980s'] });
+
+      expect(spectator.component.isDecadeSelected('1970s')).toBe(false);
+    });
+  });
+
+  describe('clearData', () => {
+    it('should set clearing to true when starting', () => {
+      mockDiscogsService.clearSyncedData.mockReturnValue(new Promise(() => {}));
+
+      spectator.component.clearData();
+
+      expect(spectator.component.clearing()).toBe(true);
+    });
+
+    it('should emit dataCleared on success', async () => {
+      const dataClearedSpy = jest.fn();
+      spectator.component.dataCleared.subscribe(dataClearedSpy);
+      mockDiscogsService.clearSyncedData.mockResolvedValue(undefined);
+
+      spectator.component.clearData();
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(dataClearedSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should close drawer on success', async () => {
+      const closeSpy = jest.fn();
+      spectator.component.close.subscribe(closeSpy);
+      mockDiscogsService.clearSyncedData.mockResolvedValue(undefined);
+
+      spectator.component.clearData();
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(closeSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should set clearing to false after success', async () => {
+      mockDiscogsService.clearSyncedData.mockResolvedValue(undefined);
+
+      spectator.component.clearData();
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(spectator.component.clearing()).toBe(false);
+    });
+
+    it('should handle clearData error gracefully', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      mockDiscogsService.clearSyncedData.mockRejectedValue(new Error('Clear error'));
+
+      spectator.component.clearData();
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to clear data:', expect.any(Error));
+      expect(spectator.component.clearing()).toBe(false);
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('ngOnDestroy', () => {
+    it('should complete destroy$ subject', () => {
+      expect(() => spectator.component.ngOnDestroy()).not.toThrow();
     });
   });
 });

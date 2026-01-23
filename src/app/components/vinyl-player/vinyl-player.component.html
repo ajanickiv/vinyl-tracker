@@ -1,11 +1,25 @@
 <div class="vinyl-player-container">
   <div class="player-header">
+    <button class="search-button" (click)="toggleSearch()">
+      <span class="search-icon">&#x1F50D;</span>
+    </button>
     <button class="menu-button" (click)="toggleMenu()">
       <span class="menu-icon">⋮</span>
     </button>
   </div>
 
-  <app-menu-drawer [isOpen]="menuOpen()" (close)="closeMenu()" (dataCleared)="onDataCleared()"></app-menu-drawer>
+  <app-menu-drawer
+    [isOpen]="menuOpen()"
+    (close)="closeMenu()"
+    (dataCleared)="onDataCleared()"
+    (filtersChanged)="onFiltersChanged()"
+  ></app-menu-drawer>
+
+  <app-search-sheet
+    [isOpen]="searchOpen()"
+    (close)="closeSearch()"
+    (releaseSelected)="onReleaseSelected($event)"
+  ></app-search-sheet>
 
   @if (isLoading()) {
     <div class="loading">

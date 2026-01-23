@@ -1,0 +1,67 @@
+<div class="sheet-container" [class.open]="isOpen()">
+  <!-- Backdrop -->
+  <div class="backdrop" (click)="onBackdropClick()"></div>
+
+  <!-- Sheet -->
+  <div class="sheet">
+    <!-- Drag Handle -->
+    <div class="drag-handle">
+      <div class="handle-bar"></div>
+    </div>
+
+    <!-- Search Header -->
+    <div class="search-header">
+      <div class="search-input-wrapper">
+        <span class="search-icon">&#x1F50D;</span>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search your collection..."
+          [value]="searchQuery()"
+          (input)="onSearchInput($event)"
+          autofocus
+        />
+        @if (searchQuery()) {
+          <button class="clear-button" (click)="clearSearch()">&#x2715;</button>
+        }
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="results-container">
+      @if (searchQuery() && searchResults().length === 0 && !isSearching()) {
+        <div class="no-results">
+          <p>No releases found for "{{ searchQuery() }}"</p>
+        </div>
+      } @else if (searchResults().length > 0) {
+        <ul class="results-list">
+          @for (release of searchResults(); track release.id) {
+            <li class="result-item" (click)="selectRelease(release)">
+              <div class="result-thumb">
+                @if (release.basicInfo.thumb) {
+                  <img [src]="release.basicInfo.thumb" [alt]="release.basicInfo.title" />
+                } @else {
+                  <div class="thumb-placeholder">&#x1F3B5;</div>
+                }
+              </div>
+              <div class="result-info">
+                <p class="result-artist">{{ release.basicInfo.artists.join(', ') }}</p>
+                <p class="result-title">{{ release.basicInfo.title }}</p>
+                <p class="result-meta">
+                  {{ release.basicInfo.year || 'Unknown year' }}
+                  @if (release.playCount > 0) {
+                    <span class="play-count">{{ release.playCount }} plays</span>
+                  }
+                </p>
+              </div>
+            </li>
+          }
+        </ul>
+      } @else if (!searchQuery()) {
+        <div class="search-prompt">
+          <p>Type to search by artist or album title</p>
+        </div>
+      }
+    </div>
+  </div>
+</div>

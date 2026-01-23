@@ -26,8 +26,11 @@
   top: 1rem;
   right: 1rem;
   z-index: 10;
+  display: flex;
+  gap: 0.5rem;
 }
 
+.search-button,
 .menu-button {
   background: $gradient-button-primary;
   border: none;
@@ -45,6 +48,10 @@
     background: $gradient-button-primary-hover;
     transform: scale(1.05);
   }
+}
+
+.search-icon {
+  font-size: 1.125rem;
 }
 
 .menu-icon {

@@ -5,6 +5,7 @@ import { takeUntil, tap } from 'rxjs/operators';
 import { DatabaseService } from '../../services/database.service';
 import { DiscogsService } from '../../services/discogs.service';
 import { PlaybackService } from '../../services/playback.service';
+import { FilterService } from '../../services/filter.service';
 import { CollectionStats } from '../../models/collection-stats.model';
 import { SYNC_MESSAGE_DISPLAY_MS } from '../../constants/timing.constants';
 
@@ -22,11 +23,16 @@ export class MenuDrawerComponent implements OnDestroy {
   syncMessage = signal('');
   clearing = signal(false);
 
+  // Filter-related signals
+  availableGenres = signal<string[]>([]);
+  availableDecades = signal<string[]>([]);
+
   readonly isDevMode = isDevMode();
 
   isOpen = input.required<boolean>();
   close = output<void>();
   dataCleared = output<void>();
+  filtersChanged = output<void>();
 
   private destroy$ = new Subject<void>();
 
@@ -34,6 +40,7 @@ export class MenuDrawerComponent implements OnDestroy {
     private db: DatabaseService,
     private discogsService: DiscogsService,
     private playbackService: PlaybackService,
+    public filterService: FilterService,
   ) {
     this.loadMenuData();
   }
@@ -81,6 +88,61 @@ export class MenuDrawerComponent implements OnDestroy {
         takeUntil(this.destroy$),
       )
       .subscribe();
+
+    // Load available genres and decades for filter chips
+    this.loadFilterOptions();
+  }
+
+  private loadFilterOptions(): void {
+    this.db
+      .getAllReleases()
+      .then((releases) => {
+        // Extract unique genres
+        const genreSet = new Set<string>();
+        releases.forEach((r) => {
+          r.basicInfo.genres?.forEach((g) => genreSet.add(g));
+        });
+        this.availableGenres.set([...genreSet].sort());
+
+        // Extract unique decades
+        const decadeSet = new Set<string>();
+        releases.forEach((r) => {
+          if (r.basicInfo.year) {
+            const decade = Math.floor(r.basicInfo.year / 10) * 10;
+            decadeSet.add(`${decade}s`);
+          }
+        });
+        this.availableDecades.set(
+          [...decadeSet].sort((a, b) => parseInt(a) - parseInt(b)),
+        );
+      })
+      .catch((error) => {
+        console.error('Failed to load filter options:', error);
+      });
+  }
+
+  toggleExcludeBoxSets(): void {
+    const current = this.filterService.filters().excludeBoxSets;
+    this.filterService.setExcludeBoxSets(!current);
+    this.filtersChanged.emit();
+  }
+
+  toggleGenre(genre: string): void {
+    this.filterService.toggleGenre(genre);
+    this.filtersChanged.emit();
+  }
+
+  toggleDecade(decade: string): void {
+    this.filterService.toggleDecade(decade);
+    this.filtersChanged.emit();
+  }
+
+  isGenreSelected(genre: string): boolean {
+    return this.filterService.filters().genres.includes(genre);
+  }
+
+  isDecadeSelected(decade: string): boolean {
+    return this.filterService.filters().decades.includes(decade);
   }
 
   onBackdropClick() {

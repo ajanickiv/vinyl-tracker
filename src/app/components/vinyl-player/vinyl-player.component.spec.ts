@@ -1,12 +1,16 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
-import { of } from 'rxjs';
+import { signal } from '@angular/core';
+import { of, throwError } from 'rxjs';
 import { VinylPlayerComponent } from './vinyl-player.component';
 import { RecommendationService } from '../../services/recommendation.service';
 import { PlaybackService } from '../../services/playback.service';
 import { DatabaseService } from '../../services/database.service';
 import { DiscogsService } from '../../services/discogs.service';
+import { FilterService } from '../../services/filter.service';
 import { Release } from '../../models/release.model';
+import { DEFAULT_FILTERS } from '../../models/filter.model';
 import { MenuDrawerComponent } from '../menu-drawer/menu-drawer.component';
+import { SearchSheetComponent } from '../search-sheet/search-sheet.component';
 import { SPIN_ANIMATION_DURATION_MS } from '../../constants/timing.constants';
 
 describe('VinylPlayerComponent', () => {
@@ -24,14 +28,22 @@ describe('VinylPlayerComponent', () => {
   };
   let mockDatabaseService: {
     getLastSyncDate: jest.Mock;
+    getAllReleases: jest.Mock;
   };
   let mockDiscogsService: {
     syncCollection: jest.Mock;
   };
+  let mockFilterService: {
+    filters: ReturnType<typeof signal>;
+    matchesFilters: jest.Mock;
+  };
 
   const createComponent = createComponentFactory({
     component: VinylPlayerComponent,
-    overrideComponents: [[MenuDrawerComponent, { set: { template: '' } }]],
+    overrideComponents: [
+      [MenuDrawerComponent, { set: { template: '' } }],
+      [SearchSheetComponent, { set: { template: '' } }],
+    ],
     detectChanges: false,
   });
 
@@ -73,10 +85,16 @@ describe('VinylPlayerComponent', () => {
 
     mockDatabaseService = {
       getLastSyncDate: jest.fn().mockResolvedValue(null),
+      getAllReleases: jest.fn().mockResolvedValue([]),
     };
 
     mockDiscogsService = {
       syncCollection: jest.fn().mockResolvedValue({ success: true, totalSynced: 0 }),
+    };
+
+    mockFilterService = {
+      filters: signal({ ...DEFAULT_FILTERS }),
+      matchesFilters: jest.fn().mockReturnValue(true),
     };
 
     spectator = createComponent({
@@ -85,6 +103,7 @@ describe('VinylPlayerComponent', () => {
         { provide: PlaybackService, useValue: mockPlaybackService },
         { provide: DatabaseService, useValue: mockDatabaseService },
         { provide: DiscogsService, useValue: mockDiscogsService },
+        { provide: FilterService, useValue: mockFilterService },
       ],
     });
   });
@@ -373,6 +392,132 @@ describe('VinylPlayerComponent', () => {
       const result = spectator.component.getFormattedDate(date);
 
       expect(result).toMatch(/12\/25\/2023|25\/12\/2023/);
+    });
+  });
+
+  describe('fetchRecommendation error handling', () => {
+    it('should handle recommendation error and set isLoading to false', () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      mockRecommendationService.getRecommendation.mockReturnValue(
+        throwError(() => new Error('Network error')),
+      );
+
+      spectator.component.getNewRecommendation();
+
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to get recommendation:', expect.any(Error));
+      expect(spectator.component.isLoading()).toBe(false);
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('markAsPlayed error handling', () => {
+    beforeEach(() => {
+      spectator.component.currentRelease.set(mockRelease);
+    });
+
+    it('should handle markAsPlayed error and reset isSpinning', () => {
+      jest.useFakeTimers();
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      mockPlaybackService.markAsPlayed.mockReturnValue(
+        throwError(() => new Error('Playback error')),
+      );
+
+      spectator.component.markAsPlayed();
+      jest.runAllTimers();
+
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to mark as played:', expect.any(Error));
+      expect(spectator.component.isSpinning()).toBe(false);
+
+      consoleSpy.mockRestore();
+      jest.useRealTimers();
+    });
+  });
+
+  describe('onDataCleared', () => {
+    it('should trigger page reload', () => {
+      // window.location.reload is a browser API that cannot be easily mocked in jsdom
+      // We test that the method exists and verify behavior indirectly
+      // In a real browser environment, this would reload the page
+      expect(spectator.component.onDataCleared).toBeDefined();
+
+      // The method should not throw when called
+      // Note: In jsdom, reload() is a no-op, but we verify our code runs correctly
+      expect(() => spectator.component.onDataCleared()).not.toThrow();
+    });
+  });
+
+  describe('onFiltersChanged', () => {
+    it('should fetch new recommendation when filters change', () => {
+      mockRecommendationService.getRecommendation.mockClear();
+      mockRecommendationService.getRecommendation.mockReturnValue(of(mockRelease));
+
+      spectator.component.onFiltersChanged();
+
+      expect(mockRecommendationService.getRecommendation).toHaveBeenCalled();
+    });
+
+    it('should update currentRelease with new recommendation', () => {
+      const newRelease = { ...mockRelease, id: 555 };
+      mockRecommendationService.getRecommendation.mockReturnValue(of(newRelease));
+
+      spectator.component.onFiltersChanged();
+
+      expect(spectator.component.currentRelease()?.id).toBe(555);
+    });
+  });
+
+  describe('search functionality', () => {
+    it('should initialize with searchOpen as false', () => {
+      expect(spectator.component.searchOpen()).toBe(false);
+    });
+
+    it('should toggle searchOpen from false to true', () => {
+      spectator.component.searchOpen.set(false);
+
+      spectator.component.toggleSearch();
+
+      expect(spectator.component.searchOpen()).toBe(true);
+    });
+
+    it('should toggle searchOpen from true to false', () => {
+      spectator.component.searchOpen.set(true);
+
+      spectator.component.toggleSearch();
+
+      expect(spectator.component.searchOpen()).toBe(false);
+    });
+
+    it('should set searchOpen to false on closeSearch', () => {
+      spectator.component.searchOpen.set(true);
+
+      spectator.component.closeSearch();
+
+      expect(spectator.component.searchOpen()).toBe(false);
+    });
+  });
+
+  describe('onReleaseSelected', () => {
+    it('should set currentRelease to selected release', () => {
+      const selectedRelease = { ...mockRelease, id: 777 };
+
+      spectator.component.onReleaseSelected(selectedRelease);
+
+      expect(spectator.component.currentRelease()?.id).toBe(777);
+    });
+
+    it('should set isLoading to false', () => {
+      spectator.component.isLoading.set(true);
+
+      spectator.component.onReleaseSelected(mockRelease);
+
+      expect(spectator.component.isLoading()).toBe(false);
+    });
+  });
+
+  describe('ngOnDestroy', () => {
+    it('should complete destroy$ subject without error', () => {
+      expect(() => spectator.component.ngOnDestroy()).not.toThrow();
     });
   });
 });

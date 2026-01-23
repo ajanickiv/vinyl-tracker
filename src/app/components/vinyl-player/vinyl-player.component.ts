@@ -6,12 +6,13 @@ import { RecommendationService } from '../../services/recommendation.service';
 import { PlaybackService } from '../../services/playback.service';
 import { Release } from '../../models/release.model';
 import { MenuDrawerComponent } from '../menu-drawer/menu-drawer.component';
+import { SearchSheetComponent } from '../search-sheet/search-sheet.component';
 import { SPIN_ANIMATION_DURATION_MS } from '../../constants/timing.constants';
 
 @Component({
   selector: 'app-vinyl-player',
   standalone: true,
-  imports: [CommonModule, MenuDrawerComponent],
+  imports: [CommonModule, MenuDrawerComponent, SearchSheetComponent],
   templateUrl: './vinyl-player.component.html',
   styleUrls: ['./vinyl-player.component.scss'],
 })
@@ -20,6 +21,7 @@ export class VinylPlayerComponent implements OnDestroy {
   isSpinning = signal(false);
   isLoading = signal(true);
   menuOpen = signal(false);
+  searchOpen = signal(false);
 
   private destroy$ = new Subject<void>();
 
@@ -118,5 +120,23 @@ export class VinylPlayerComponent implements OnDestroy {
   onDataCleared(): void {
     // Reload the page to show the sync screen
     window.location.reload();
+  }
+
+  onFiltersChanged(): void {
+    // Get a new recommendation that respects the updated filters
+    this.fetchRecommendation();
+  }
+
+  toggleSearch(): void {
+    this.searchOpen.set(!this.searchOpen());
+  }
+
+  closeSearch(): void {
+    this.searchOpen.set(false);
+  }
+
+  onReleaseSelected(release: Release): void {
+    this.currentRelease.set(release);
+    this.isLoading.set(false);
   }
 }
