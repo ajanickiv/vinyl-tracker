@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Observable, from, of } from 'rxjs';
-import { map, catchError, switchMap } from 'rxjs/operators';
+import { map, catchError, switchMap, tap } from 'rxjs/operators';
 import { DatabaseService } from './database.service';
+import { PlayHistoryService } from './play-history.service';
 import { Release } from '../models/release.model';
 import { CollectionStats } from '../models/collection-stats.model';
 import { PlayStats } from '../models/play-stats.model';
@@ -10,7 +11,10 @@ import { PlayStats } from '../models/play-stats.model';
   providedIn: 'root',
 })
 export class PlaybackService {
-  constructor(private db: DatabaseService) {}
+  constructor(
+    private db: DatabaseService,
+    private playHistoryService: PlayHistoryService,
+  ) {}
 
   /**
    * Get overall collection statistics
@@ -86,6 +90,10 @@ export class PlaybackService {
             lastPlayedDate: updatedRelease.lastPlayedDate,
           }),
         ).pipe(
+          tap(() => {
+            // Add to play history
+            this.playHistoryService.addToHistory(releaseId);
+          }),
           map(() => {
             console.log(
               `✅ Marked as played: ${release.basicInfo.title} (play count: ${updatedRelease.playCount})`,

@@ -1,0 +1,67 @@
+<div class="sheet-container" [class.open]="isOpen()">
+  <!-- Backdrop -->
+  <div class="backdrop" (click)="onBackdropClick()"></div>
+
+  <!-- Sheet -->
+  <div class="sheet">
+    <!-- Drag Handle -->
+    <div class="drag-handle">
+      <div class="handle-bar"></div>
+    </div>
+
+    <!-- Header -->
+    <div class="history-header">
+      <h2 class="header-title">Play History</h2>
+    </div>
+
+    <!-- Content -->
+    <div class="history-container">
+      @if (isLoading()) {
+        <div class="loading-state">
+          <p>Loading history...</p>
+        </div>
+      } @else if (historyItems().length === 0) {
+        <div class="empty-state">
+          <span class="empty-icon">&#x1F3B5;</span>
+          <p>No play history yet</p>
+          <p class="empty-hint">Albums you play will appear here</p>
+        </div>
+      } @else {
+        <ul class="history-list">
+          @for (item of historyItems(); track item.entry.releaseId) {
+            @if (item.release) {
+              <li class="history-item" (click)="selectRelease(item)">
+                <div class="item-thumb">
+                  @if (item.release.basicInfo.thumb) {
+                    <img
+                      [src]="item.release.basicInfo.thumb"
+                      [alt]="item.release.basicInfo.title"
+                    />
+                  } @else {
+                    <div class="thumb-placeholder">&#x1F3B5;</div>
+                  }
+                </div>
+                <div class="item-info">
+                  <p class="item-artist">{{ item.release.basicInfo.artists.join(', ') }}</p>
+                  <p class="item-title">{{ item.release.basicInfo.title }}</p>
+                  <p class="item-time">{{ getRelativeTime(item.entry.playedAt) }}</p>
+                </div>
+              </li>
+            } @else {
+              <li class="history-item unavailable">
+                <div class="item-thumb">
+                  <div class="thumb-placeholder">?</div>
+                </div>
+                <div class="item-info">
+                  <p class="item-artist">Unknown Release</p>
+                  <p class="item-title">Release no longer in collection</p>
+                  <p class="item-time">{{ getRelativeTime(item.entry.playedAt) }}</p>
+                </div>
+              </li>
+            }
+          }
+        </ul>
+      }
+    </div>
+  </div>
+</div>

@@ -3,6 +3,9 @@
     <button class="search-button" (click)="toggleSearch()">
       <span class="search-icon">&#x1F50D;</span>
     </button>
+    <button class="history-button" (click)="toggleHistory()">
+      <span class="history-icon">&#x1F553;</span>
+    </button>
     <button class="menu-button" (click)="toggleMenu()">
       <span class="menu-icon">⋮</span>
     </button>
@@ -20,6 +23,12 @@
     (close)="closeSearch()"
     (releaseSelected)="onReleaseSelected($event)"
   ></app-search-sheet>
+
+  <app-play-history-sheet
+    [isOpen]="historyOpen()"
+    (close)="closeHistory()"
+    (releaseSelected)="onHistoryReleaseSelected($event)"
+  ></app-play-history-sheet>
 
   @if (isLoading()) {
     <div class="loading">

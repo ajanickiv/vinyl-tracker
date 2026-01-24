@@ -263,6 +263,7 @@ describe('DiscogsService', () => {
     });
 
     it('should handle HTTP errors', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       const http = spectator.inject(HttpClient);
       const db = spectator.inject(DatabaseService);
 
@@ -274,9 +275,12 @@ describe('DiscogsService', () => {
       expect(result.success).toBe(false);
       expect(result.totalSynced).toBe(0);
       expect(result.error).toBe('Network error');
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
     });
 
     it('should handle database errors', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       const http = spectator.inject(HttpClient);
       const db = spectator.inject(DatabaseService);
 
@@ -288,9 +292,12 @@ describe('DiscogsService', () => {
       expect(result.success).toBe(false);
       expect(result.totalSynced).toBe(0);
       expect(result.error).toBe('Database error');
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
     });
 
     it('should handle non-Error objects in catch', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       const http = spectator.inject(HttpClient);
 
       http.get.mockReturnValue(throwError(() => 'String error'));
@@ -299,6 +306,8 @@ describe('DiscogsService', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Unknown error');
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
     });
   });
 

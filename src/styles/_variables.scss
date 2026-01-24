@@ -50,11 +50,25 @@ $border-accent: $color-primary;
 // Gradients
 // ==============================================
 
-$gradient-background: linear-gradient(135deg, $color-background 0%, $color-gray-700 50%, $color-background 100%);
+$gradient-background: linear-gradient(
+  135deg,
+  $color-background 0%,
+  $color-gray-700 50%,
+  $color-background 100%
+);
 $gradient-drawer: linear-gradient(135deg, $color-background 0%, $color-background-light 100%);
 $gradient-button-primary: linear-gradient(to right, $color-primary, $color-primary-dark);
-$gradient-button-primary-hover: linear-gradient(to right, $color-primary-dark, $color-primary-darker);
-$gradient-vinyl: linear-gradient(135deg, $color-vinyl-dark 0%, $color-vinyl-black 50%, $color-vinyl-dark 100%);
+$gradient-button-primary-hover: linear-gradient(
+  to right,
+  $color-primary-dark,
+  $color-primary-darker
+);
+$gradient-vinyl: linear-gradient(
+  135deg,
+  $color-vinyl-dark 0%,
+  $color-vinyl-black 50%,
+  $color-vinyl-dark 100%
+);
 $gradient-vinyl-label: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
 $gradient-turntable: linear-gradient(135deg, $color-turntable-light 0%, $color-turntable-dark 100%);
 $gradient-tonearm: linear-gradient(to right, $color-gray-400, $color-gray-600);

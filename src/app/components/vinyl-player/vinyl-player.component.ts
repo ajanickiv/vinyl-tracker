@@ -1,4 +1,4 @@
-import { Component, signal, OnDestroy } from '@angular/core';
+import { Component, signal, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subject, of, timer } from 'rxjs';
 import { takeUntil, tap, catchError, switchMap } from 'rxjs/operators';
@@ -7,21 +7,25 @@ import { PlaybackService } from '../../services/playback.service';
 import { Release } from '../../models/release.model';
 import { MenuDrawerComponent } from '../menu-drawer/menu-drawer.component';
 import { SearchSheetComponent } from '../search-sheet/search-sheet.component';
+import { PlayHistorySheetComponent } from '../play-history-sheet/play-history-sheet.component';
 import { SPIN_ANIMATION_DURATION_MS } from '../../constants/timing.constants';
 
 @Component({
   selector: 'app-vinyl-player',
   standalone: true,
-  imports: [CommonModule, MenuDrawerComponent, SearchSheetComponent],
+  imports: [CommonModule, MenuDrawerComponent, SearchSheetComponent, PlayHistorySheetComponent],
   templateUrl: './vinyl-player.component.html',
   styleUrls: ['./vinyl-player.component.scss'],
 })
 export class VinylPlayerComponent implements OnDestroy {
+  @ViewChild(PlayHistorySheetComponent) historySheet?: PlayHistorySheetComponent;
+
   currentRelease = signal<Release | null>(null);
   isSpinning = signal(false);
   isLoading = signal(true);
   menuOpen = signal(false);
   searchOpen = signal(false);
+  historyOpen = signal(false);
 
   private destroy$ = new Subject<void>();
 
@@ -136,6 +140,23 @@ export class VinylPlayerComponent implements OnDestroy {
   }
 
   onReleaseSelected(release: Release): void {
+    this.currentRelease.set(release);
+    this.isLoading.set(false);
+  }
+
+  toggleHistory(): void {
+    this.historyOpen.set(!this.historyOpen());
+    // Refresh history data when opening
+    if (this.historyOpen() && this.historySheet) {
+      this.historySheet.refreshHistory();
+    }
+  }
+
+  closeHistory(): void {
+    this.historyOpen.set(false);
+  }
+
+  onHistoryReleaseSelected(release: Release): void {
     this.currentRelease.set(release);
     this.isLoading.set(false);
   }

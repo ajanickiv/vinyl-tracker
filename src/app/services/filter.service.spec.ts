@@ -65,11 +65,14 @@ describe('FilterService', () => {
     });
 
     it('should handle invalid localStorage data gracefully', () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       localStorage.setItem('vinyl-tracker-filters', 'invalid json');
 
       const newService = new FilterService();
 
       expect(newService.filters()).toEqual(DEFAULT_FILTERS);
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to load filters:', expect.any(SyntaxError));
+      consoleSpy.mockRestore();
     });
   });
 
@@ -259,7 +262,9 @@ describe('FilterService', () => {
       it('should match release when its decade is selected', () => {
         service.setExcludeBoxSets(false);
         service.setDecades(['1980s']);
-        const release = createMockRelease({ basicInfo: { ...createMockRelease().basicInfo, year: 1985 } });
+        const release = createMockRelease({
+          basicInfo: { ...createMockRelease().basicInfo, year: 1985 },
+        });
 
         expect(service.matchesFilters(release)).toBe(true);
       });
@@ -267,7 +272,9 @@ describe('FilterService', () => {
       it('should not match release when its decade is not selected', () => {
         service.setExcludeBoxSets(false);
         service.setDecades(['1990s']);
-        const release = createMockRelease({ basicInfo: { ...createMockRelease().basicInfo, year: 1985 } });
+        const release = createMockRelease({
+          basicInfo: { ...createMockRelease().basicInfo, year: 1985 },
+        });
 
         expect(service.matchesFilters(release)).toBe(false);
       });
@@ -304,9 +311,15 @@ describe('FilterService', () => {
         service.setExcludeBoxSets(false);
         service.setDecades(['1980s']);
 
-        const release1980 = createMockRelease({ basicInfo: { ...createMockRelease().basicInfo, year: 1980 } });
-        const release1989 = createMockRelease({ basicInfo: { ...createMockRelease().basicInfo, year: 1989 } });
-        const release1990 = createMockRelease({ basicInfo: { ...createMockRelease().basicInfo, year: 1990 } });
+        const release1980 = createMockRelease({
+          basicInfo: { ...createMockRelease().basicInfo, year: 1980 },
+        });
+        const release1989 = createMockRelease({
+          basicInfo: { ...createMockRelease().basicInfo, year: 1989 },
+        });
+        const release1990 = createMockRelease({
+          basicInfo: { ...createMockRelease().basicInfo, year: 1990 },
+        });
 
         expect(service.matchesFilters(release1980)).toBe(true);
         expect(service.matchesFilters(release1989)).toBe(true);

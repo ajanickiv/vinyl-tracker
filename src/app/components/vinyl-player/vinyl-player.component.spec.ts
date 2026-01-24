@@ -11,6 +11,7 @@ import { Release } from '../../models/release.model';
 import { DEFAULT_FILTERS } from '../../models/filter.model';
 import { MenuDrawerComponent } from '../menu-drawer/menu-drawer.component';
 import { SearchSheetComponent } from '../search-sheet/search-sheet.component';
+import { PlayHistorySheetComponent } from '../play-history-sheet/play-history-sheet.component';
 import { SPIN_ANIMATION_DURATION_MS } from '../../constants/timing.constants';
 
 describe('VinylPlayerComponent', () => {
@@ -43,6 +44,7 @@ describe('VinylPlayerComponent', () => {
     overrideComponents: [
       [MenuDrawerComponent, { set: { template: '' } }],
       [SearchSheetComponent, { set: { template: '' } }],
+      [PlayHistorySheetComponent, { set: { template: '' } }],
     ],
     detectChanges: false,
   });
@@ -436,6 +438,9 @@ describe('VinylPlayerComponent', () => {
 
   describe('onDataCleared', () => {
     it('should trigger page reload', () => {
+      // Suppress jsdom's console.error for unimplemented navigation
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
       // window.location.reload is a browser API that cannot be easily mocked in jsdom
       // We test that the method exists and verify behavior indirectly
       // In a real browser environment, this would reload the page
@@ -444,6 +449,8 @@ describe('VinylPlayerComponent', () => {
       // The method should not throw when called
       // Note: In jsdom, reload() is a no-op, but we verify our code runs correctly
       expect(() => spectator.component.onDataCleared()).not.toThrow();
+
+      consoleSpy.mockRestore();
     });
   });
 
@@ -510,6 +517,54 @@ describe('VinylPlayerComponent', () => {
       spectator.component.isLoading.set(true);
 
       spectator.component.onReleaseSelected(mockRelease);
+
+      expect(spectator.component.isLoading()).toBe(false);
+    });
+  });
+
+  describe('history functionality', () => {
+    it('should initialize with historyOpen as false', () => {
+      expect(spectator.component.historyOpen()).toBe(false);
+    });
+
+    it('should toggle historyOpen from false to true', () => {
+      spectator.component.historyOpen.set(false);
+
+      spectator.component.toggleHistory();
+
+      expect(spectator.component.historyOpen()).toBe(true);
+    });
+
+    it('should toggle historyOpen from true to false', () => {
+      spectator.component.historyOpen.set(true);
+
+      spectator.component.toggleHistory();
+
+      expect(spectator.component.historyOpen()).toBe(false);
+    });
+
+    it('should set historyOpen to false on closeHistory', () => {
+      spectator.component.historyOpen.set(true);
+
+      spectator.component.closeHistory();
+
+      expect(spectator.component.historyOpen()).toBe(false);
+    });
+  });
+
+  describe('onHistoryReleaseSelected', () => {
+    it('should set currentRelease to selected release', () => {
+      const selectedRelease = { ...mockRelease, id: 888 };
+
+      spectator.component.onHistoryReleaseSelected(selectedRelease);
+
+      expect(spectator.component.currentRelease()?.id).toBe(888);
+    });
+
+    it('should set isLoading to false', () => {
+      spectator.component.isLoading.set(true);
+
+      spectator.component.onHistoryReleaseSelected(mockRelease);
 
       expect(spectator.component.isLoading()).toBe(false);
     });

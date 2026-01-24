@@ -112,9 +112,7 @@ export class MenuDrawerComponent implements OnDestroy {
             decadeSet.add(`${decade}s`);
           }
         });
-        this.availableDecades.set(
-          [...decadeSet].sort((a, b) => parseInt(a) - parseInt(b)),
-        );
+        this.availableDecades.set([...decadeSet].sort((a, b) => parseInt(a) - parseInt(b)));
       })
       .catch((error) => {
         console.error('Failed to load filter options:', error);

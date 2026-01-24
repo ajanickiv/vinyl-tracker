@@ -48,9 +48,7 @@ export class RecommendationService {
     return from(this.db.releases.where('playCount').equals(0).toArray()).pipe(
       switchMap((neverPlayed) => {
         // Apply filters to never-played items
-        const filteredNeverPlayed = neverPlayed.filter((r) =>
-          this.filterService.matchesFilters(r),
-        );
+        const filteredNeverPlayed = neverPlayed.filter((r) => this.filterService.matchesFilters(r));
 
         if (filteredNeverPlayed.length > 0) {
           console.log(

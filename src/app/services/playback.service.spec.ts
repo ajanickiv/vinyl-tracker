@@ -2,13 +2,14 @@ import { createServiceFactory, SpectatorService } from '@ngneat/spectator/jest';
 import { firstValueFrom } from 'rxjs';
 import { PlaybackService } from './playback.service';
 import { DatabaseService } from './database.service';
+import { PlayHistoryService } from './play-history.service';
 import { Release } from '../models/release.model';
 
 describe('PlaybackService', () => {
   let spectator: SpectatorService<PlaybackService>;
   const createService = createServiceFactory({
     service: PlaybackService,
-    mocks: [DatabaseService],
+    mocks: [DatabaseService, PlayHistoryService],
   });
 
   const mockRelease1: Release = {
@@ -215,6 +216,7 @@ describe('PlaybackService', () => {
     });
 
     it('should return null if release not found', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       const db = spectator.inject(DatabaseService);
       db.getRelease.mockResolvedValue(undefined);
 
@@ -222,6 +224,8 @@ describe('PlaybackService', () => {
 
       expect(result).toBeNull();
       expect(db.updateRelease).not.toHaveBeenCalled();
+      expect(consoleSpy).toHaveBeenCalledWith('Release 999 not found');
+      consoleSpy.mockRestore();
     });
 
     it('should return null and log error on database failure', async () => {
@@ -258,6 +262,30 @@ describe('PlaybackService', () => {
       expect(result?.basicInfo.title).toBe('Test Album 1');
       expect(result?.basicInfo.artists).toEqual(['Artist 1']);
       expect(result?.rating).toBe(5);
+    });
+
+    it('should add release to play history', async () => {
+      const db = spectator.inject(DatabaseService);
+      const playHistoryService = spectator.inject(PlayHistoryService);
+      db.getRelease.mockResolvedValue(mockRelease1);
+      db.updateRelease.mockResolvedValue(1);
+
+      await firstValueFrom(spectator.service.markAsPlayed(1));
+
+      expect(playHistoryService.addToHistory).toHaveBeenCalledWith(1);
+    });
+
+    it('should not add to history if release not found', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const db = spectator.inject(DatabaseService);
+      const playHistoryService = spectator.inject(PlayHistoryService);
+      db.getRelease.mockResolvedValue(undefined);
+
+      await firstValueFrom(spectator.service.markAsPlayed(999));
+
+      expect(playHistoryService.addToHistory).not.toHaveBeenCalled();
+      expect(consoleSpy).toHaveBeenCalledWith('Release 999 not found');
+      consoleSpy.mockRestore();
     });
   });
 
