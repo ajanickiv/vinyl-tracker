@@ -1,20 +1,23 @@
 # Vinyl Tracker
 
-A personal listening tracker for your Discogs vinyl collection. Get personalized album recommendations based on play history and track your listening habits.
+A personal listening tracker for your Discogs vinyl collection. Get personalized album recommendations based on play history, search your collection, and track your listening habits.
 
-![Browns Colors](https://img.shields.io/badge/colors-Browns%20Orange%20%26%20Brown-FF3C00)
-![Angular](https://img.shields.io/badge/Angular-18+-red)
+![Copper Theme](https://img.shields.io/badge/theme-Copper-c9845c)
+![Angular](https://img.shields.io/badge/Angular-19+-red)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 ## Features
 
-- 🎵 **Sync Your Collection** - Import your entire Discogs collection with one click
-- 🎲 **Smart Recommendations** - Get weighted random recommendations that prioritize unplayed and neglected albums
-- 📊 **Play Tracking** - Track play counts and last played dates for each release
-- 📈 **Collection Stats** - View stats about your listening habits
-- 💾 **Local Storage** - All play data stored locally in your browser using IndexedDB
-- 📱 **Mobile First** - Optimized for mobile devices with a clean, touch-friendly interface
-- 🟤🟠 **Cleveland Browns Theme** - Custom color scheme for Browns fans
+- **Sync Your Collection** - Import your entire Discogs collection with one click
+- **Smart Recommendations** - Get weighted random recommendations that prioritize unplayed and neglected albums
+- **Play Tracking** - Track play counts and last played dates for each release
+- **Search** - Quickly find any album in your collection with real-time search
+- **Play History** - View your 10 most recent plays with quick access to replay
+- **Filtering** - Filter recommendations by genre, decade, or exclude box sets
+- **Collection Stats** - View stats about your listening habits and most played albums
+- **Backup & Restore** - Export and import your play data as JSON files
+- **Local Storage** - All play data stored locally in your browser using IndexedDB
+- **Mobile First** - Optimized for mobile devices with a clean, touch-friendly interface
 
 ## How It Works
 
@@ -26,7 +29,7 @@ A personal listening tracker for your Discogs vinyl collection. Get personalized
 
 ### Using the App
 
-**Main Screen:**
+**Main Screen**
 
 - The app displays a vinyl record with album art from your collection
 - You'll see the artist, album title, year, format, play count, and last played date
@@ -34,7 +37,27 @@ A personal listening tracker for your Discogs vinyl collection. Get personalized
   - **Mark as Played** - Logs a play (increments count, updates date) and loads the next recommendation
   - **Skip / Get Another** - Get a new recommendation without logging a play
 
-**Recommendation Algorithm:**
+**Header Buttons**
+
+- **Search (magnifying glass)** - Open the search sheet to find any album
+- **History (clock)** - View your 10 most recent plays
+- **Menu (three dots)** - Open the settings drawer
+
+**Search Sheet**
+
+- Tap the search icon to open the search panel
+- Type to filter your collection in real-time
+- Results show artist, title, year, and play count
+- Tap any result to load it on the turntable
+
+**Play History Sheet**
+
+- Tap the history icon to see your recent plays
+- Shows the last 10 albums you've played
+- Tap any entry to load it on the turntable
+- Albums no longer in your collection appear grayed out
+
+**Recommendation Algorithm**
 
 - **Never played items** are always recommended first (random selection)
 - Once all items have been played at least once, the algorithm uses **weighted random selection**:
@@ -43,18 +66,56 @@ A personal listening tracker for your Discogs vinyl collection. Get personalized
   - Recent plays still have a chance, just lower probability
   - Formula: `weight = (1 / playCount) * log(daysSincePlay + 1)`
 
-**Menu Drawer:**
+**Menu Drawer**
 
-- Tap the menu icon (⋮) in the top-right to access:
-  - **Sync status** - See when you last synced with Discogs
-  - **Re-sync** - Pull new additions from Discogs (preserves your play data)
-  - **Collection stats** - Total releases, total plays, never played count, most played album
+Tap the menu icon in the top-right to access:
+
+- **Filters** - Customize recommendations
+  - Toggle "Exclude Box Sets" to skip box set releases
+  - Select genres to filter by (e.g., Rock, Jazz, Electronic)
+  - Select decades to filter by (e.g., 1970s, 1980s, 1990s)
+- **Collection Stats** - View totals and percentages
+  - Total releases, total plays, never played count
+  - Percentage of collection played
+- **Most Played** - See your most played album
+- **Advanced** (collapsible section)
+  - **Collection Sync** - Re-sync from Discogs to add new purchases
+  - **Backup & Restore** - Export/import play data as JSON
+
+### Filtering Your Collection
+
+Use filters to focus recommendations on specific parts of your collection:
+
+1. Open the menu drawer
+2. Under "Filters", you'll see available options based on your collection
+3. Toggle "Exclude Box Sets" to skip box set releases
+4. Tap genre chips to filter by one or more genres
+5. Tap decade chips to filter by era
+6. Filters apply immediately to recommendations
+
+### Backup & Restore
+
+Export your play data to keep a backup or transfer to another device:
+
+**Exporting**
+
+1. Open menu drawer > Advanced > Backup & Restore
+2. Tap "Export Play Stats"
+3. A JSON file downloads with your play counts and history
+
+**Importing**
+
+1. Choose import mode:
+   - **Replace** - Overwrites existing play data completely
+   - **Merge** - Adds imported play counts to existing counts
+2. Tap "Import Play Stats" and select your backup file
+3. Only releases in your current collection are imported (others are skipped)
 
 ### Re-syncing Your Collection
 
 When you add new records to your Discogs collection:
 
-1. Open the menu drawer
+1. Open the menu drawer > Advanced > Collection Sync
 2. Tap "Re-sync from Discogs"
 3. New releases are added to your local database
 4. **Your play counts and dates are preserved** for existing releases
@@ -103,6 +164,12 @@ When you add new records to your Discogs collection:
 
 5. Navigate to `http://localhost:4200`
 
+### Running Tests
+
+```bash
+npm test
+```
+
 ### Building for Production
 
 ```bash
@@ -119,16 +186,30 @@ src/
 │   ├── components/
 │   │   ├── vinyl-player/          # Main player interface
 │   │   ├── sync-screen/           # First-time sync UI
-│   │   └── menu-drawer/           # Side menu with stats
+│   │   ├── menu-drawer/           # Side menu with stats, filters, settings
+│   │   ├── search-sheet/          # Collection search bottom sheet
+│   │   └── play-history-sheet/    # Recent plays bottom sheet
 │   ├── models/
 │   │   ├── release.model.ts       # Release data structure
-│   │   └── discogs-api.model.ts   # Discogs API types
+│   │   ├── discogs-api.model.ts   # Discogs API types
+│   │   ├── collection-stats.model.ts  # Stats types
+│   │   ├── filter.model.ts        # Filter configuration
+│   │   ├── play-history.model.ts  # Play history entry
+│   │   └── play-stats-export.model.ts # Export/import format
 │   ├── services/
 │   │   ├── database.service.ts    # Dexie/IndexedDB wrapper
 │   │   ├── discogs.service.ts     # Discogs API integration
 │   │   ├── playback.service.ts    # Play tracking logic
-│   │   └── recommendation.service.ts  # Recommendation algorithm
-│   └── app.component.ts           # Root component
+│   │   ├── recommendation.service.ts  # Recommendation algorithm
+│   │   ├── filter.service.ts      # Filter state management
+│   │   ├── play-history.service.ts    # Recent plays tracking
+│   │   └── play-stats-export.service.ts # Backup/restore logic
+│   ├── constants/
+│   │   └── timing.constants.ts    # Animation and timing values
+│   └── app.ts                     # Root component
+├── styles/
+│   ├── _variables.scss            # Color and design tokens
+│   └── _mixins.scss               # Reusable style patterns
 ├── environments/
 │   ├── environment.ts             # Development config
 │   └── environment.prod.ts        # Production config
@@ -137,11 +218,11 @@ src/
 
 ## Tech Stack
 
-- **Angular 18+** - Frontend framework with standalone components
+- **Angular 19+** - Frontend framework with standalone components
 - **Signals** - Angular's reactive primitives for state management
 - **Dexie.js** - IndexedDB wrapper for local storage
 - **Discogs API** - Music database and collection access
-- **SCSS** - Styling with Browns color theme
+- **SCSS** - Styling with Copper color theme and reusable mixins
 
 ## Data Storage
 
@@ -155,7 +236,9 @@ All data is stored locally in your browser using IndexedDB:
 - **Metadata Table** - App settings
   - Last sync timestamp
 
-**Privacy:** Your play data never leaves your device. It's stored entirely in your browser's local database.
+- **Local Storage** - Play history (last 10 plays)
+
+**Privacy** Your play data never leaves your device. It's stored entirely in your browser's local database.
 
 ## API Rate Limiting
 
@@ -171,14 +254,24 @@ For a collection of 500 releases, expect sync to take approximately 30-45 second
 
 ### Colors
 
-The app uses Cleveland Browns colors by default. To customize:
+The app uses a copper theme with a charcoal background. To customize:
 
-Edit the SCSS variables in component stylesheets:
+Edit the SCSS variables in `src/styles/_variables.scss`:
 
-- Brown: `#311D00`
-- Orange: `#FF3C00`
-- Burnt Orange: `#CC5500`
-- Turntable Blue: `#3986b3`
+```scss
+// Primary Brand Colors (Copper Theme)
+$color-primary: #c9845c;
+$color-primary-dark: #a86d4a;
+$color-primary-darker: #8a5a3d;
+
+// Background Colors (Charcoal Theme)
+$color-background: #1c1c1c;
+$color-background-light: #2a2a2a;
+
+// Turntable Colors
+$color-turntable-light: #3986b3;
+$color-turntable-dark: #2a6a8f;
+```
 
 ### Recommendation Algorithm
 
@@ -234,13 +327,12 @@ The app is a static Angular application and can be deployed to:
 
 ## Future Enhancement Ideas
 
-- Filter recommendations by genre, format, or decade
-- Listening history timeline
-- Export play data to CSV
 - PWA support for offline use
 - Listening streaks ("X days in a row")
 - Share what you're listening to on social media
 - Multi-device sync with backend storage
+- Listening timeline/calendar view
+- Collection value tracking via Discogs marketplace data
 
 ## Troubleshooting
 
@@ -251,7 +343,7 @@ The app is a static Angular application and can be deployed to:
 
 **Collection not loading:**
 
-- Open browser DevTools → Application → IndexedDB
+- Open browser DevTools > Application > IndexedDB
 - Check if `DiscogsTrackerDB` exists with data
 - Try clearing the database and re-syncing
 
@@ -260,6 +352,18 @@ The app is a static Angular application and can be deployed to:
 - The algorithm is working as designed - items with very low play counts will dominate
 - Play more of your collection to balance things out
 - Or adjust the weighting formula in `recommendation.service.ts`
+
+**Filters not showing genres/decades:**
+
+- Filters are populated based on your collection data
+- If genres or decades are empty, your collection may not have that metadata
+- Try re-syncing from Discogs
+
+**Import not working:**
+
+- Ensure the file is valid JSON in the expected format
+- Only releases that exist in your current collection are imported
+- Check the status message for details on skipped releases
 
 **App won't load after deployment:**
 
@@ -272,6 +376,6 @@ MIT
 
 ## Credits
 
-Built with ❤️ for vinyl collectors and Cleveland Browns fans.
+Built with love for vinyl collectors.
 
 Powered by the [Discogs API](https://www.discogs.com/developers/).

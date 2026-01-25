@@ -10,6 +10,7 @@ import { PlayStatsExportService } from '../../services/play-stats-export.service
 import { CollectionStats } from '../../models/collection-stats.model';
 import { ImportMode } from '../../models/play-stats-export.model';
 import { SYNC_MESSAGE_DISPLAY_MS } from '../../constants/timing.constants';
+import { APP_VERSION } from '../../constants/app.constants';
 
 @Component({
   selector: 'app-menu-drawer',
@@ -39,6 +40,7 @@ export class MenuDrawerComponent implements OnDestroy {
   advancedExpanded = signal(false);
 
   readonly isDevMode = isDevMode();
+  readonly appVersion = APP_VERSION;
 
   isOpen = input.required<boolean>();
   close = output<void>();

@@ -364,3 +364,16 @@
     background: rgba(#e57373, 0.1);
   }
 }
+
+// ==============================================
+// Version Info
+// ==============================================
+
+.version-info {
+  color: $color-gray-400;
+  font-size: 0.75rem;
+  text-align: center;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid $overlay-card-border;
+}
