@@ -1,6 +1,7 @@
 import { createServiceFactory, SpectatorService } from '@ngneat/spectator/jest';
 import { DiscogsService } from './discogs.service';
 import { DatabaseService } from './database.service';
+import { PlayHistoryService } from './play-history.service';
 import { HttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { DiscogsCollectionResponse, DiscogsRelease } from '../models/discogs-api.model';
@@ -10,7 +11,7 @@ describe('DiscogsService', () => {
   let spectator: SpectatorService<DiscogsService>;
   const createService = createServiceFactory({
     service: DiscogsService,
-    mocks: [HttpClient, DatabaseService],
+    mocks: [HttpClient, DatabaseService, PlayHistoryService],
   });
 
   const mockDiscogsRelease: DiscogsRelease = {
@@ -59,6 +60,16 @@ describe('DiscogsService', () => {
       await spectator.service.clearSyncedData();
 
       expect(db.clearAllData).toHaveBeenCalled();
+    });
+
+    it('should clear play history', async () => {
+      const db = spectator.inject(DatabaseService);
+      const playHistoryService = spectator.inject(PlayHistoryService);
+      db.clearAllData.mockResolvedValue(undefined);
+
+      await spectator.service.clearSyncedData();
+
+      expect(playHistoryService.clearHistory).toHaveBeenCalled();
     });
 
     it('should log confirmation message', async () => {

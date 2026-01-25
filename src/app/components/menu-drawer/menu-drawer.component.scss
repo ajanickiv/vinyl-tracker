@@ -298,9 +298,122 @@
   }
 }
 
+// Export/Import Section
+.export-import-container {
+  background: $overlay-card;
+  border: 1px solid $overlay-card-border;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.export-import-info {
+  color: $text-muted;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.export-button,
+.import-button {
+  width: 100%;
+  background: $gradient-button-primary;
+  color: $text-primary;
+  font-weight: 600;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) {
+    background: $gradient-button-primary-hover;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.export-button {
+  margin-bottom: 1rem;
+}
+
+.import-mode-toggle {
+  margin-bottom: 1rem;
+}
+
+.import-mode-hint {
+  color: $text-muted;
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+// Advanced Section (Collapsible)
+.advanced-section {
+  margin-top: auto;
+  border-top: 1px solid $overlay-card-border;
+}
+
+.advanced-header {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 1rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  color: $text-primary;
+
+  h3 {
+    color: $text-muted;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &:hover h3 {
+    color: $color-primary;
+  }
+}
+
+.expand-icon {
+  color: $text-muted;
+  font-size: 0.75rem;
+  transition: transform 0.3s ease;
+
+  &.expanded {
+    transform: rotate(180deg);
+  }
+
+  .advanced-header:hover & {
+    color: $color-primary;
+  }
+}
+
+.advanced-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
+
+  &.expanded {
+    grid-template-rows: 1fr;
+  }
+
+  > * {
+    overflow: hidden;
+  }
+}
+
 // Dev Tools Section
 .dev-section {
-  margin-top: auto;
   border-top: 1px dashed $color-gray-600;
   padding-top: 1rem;
 

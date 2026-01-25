@@ -6,7 +6,9 @@ import { DatabaseService } from '../../services/database.service';
 import { DiscogsService } from '../../services/discogs.service';
 import { PlaybackService } from '../../services/playback.service';
 import { FilterService } from '../../services/filter.service';
+import { PlayStatsExportService } from '../../services/play-stats-export.service';
 import { CollectionStats } from '../../models/collection-stats.model';
+import { ImportMode } from '../../models/play-stats-export.model';
 import { SYNC_MESSAGE_DISPLAY_MS } from '../../constants/timing.constants';
 
 @Component({
@@ -27,6 +29,15 @@ export class MenuDrawerComponent implements OnDestroy {
   availableGenres = signal<string[]>([]);
   availableDecades = signal<string[]>([]);
 
+  // Export/Import signals
+  exporting = signal(false);
+  importing = signal(false);
+  importExportMessage = signal('');
+  importMode = signal<ImportMode>('replace');
+
+  // Advanced section collapsed state
+  advancedExpanded = signal(false);
+
   readonly isDevMode = isDevMode();
 
   isOpen = input.required<boolean>();
@@ -41,8 +52,14 @@ export class MenuDrawerComponent implements OnDestroy {
     private discogsService: DiscogsService,
     private playbackService: PlaybackService,
     public filterService: FilterService,
+    private playStatsExportService: PlayStatsExportService,
   ) {
     this.loadMenuData();
+
+    // Subscribe to stats updates to refresh when plays change
+    this.playbackService.statsUpdated$.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.refreshCollectionStats();
+    });
   }
 
   ngOnDestroy(): void {
@@ -79,6 +96,13 @@ export class MenuDrawerComponent implements OnDestroy {
         console.error('Failed to load last sync date:', error);
       });
 
+    this.refreshCollectionStats();
+
+    // Load available genres and decades for filter chips
+    this.loadFilterOptions();
+  }
+
+  private refreshCollectionStats(): void {
     this.playbackService
       .getCollectionStats()
       .pipe(
@@ -88,9 +112,6 @@ export class MenuDrawerComponent implements OnDestroy {
         takeUntil(this.destroy$),
       )
       .subscribe();
-
-    // Load available genres and decades for filter chips
-    this.loadFilterOptions();
   }
 
   private loadFilterOptions(): void {
@@ -187,5 +208,76 @@ export class MenuDrawerComponent implements OnDestroy {
       .finally(() => {
         this.clearing.set(false);
       });
+  }
+
+  async onExport(): Promise<void> {
+    this.exporting.set(true);
+    this.importExportMessage.set('');
+
+    try {
+      await this.playStatsExportService.exportToFile();
+      this.importExportMessage.set('Export downloaded successfully!');
+    } catch (error) {
+      console.error('Export failed:', error);
+      this.importExportMessage.set('Export failed. Please try again.');
+    } finally {
+      this.exporting.set(false);
+      setTimeout(() => this.importExportMessage.set(''), SYNC_MESSAGE_DISPLAY_MS);
+    }
+  }
+
+  onImportClick(): void {
+    const fileInput = document.getElementById('import-file-input') as HTMLInputElement;
+    fileInput?.click();
+  }
+
+  async onFileSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) return;
+
+    this.importing.set(true);
+    this.importExportMessage.set('Importing...');
+
+    try {
+      const content = await file.text();
+      const validation = this.playStatsExportService.validateImportFile(content);
+
+      if (!validation.valid) {
+        this.importExportMessage.set(`Invalid file: ${validation.errors[0]}`);
+        return;
+      }
+
+      const result = await this.playStatsExportService.importFromData(
+        validation.data!,
+        this.importMode(),
+      );
+
+      if (result.success) {
+        this.importExportMessage.set(
+          `Imported ${result.imported} releases` +
+            (result.skipped > 0 ? `, skipped ${result.skipped}` : ''),
+        );
+        this.loadMenuData();
+      } else {
+        this.importExportMessage.set(`Import completed with errors: ${result.errors[0]}`);
+      }
+    } catch (error) {
+      console.error('Import failed:', error);
+      this.importExportMessage.set('Import failed. Please try again.');
+    } finally {
+      this.importing.set(false);
+      input.value = '';
+      setTimeout(() => this.importExportMessage.set(''), SYNC_MESSAGE_DISPLAY_MS);
+    }
+  }
+
+  setImportMode(mode: ImportMode): void {
+    this.importMode.set(mode);
+  }
+
+  toggleAdvanced(): void {
+    this.advancedExpanded.set(!this.advancedExpanded());
   }
 }

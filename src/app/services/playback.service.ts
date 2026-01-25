@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, from, of } from 'rxjs';
+import { Observable, Subject, from, of } from 'rxjs';
 import { map, catchError, switchMap, tap } from 'rxjs/operators';
 import { DatabaseService } from './database.service';
 import { PlayHistoryService } from './play-history.service';
@@ -11,6 +11,12 @@ import { PlayStats } from '../models/play-stats.model';
   providedIn: 'root',
 })
 export class PlaybackService {
+  /**
+   * Emits when play stats have been updated (after markAsPlayed)
+   * Components can subscribe to refresh their stats displays
+   */
+  readonly statsUpdated$ = new Subject<void>();
+
   constructor(
     private db: DatabaseService,
     private playHistoryService: PlayHistoryService,
@@ -93,6 +99,8 @@ export class PlaybackService {
           tap(() => {
             // Add to play history
             this.playHistoryService.addToHistory(releaseId);
+            // Notify subscribers that stats have changed
+            this.statsUpdated$.next();
           }),
           map(() => {
             console.log(

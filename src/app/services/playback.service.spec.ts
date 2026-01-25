@@ -275,6 +275,19 @@ describe('PlaybackService', () => {
       expect(playHistoryService.addToHistory).toHaveBeenCalledWith(1);
     });
 
+    it('should emit on statsUpdated$ after marking as played', async () => {
+      const db = spectator.inject(DatabaseService);
+      db.getRelease.mockResolvedValue(mockRelease1);
+      db.updateRelease.mockResolvedValue(1);
+
+      const statsUpdatedSpy = jest.fn();
+      spectator.service.statsUpdated$.subscribe(statsUpdatedSpy);
+
+      await firstValueFrom(spectator.service.markAsPlayed(1));
+
+      expect(statsUpdatedSpy).toHaveBeenCalledTimes(1);
+    });
+
     it('should not add to history if release not found', async () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       const db = spectator.inject(DatabaseService);

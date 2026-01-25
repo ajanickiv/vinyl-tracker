@@ -1,6 +1,6 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
 import { signal } from '@angular/core';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { VinylPlayerComponent } from './vinyl-player.component';
 import { RecommendationService } from '../../services/recommendation.service';
 import { PlaybackService } from '../../services/playback.service';
@@ -26,6 +26,7 @@ describe('VinylPlayerComponent', () => {
     markAsPlayed: jest.Mock;
     getCollectionStats: jest.Mock;
     getPlayStats: jest.Mock;
+    statsUpdated$: Subject<void>;
   };
   let mockDatabaseService: {
     getLastSyncDate: jest.Mock;
@@ -83,6 +84,7 @@ describe('VinylPlayerComponent', () => {
       markAsPlayed: jest.fn().mockReturnValue(of(null)),
       getCollectionStats: jest.fn().mockReturnValue(of({})),
       getPlayStats: jest.fn().mockReturnValue(of(null)),
+      statsUpdated$: new Subject<void>(),
     };
 
     mockDatabaseService = {

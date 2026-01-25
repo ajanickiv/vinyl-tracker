@@ -1,7 +1,7 @@
 import { fakeAsync, flush } from '@angular/core/testing';
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
 import { signal } from '@angular/core';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { MenuDrawerComponent } from './menu-drawer.component';
 import { DatabaseService } from '../../services/database.service';
 import { DiscogsService } from '../../services/discogs.service';
@@ -23,6 +23,7 @@ describe('MenuDrawerComponent', () => {
     getCollectionStats: jest.Mock;
     markAsPlayed: jest.Mock;
     getPlayStats: jest.Mock;
+    statsUpdated$: Subject<void>;
   };
   let mockDiscogsService: {
     syncCollection: jest.Mock;
@@ -61,6 +62,7 @@ describe('MenuDrawerComponent', () => {
       getCollectionStats: jest.fn().mockReturnValue(of(mockStats)),
       markAsPlayed: jest.fn().mockReturnValue(of(null)),
       getPlayStats: jest.fn().mockReturnValue(of(null)),
+      statsUpdated$: new Subject<void>(),
     };
 
     mockDiscogsService = {
@@ -727,9 +729,47 @@ describe('MenuDrawerComponent', () => {
     });
   });
 
+  describe('toggleAdvanced', () => {
+    it('should toggle advancedExpanded from false to true', () => {
+      expect(spectator.component.advancedExpanded()).toBe(false);
+
+      spectator.component.toggleAdvanced();
+
+      expect(spectator.component.advancedExpanded()).toBe(true);
+    });
+
+    it('should toggle advancedExpanded from true to false', () => {
+      spectator.component.advancedExpanded.set(true);
+
+      spectator.component.toggleAdvanced();
+
+      expect(spectator.component.advancedExpanded()).toBe(false);
+    });
+  });
+
   describe('ngOnDestroy', () => {
     it('should complete destroy$ subject', () => {
       expect(() => spectator.component.ngOnDestroy()).not.toThrow();
+    });
+  });
+
+  describe('statsUpdated$ subscription', () => {
+    it('should refresh collection stats when statsUpdated$ emits', () => {
+      const playbackService = mockPlaybackService;
+      playbackService.getCollectionStats.mockClear();
+
+      const newStats: CollectionStats = {
+        totalReleases: 110,
+        totalPlays: 600,
+        neverPlayed: 15,
+      };
+      playbackService.getCollectionStats.mockReturnValue(of(newStats));
+
+      // Emit on statsUpdated$
+      playbackService.statsUpdated$.next();
+
+      expect(playbackService.getCollectionStats).toHaveBeenCalled();
+      expect(spectator.component.collectionStats()).toEqual(newStats);
     });
   });
 });

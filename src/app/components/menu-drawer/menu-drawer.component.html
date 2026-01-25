@@ -10,23 +10,6 @@
     </div>
 
     <div class="drawer-content">
-      <!-- Sync Section -->
-      <div class="menu-section">
-        <h3>Collection Sync</h3>
-        <div class="sync-info">
-          <p class="sync-status">
-            Last synced: <strong>{{ getTimeSinceSync() }}</strong>
-          </p>
-          <button class="resync-button" (click)="resync()" [disabled]="syncing()">
-            <span class="button-icon">↻</span>
-            {{ syncing() ? 'Syncing...' : 'Re-sync from Discogs' }}
-          </button>
-          @if (syncMessage()) {
-            <p class="sync-message">{{ syncMessage() }}</p>
-          }
-        </div>
-      </div>
-
       <!-- Filters Section -->
       <div class="menu-section">
         <h3>Filters</h3>
@@ -132,19 +115,107 @@
         }
       }
 
-      <!-- Dev Tools Section (only in dev mode) -->
-      @if (isDevMode) {
-        <div class="menu-section dev-section">
-          <h3>Dev Tools</h3>
-          <div class="dev-info">
-            <p class="dev-warning">These options are only visible in development mode.</p>
-            <button class="clear-button" (click)="clearData()" [disabled]="clearing()">
-              <span class="button-icon">🗑</span>
-              {{ clearing() ? 'Clearing...' : 'Clear All Data' }}
-            </button>
+      <!-- Advanced Section (Collapsible) -->
+      <div class="advanced-section">
+        <button class="advanced-header" (click)="toggleAdvanced()">
+          <h3>Advanced</h3>
+          <span class="expand-icon" [class.expanded]="advancedExpanded()">▼</span>
+        </button>
+
+        <div class="advanced-content" [class.expanded]="advancedExpanded()">
+          <div class="advanced-content-inner">
+            <!-- Sync Section -->
+            <div class="menu-section">
+              <h3>Collection Sync</h3>
+              <div class="sync-info">
+                <p class="sync-status">
+                  Last synced: <strong>{{ getTimeSinceSync() }}</strong>
+                </p>
+                <button class="resync-button" (click)="resync()" [disabled]="syncing()">
+                  <span class="button-icon">↻</span>
+                  {{ syncing() ? 'Syncing...' : 'Re-sync from Discogs' }}
+                </button>
+                @if (syncMessage()) {
+                  <p class="sync-message">{{ syncMessage() }}</p>
+                }
+              </div>
+            </div>
+
+            <!-- Export/Import Section -->
+            <div class="menu-section">
+              <h3>Backup & Restore</h3>
+              <div class="export-import-container">
+                <p class="export-import-info">Export or import your play counts and history.</p>
+
+                <!-- Export Button -->
+                <button class="export-button" (click)="onExport()" [disabled]="exporting()">
+                  <span class="button-icon">⬇</span>
+                  {{ exporting() ? 'Exporting...' : 'Export Play Stats' }}
+                </button>
+
+                <!-- Import Mode Toggle -->
+                <div class="import-mode-toggle">
+                  <label class="toggle-label">
+                    <span class="toggle-text">
+                      {{ importMode() === 'replace' ? 'Replace' : 'Merge' }}
+                    </span>
+                    <button
+                      class="toggle-button"
+                      [class.active]="importMode() === 'merge'"
+                      (click)="setImportMode(importMode() === 'replace' ? 'merge' : 'replace')"
+                    >
+                      <span class="toggle-track">
+                        <span class="toggle-thumb"></span>
+                      </span>
+                    </button>
+                  </label>
+                  <p class="import-mode-hint">
+                    {{
+                      importMode() === 'replace'
+                        ? 'Overwrites all play data'
+                        : 'Adds to existing play counts'
+                    }}
+                  </p>
+                </div>
+
+                <!-- Import Button -->
+                <button class="import-button" (click)="onImportClick()" [disabled]="importing()">
+                  <span class="button-icon">⬆</span>
+                  {{ importing() ? 'Importing...' : 'Import Play Stats' }}
+                </button>
+
+                <!-- Hidden file input -->
+                <input
+                  type="file"
+                  id="import-file-input"
+                  accept=".json"
+                  style="display: none"
+                  (change)="onFileSelected($event)"
+                />
+
+                <!-- Status message -->
+                @if (importExportMessage()) {
+                  <p class="sync-message">{{ importExportMessage() }}</p>
+                }
+              </div>
+            </div>
+
+            <!-- Dev Tools Section (only in dev mode) -->
+            @if (isDevMode) {
+              <div class="menu-section dev-section">
+                <h3>Dev Tools</h3>
+                <div class="dev-info">
+                  <p class="dev-warning">These options are only visible in development mode.</p>
+                  <button class="clear-button" (click)="clearData()" [disabled]="clearing()">
+                    <span class="button-icon">🗑</span>
+                    {{ clearing() ? 'Clearing...' : 'Clear All Data' }}
+                  </button>
+                </div>
+              </div>
+            }
           </div>
         </div>
-      }
+      </div>
     </div>
   </div>
 </div>

@@ -221,6 +221,65 @@ describe('PlayHistoryService', () => {
     });
   });
 
+  describe('setHistory', () => {
+    it('should replace existing history with new entries', () => {
+      service.addToHistory(1);
+      service.addToHistory(2);
+
+      const newEntries = [
+        { releaseId: 100, playedAt: new Date('2024-01-15T10:00:00Z') },
+        { releaseId: 200, playedAt: new Date('2024-01-14T10:00:00Z') },
+      ];
+
+      service.setHistory(newEntries);
+
+      expect(service.history().length).toBe(2);
+      expect(service.history()[0].releaseId).toBe(100);
+      expect(service.history()[1].releaseId).toBe(200);
+    });
+
+    it('should trim to MAX_HISTORY_ENTRIES', () => {
+      const manyEntries = [];
+      for (let i = 0; i < MAX_HISTORY_ENTRIES + 5; i++) {
+        manyEntries.push({ releaseId: i, playedAt: new Date() });
+      }
+
+      service.setHistory(manyEntries);
+
+      expect(service.history().length).toBe(MAX_HISTORY_ENTRIES);
+      // Should keep first MAX_HISTORY_ENTRIES entries (slice from start)
+      expect(service.history()[0].releaseId).toBe(0);
+    });
+
+    it('should persist to localStorage', () => {
+      const newEntries = [{ releaseId: 100, playedAt: new Date('2024-01-15T10:00:00Z') }];
+
+      service.setHistory(newEntries);
+
+      const stored = JSON.parse(localStorage.getItem(PLAY_HISTORY_STORAGE_KEY)!);
+      expect(stored.length).toBe(1);
+      expect(stored[0].releaseId).toBe(100);
+    });
+
+    it('should update hasHistory signal', () => {
+      expect(service.hasHistory()).toBe(false);
+
+      service.setHistory([{ releaseId: 1, playedAt: new Date() }]);
+
+      expect(service.hasHistory()).toBe(true);
+    });
+
+    it('should handle empty array', () => {
+      service.addToHistory(1);
+      expect(service.hasHistory()).toBe(true);
+
+      service.setHistory([]);
+
+      expect(service.history()).toEqual([]);
+      expect(service.hasHistory()).toBe(false);
+    });
+  });
+
   describe('localStorage error handling', () => {
     it('should handle localStorage save errors gracefully', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();

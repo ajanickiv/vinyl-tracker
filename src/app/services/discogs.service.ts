@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { DatabaseService } from './database.service';
+import { PlayHistoryService } from './play-history.service';
 import { Release } from '../models/release.model';
 import { DiscogsCollectionResponse, DiscogsRelease } from '../models/discogs-api.model';
 import { DISCOGS_API_DELAY_MS } from '../constants/timing.constants';
@@ -18,6 +19,7 @@ export class DiscogsService {
   constructor(
     private http: HttpClient,
     private db: DatabaseService,
+    private playHistoryService: PlayHistoryService,
   ) {}
 
   /**
@@ -25,6 +27,7 @@ export class DiscogsService {
    */
   async clearSyncedData(): Promise<void> {
     await this.db.clearAllData();
+    this.playHistoryService.clearHistory();
     console.log('All synced data cleared');
   }
 

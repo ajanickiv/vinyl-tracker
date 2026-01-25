@@ -63,6 +63,16 @@ export class PlayHistoryService {
   }
 
   /**
+   * Replace the entire play history (used for import).
+   * Trims to max size, keeping most recent entries.
+   */
+  setHistory(entries: PlayHistoryEntry[]): void {
+    const trimmed = entries.slice(0, MAX_HISTORY_ENTRIES);
+    this.historySignal.set(trimmed);
+    this.saveHistory();
+  }
+
+  /**
    * Load history from localStorage
    */
   private loadHistory(): PlayHistoryEntry[] {
