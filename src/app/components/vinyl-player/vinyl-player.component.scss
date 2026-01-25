@@ -1,4 +1,5 @@
 @use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
 
 .vinyl-player-container {
   min-height: 100vh;
@@ -21,6 +22,10 @@
   max-width: 28rem;
 }
 
+// ==============================================
+// Header Buttons
+// ==============================================
+
 .player-header {
   position: absolute;
   top: 1rem;
@@ -33,22 +38,7 @@
 .search-button,
 .history-button,
 .menu-button {
-  background: $gradient-button-primary;
-  border: none;
-  color: $text-primary;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: $shadow-sm;
-  transition: all 0.2s;
-
-  &:hover {
-    background: $gradient-button-primary-hover;
-    transform: scale(1.05);
-  }
+  @include btn-header;
 }
 
 .search-icon,
@@ -61,7 +51,10 @@
   font-weight: bold;
 }
 
-// ===== Turntable =====
+// ==============================================
+// Turntable
+// ==============================================
+
 .turntable-wrapper {
   position: relative;
   margin-bottom: 2rem;
@@ -75,7 +68,10 @@
   box-shadow: $shadow-xl;
 }
 
-// ===== Record =====
+// ==============================================
+// Record
+// ==============================================
+
 .record {
   position: relative;
   margin: 0 auto;
@@ -104,7 +100,10 @@
   border: 1px solid $color-gray-700;
 }
 
-// ===== Album Art =====
+// ==============================================
+// Album Art
+// ==============================================
+
 .album-art {
   position: absolute;
   inset: 2rem;
@@ -135,7 +134,10 @@
   mix-blend-mode: overlay;
 }
 
-// ===== Center Label =====
+// ==============================================
+// Center Label
+// ==============================================
+
 .center-label {
   position: absolute;
   top: 50%;
@@ -159,7 +161,10 @@
   background-color: $color-black;
 }
 
-// ===== Tonearm =====
+// ==============================================
+// Tonearm
+// ==============================================
+
 .tonearm {
   position: absolute;
   top: 2rem;
@@ -206,7 +211,10 @@
   box-shadow: $shadow-md;
 }
 
-// ===== Album Info =====
+// ==============================================
+// Album Info
+// ==============================================
+
 .album-info {
   text-align: center;
   margin-bottom: 1.5rem;
@@ -230,7 +238,10 @@
   color: $text-muted;
 }
 
-// ===== Stats =====
+// ==============================================
+// Stats
+// ==============================================
+
 .stats {
   display: flex;
   justify-content: center;
@@ -244,64 +255,40 @@
 }
 
 .stat-value {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: $text-dark;
+  @include stat-value;
 }
 
 .stat-label {
-  font-size: 0.75rem;
-  color: $text-muted;
+  @include stat-label;
 }
 
-// ===== Action Buttons =====
+// ==============================================
+// Action Buttons
+// ==============================================
+
 .actions {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.btn-primary,
-.btn-secondary {
-  width: 100%;
-  font-weight: 600;
+.btn-primary {
+  @include btn-primary;
   padding: 1rem 1.5rem;
-  border-radius: 0.5rem;
   box-shadow: $shadow-md;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border: none;
-  cursor: pointer;
 
   &:hover:not(:disabled) {
     transform: scale(1.05);
   }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-}
-
-.btn-primary {
-  background: $gradient-button-primary;
-  color: $text-primary;
-
-  &:hover:not(:disabled) {
-    background: $gradient-button-primary-hover;
-  }
 }
 
 .btn-secondary {
-  background-color: $color-background;
-  border: 1px solid $border-primary;
-  color: $text-primary;
+  @include btn-secondary;
+  padding: 1rem 1.5rem;
+  box-shadow: $shadow-md;
 
   &:hover:not(:disabled) {
-    background-color: $color-background-light;
+    transform: scale(1.05);
   }
 }
 
@@ -309,7 +296,10 @@
   font-size: 1.25rem;
 }
 
-// ===== Animations =====
+// ==============================================
+// Animations
+// ==============================================
+
 @keyframes spinRecord {
   0% {
     transform: rotate(0deg);

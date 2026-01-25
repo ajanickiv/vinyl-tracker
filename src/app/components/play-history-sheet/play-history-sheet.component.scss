@@ -1,10 +1,12 @@
 @use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+// ==============================================
+// Sheet Container & Backdrop
+// ==============================================
 
 .sheet-container {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1000;
+  @include overlay-container;
 
   &.open {
     pointer-events: auto;
@@ -20,43 +22,19 @@
 }
 
 .backdrop {
-  position: absolute;
-  inset: 0;
-  background: $overlay-backdrop;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  @include overlay-backdrop;
 }
 
 .sheet {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  max-height: 70vh;
-  background: $gradient-drawer;
-  border-top-left-radius: 1rem;
-  border-top-right-radius: 1rem;
-  box-shadow: 0 -4px 20px $overlay-light;
-  transform: translateY(100%);
-  transition: transform 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  @include bottom-sheet;
 }
 
-.drag-handle {
-  display: flex;
-  justify-content: center;
-  padding: 0.75rem;
-  cursor: grab;
-}
+// Drag Handle
+@include drag-handle;
 
-.handle-bar {
-  width: 2.5rem;
-  height: 0.25rem;
-  background: $color-gray-600;
-  border-radius: 0.125rem;
-}
+// ==============================================
+// Header
+// ==============================================
 
 .history-header {
   padding: 0 1rem 1rem;
@@ -69,6 +47,10 @@
   font-weight: 600;
   color: $text-primary;
 }
+
+// ==============================================
+// History List
+// ==============================================
 
 .history-container {
   flex: 1;
@@ -108,21 +90,7 @@
 }
 
 .history-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: background 0.2s;
-
-  &:hover {
-    background: $overlay-card;
-  }
-
-  &:active {
-    background: rgba($color-primary, 0.2);
-  }
+  @include list-item;
 
   &.unavailable {
     opacity: 0.5;
@@ -135,28 +103,11 @@
 }
 
 .item-thumb {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 0.25rem;
-  overflow: hidden;
-  flex-shrink: 0;
-  background: $color-background;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+  @include list-thumbnail;
 }
 
 .thumb-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  color: $color-gray-600;
+  @include thumbnail-placeholder;
 }
 
 .item-info {
@@ -169,18 +120,14 @@
   font-size: 0.875rem;
   font-weight: 600;
   color: $color-primary;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include text-truncate;
 }
 
 .item-title {
   margin: 0.125rem 0 0;
   font-size: 0.875rem;
   color: $text-primary;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include text-truncate;
 }
 
 .item-time {

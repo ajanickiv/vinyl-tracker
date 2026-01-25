@@ -1,4 +1,5 @@
 @use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
 
 .sync-screen {
   min-height: 100vh;
@@ -14,6 +15,10 @@
   text-align: center;
   color: $text-primary;
 }
+
+// ==============================================
+// Logo / Vinyl Icon
+// ==============================================
 
 .logo {
   margin-bottom: 2rem;
@@ -48,6 +53,10 @@
   background: $color-black;
 }
 
+// ==============================================
+// Title & Info
+// ==============================================
+
 .title {
   font-size: 2rem;
   font-weight: bold;
@@ -61,10 +70,7 @@
 }
 
 .info-section {
-  background: $overlay-card;
-  border: 1px solid $overlay-card-border;
-  border-radius: 0.5rem;
-  padding: 1.5rem;
+  @include card-panel(1.5rem);
   margin-bottom: 2rem;
   backdrop-filter: blur(10px);
 
@@ -94,26 +100,18 @@
   }
 }
 
+// ==============================================
+// Sync Button
+// ==============================================
+
 .sync-button {
-  width: 100%;
-  background: $gradient-button-primary;
-  color: $text-primary;
-  font-weight: 600;
+  @include btn-primary;
   font-size: 1.125rem;
   padding: 1rem 2rem;
-  border-radius: 0.5rem;
-  border: none;
-  cursor: pointer;
   box-shadow: $shadow-md;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
 
   &:hover {
     transform: scale(1.05);
-    background: $gradient-button-primary-hover;
   }
 }
 
@@ -126,6 +124,10 @@
   font-size: 0.875rem;
   color: $text-subdued;
 }
+
+// ==============================================
+// Sync Status
+// ==============================================
 
 .sync-status {
   padding: 2rem;
