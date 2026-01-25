@@ -102,16 +102,18 @@
         </div>
 
         @if (stats.mostPlayed; as mostPlayed) {
-          <div class="menu-section">
-            <h3>Most Played</h3>
-            <div class="album-highlight">
-              <p class="album-title">{{ mostPlayed.basicInfo.title }}</p>
-              <p class="album-artist">
-                {{ mostPlayed.basicInfo.artists.join(', ') }}
-              </p>
-              <p class="play-count">{{ mostPlayed.playCount }} plays</p>
+          @if (mostPlayed.playCount > 0) {
+            <div class="menu-section">
+              <h3>Most Played</h3>
+              <div class="album-highlight">
+                <p class="album-title">{{ mostPlayed.basicInfo.title }}</p>
+                <p class="album-artist">
+                  {{ mostPlayed.basicInfo.artists.join(', ') }}
+                </p>
+                <p class="play-count">{{ mostPlayed.playCount }} plays</p>
+              </div>
             </div>
-          </div>
+          }
         }
       }
 

@@ -75,9 +75,11 @@ export class MenuDrawerComponent implements OnDestroy {
     const lastSync = this.lastSyncDate();
     if (!lastSync) return 'Never';
 
+    // Compare calendar dates (midnight to midnight)
     const now = new Date();
-    const diffMs = now.getTime() - lastSync.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const syncDay = new Date(lastSync.getFullYear(), lastSync.getMonth(), lastSync.getDate());
+    const diffDays = Math.floor((today.getTime() - syncDay.getTime()) / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';

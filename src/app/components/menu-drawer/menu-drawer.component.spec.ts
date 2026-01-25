@@ -238,6 +238,17 @@ describe('MenuDrawerComponent', () => {
       expect(result).toBe('Yesterday');
     });
 
+    it('should return "Yesterday" for previous calendar day even if less than 24 hours ago', () => {
+      // System time is 2024-01-20 at 10:00 AM UTC
+      // Sync was at 11:00 PM UTC on Jan 19 (only 11 hours ago, but different calendar day)
+      const lastNight = new Date('2024-01-19T23:00:00Z');
+      spectator.component.lastSyncDate.set(lastNight);
+
+      const result = spectator.component.getTimeSinceSync();
+
+      expect(result).toBe('Yesterday');
+    });
+
     it('should return days ago for 2-6 days', () => {
       const threeDaysAgo = new Date('2024-01-17T10:00:00Z');
       spectator.component.lastSyncDate.set(threeDaysAgo);
