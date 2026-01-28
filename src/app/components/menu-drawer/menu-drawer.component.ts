@@ -1,5 +1,6 @@
 import { Component, signal, input, output, OnDestroy, isDevMode } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil, tap } from 'rxjs/operators';
 import { DatabaseService } from '../../services/database.service';
@@ -7,6 +8,7 @@ import { DiscogsService } from '../../services/discogs.service';
 import { PlaybackService } from '../../services/playback.service';
 import { FilterService } from '../../services/filter.service';
 import { PlayStatsExportService } from '../../services/play-stats-export.service';
+import { CredentialsService } from '../../services/credentials.service';
 import { CollectionStats } from '../../models/collection-stats.model';
 import { ImportMode } from '../../models/play-stats-export.model';
 import { SYNC_MESSAGE_DISPLAY_MS } from '../../constants/timing.constants';
@@ -15,7 +17,7 @@ import { APP_VERSION } from '../../constants/app.constants';
 @Component({
   selector: 'app-menu-drawer',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './menu-drawer.component.html',
   styleUrls: ['./menu-drawer.component.scss'],
 })
@@ -39,6 +41,13 @@ export class MenuDrawerComponent implements OnDestroy {
   // Advanced section collapsed state
   advancedExpanded = signal(false);
 
+  // Credentials editing signals
+  editingCredentials = signal(false);
+  editUsername = signal('');
+  editToken = signal('');
+  showEditToken = signal(false);
+  credentialsMessage = signal('');
+
   readonly isDevMode = isDevMode();
   readonly appVersion = APP_VERSION;
 
@@ -55,6 +64,7 @@ export class MenuDrawerComponent implements OnDestroy {
     private playbackService: PlaybackService,
     public filterService: FilterService,
     private playStatsExportService: PlayStatsExportService,
+    public credentialsService: CredentialsService,
   ) {
     this.loadMenuData();
 
@@ -283,5 +293,46 @@ export class MenuDrawerComponent implements OnDestroy {
 
   toggleAdvanced(): void {
     this.advancedExpanded.set(!this.advancedExpanded());
+  }
+
+  // Credentials editing methods
+  startEditCredentials(): void {
+    this.editUsername.set(this.credentialsService.getUsername() ?? '');
+    this.editToken.set('');
+    this.showEditToken.set(false);
+    this.credentialsMessage.set('');
+    this.editingCredentials.set(true);
+  }
+
+  cancelEditCredentials(): void {
+    this.editingCredentials.set(false);
+    this.editUsername.set('');
+    this.editToken.set('');
+    this.credentialsMessage.set('');
+  }
+
+  saveCredentials(): void {
+    const username = this.editUsername().trim();
+    const token = this.editToken().trim();
+
+    if (!username) {
+      this.credentialsMessage.set('Username is required');
+      return;
+    }
+
+    if (!token) {
+      this.credentialsMessage.set('Token is required');
+      return;
+    }
+
+    this.credentialsService.setCredentials({ username, token });
+    this.credentialsMessage.set('Credentials saved!');
+    this.editingCredentials.set(false);
+
+    setTimeout(() => this.credentialsMessage.set(''), SYNC_MESSAGE_DISPLAY_MS);
+  }
+
+  toggleShowEditToken(): void {
+    this.showEditToken.update((v) => !v);
   }
 }

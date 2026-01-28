@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { DatabaseService } from './database.service';
 import { PlayHistoryService } from './play-history.service';
+import { CredentialsService } from './credentials.service';
 import { Release } from '../models/release.model';
 import { DiscogsCollectionResponse, DiscogsRelease } from '../models/discogs-api.model';
 import { DISCOGS_API_DELAY_MS } from '../constants/timing.constants';
@@ -13,14 +14,21 @@ import { DISCOGS_API_DELAY_MS } from '../constants/timing.constants';
 })
 export class DiscogsService {
   private apiUrl = environment.discogsApiUrl;
-  private username = environment.discogsUsername;
-  private token = environment.discogsToken;
 
   constructor(
     private http: HttpClient,
     private db: DatabaseService,
     private playHistoryService: PlayHistoryService,
+    private credentialsService: CredentialsService,
   ) {}
+
+  private get username(): string {
+    return this.credentialsService.getUsername() ?? '';
+  }
+
+  private get token(): string {
+    return this.credentialsService.getToken() ?? '';
+  }
 
   /**
    * Clear all synced data (useful for re-syncing from scratch)
@@ -43,6 +51,10 @@ export class DiscogsService {
    * Fetch and sync the entire collection from Discogs
    */
   async syncCollection(): Promise<{ success: boolean; totalSynced: number; error?: string }> {
+    if (!this.credentialsService.hasCredentials()) {
+      return { success: false, totalSynced: 0, error: 'No credentials configured' };
+    }
+
     try {
       console.log('Starting collection sync...');
 

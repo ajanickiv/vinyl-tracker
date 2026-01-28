@@ -126,6 +126,64 @@
 
         <div class="advanced-content" [class.expanded]="advancedExpanded()">
           <div class="advanced-content-inner">
+            <!-- Discogs Account Section -->
+            <div class="menu-section">
+              <h3>Discogs Account</h3>
+              <div class="account-info">
+                @if (!editingCredentials()) {
+                  <p class="account-status">
+                    Connected as: <strong>{{ credentialsService.getUsername() }}</strong>
+                  </p>
+                  <button class="edit-credentials-button" (click)="startEditCredentials()">
+                    <span class="button-icon">✎</span>
+                    Edit Credentials
+                  </button>
+                  @if (credentialsMessage()) {
+                    <p class="sync-message">{{ credentialsMessage() }}</p>
+                  }
+                } @else {
+                  <div class="credentials-form">
+                    <div class="form-group">
+                      <label for="edit-username">Username</label>
+                      <input
+                        type="text"
+                        id="edit-username"
+                        [ngModel]="editUsername()"
+                        (ngModelChange)="editUsername.set($event)"
+                        placeholder="Discogs username"
+                      />
+                    </div>
+                    <div class="form-group">
+                      <label for="edit-token">Personal Access Token</label>
+                      <div class="token-input-wrapper">
+                        <input
+                          [type]="showEditToken() ? 'text' : 'password'"
+                          id="edit-token"
+                          [ngModel]="editToken()"
+                          (ngModelChange)="editToken.set($event)"
+                          placeholder="Enter new token"
+                        />
+                        <button
+                          type="button"
+                          class="toggle-visibility"
+                          (click)="toggleShowEditToken()"
+                        >
+                          {{ showEditToken() ? 'Hide' : 'Show' }}
+                        </button>
+                      </div>
+                    </div>
+                    @if (credentialsMessage()) {
+                      <p class="error-message">{{ credentialsMessage() }}</p>
+                    }
+                    <div class="form-actions">
+                      <button class="save-button" (click)="saveCredentials()">Save</button>
+                      <button class="cancel-button" (click)="cancelEditCredentials()">Cancel</button>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
             <!-- Sync Section -->
             <div class="menu-section">
               <h3>Collection Sync</h3>

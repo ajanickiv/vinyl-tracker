@@ -1,0 +1,70 @@
+<div class="setup-screen">
+  <div class="setup-content">
+    <div class="logo">
+      <div class="vinyl-icon">
+        <div class="vinyl-circle"></div>
+        <div class="vinyl-center"></div>
+      </div>
+    </div>
+
+    <h1 class="title">Connect to Discogs</h1>
+    <p class="subtitle">Enter your Discogs credentials to get started</p>
+
+    @if (hasExistingData()) {
+      <div class="notice">
+        <p>Your existing play data will be preserved.</p>
+      </div>
+    }
+
+    <div class="form-section">
+      <div class="form-group">
+        <label for="username">Discogs Username</label>
+        <input
+          type="text"
+          id="username"
+          [value]="username()"
+          (input)="onUsernameChange($any($event.target).value)"
+          placeholder="Enter your Discogs username"
+          autocomplete="username"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="token">Personal Access Token</label>
+        <div class="token-input-wrapper">
+          <input
+            [type]="showToken() ? 'text' : 'password'"
+            id="token"
+            [value]="token()"
+            (input)="onTokenChange($any($event.target).value)"
+            placeholder="Enter your personal access token"
+            autocomplete="current-password"
+          />
+          <button type="button" class="toggle-visibility" (click)="toggleShowToken()">
+            {{ showToken() ? 'Hide' : 'Show' }}
+          </button>
+        </div>
+      </div>
+
+      @if (errorMessage()) {
+        <p class="error-message">{{ errorMessage() }}</p>
+      }
+
+      <button class="submit-button" (click)="submit()">
+        <span class="button-icon">→</span>
+        Continue
+      </button>
+
+      <a
+        class="help-link"
+        href="https://www.discogs.com/settings/developers"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Get a personal access token from Discogs
+      </a>
+    </div>
+
+    <p class="disclaimer">Your credentials are stored locally on this device only.</p>
+  </div>
+</div>

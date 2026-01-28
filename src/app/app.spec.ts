@@ -2,17 +2,39 @@ import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
 import { of } from 'rxjs';
 import { AppComponent } from './app';
 import { DatabaseService } from './services/database.service';
+import { CredentialsService } from './services/credentials.service';
 import { RecommendationService } from './services/recommendation.service';
 import { PlaybackService } from './services/playback.service';
+import { SetupScreenComponent } from './components/setup-screen/setup-screen.component';
 import { SyncScreenComponent } from './components/sync-screen/sync-screen.component';
 import { VinylPlayerComponent } from './components/vinyl-player/vinyl-player.component';
 
 describe('AppComponent', () => {
   let spectator: Spectator<AppComponent>;
+  let mockCredentialsService: {
+    hasCredentials: jest.Mock;
+    getUsername: jest.Mock;
+    getToken: jest.Mock;
+  };
+
   const createComponent = createComponentFactory({
     component: AppComponent,
     mocks: [DatabaseService, RecommendationService, PlaybackService],
+    providers: [
+      {
+        provide: CredentialsService,
+        useFactory: () => {
+          mockCredentialsService = {
+            hasCredentials: jest.fn().mockReturnValue(false),
+            getUsername: jest.fn().mockReturnValue('testuser'),
+            getToken: jest.fn().mockReturnValue('testtoken'),
+          };
+          return mockCredentialsService;
+        },
+      },
+    ],
     overrideComponents: [
+      [SetupScreenComponent, { set: { template: '' } }],
       [SyncScreenComponent, { set: { template: '' } }],
       [VinylPlayerComponent, { set: { template: '' } }],
     ],
@@ -39,29 +61,90 @@ describe('AppComponent', () => {
     expect(spectator.component).toBeTruthy();
   });
 
-  it('should initialize with hasSyncedData as false', () => {
+  it('should initialize with hasCredentials and hasSyncedData as false', () => {
+    expect(spectator.component.hasCredentials()).toBe(false);
     expect(spectator.component.hasSyncedData()).toBe(false);
   });
 
   describe('ngOnInit', () => {
+    it('should set hasCredentials based on CredentialsService', async () => {
+      mockCredentialsService.hasCredentials.mockReturnValue(true);
+
+      await spectator.component.ngOnInit();
+
+      expect(spectator.component.hasCredentials()).toBe(true);
+    });
+
+    it('should check collection count only when credentials exist', async () => {
+      const dbService = spectator.inject(DatabaseService);
+      mockCredentialsService.hasCredentials.mockReturnValue(true);
+      dbService.getCollectionCount.mockResolvedValue(5);
+
+      await spectator.component.ngOnInit();
+
+      expect(dbService.getCollectionCount).toHaveBeenCalled();
+      expect(spectator.component.hasSyncedData()).toBe(true);
+    });
+
+    it('should not check collection count when credentials do not exist', async () => {
+      const dbService = spectator.inject(DatabaseService);
+      mockCredentialsService.hasCredentials.mockReturnValue(false);
+      dbService.getCollectionCount.mockClear(); // Clear any calls from previous tests
+
+      await spectator.component.ngOnInit();
+
+      expect(dbService.getCollectionCount).not.toHaveBeenCalled();
+      expect(spectator.component.hasSyncedData()).toBe(false);
+    });
+
     it('should set hasSyncedData to true when collection has items', async () => {
       const dbService = spectator.inject(DatabaseService);
+      mockCredentialsService.hasCredentials.mockReturnValue(true);
       dbService.getCollectionCount.mockResolvedValue(5);
 
       await spectator.component.ngOnInit();
 
       expect(spectator.component.hasSyncedData()).toBe(true);
-      expect(dbService.getCollectionCount).toHaveBeenCalled();
     });
 
     it('should keep hasSyncedData as false when collection is empty', async () => {
       const dbService = spectator.inject(DatabaseService);
+      mockCredentialsService.hasCredentials.mockReturnValue(true);
       dbService.getCollectionCount.mockResolvedValue(0);
 
       await spectator.component.ngOnInit();
 
       expect(spectator.component.hasSyncedData()).toBe(false);
+    });
+  });
+
+  describe('onSetupComplete', () => {
+    it('should set hasCredentials to true', async () => {
+      const dbService = spectator.inject(DatabaseService);
+      dbService.getCollectionCount.mockResolvedValue(0);
+
+      await spectator.component.onSetupComplete();
+
+      expect(spectator.component.hasCredentials()).toBe(true);
+    });
+
+    it('should check collection count for existing data', async () => {
+      const dbService = spectator.inject(DatabaseService);
+      dbService.getCollectionCount.mockResolvedValue(100);
+
+      await spectator.component.onSetupComplete();
+
       expect(dbService.getCollectionCount).toHaveBeenCalled();
+      expect(spectator.component.hasSyncedData()).toBe(true);
+    });
+
+    it('should set hasSyncedData false when no existing data', async () => {
+      const dbService = spectator.inject(DatabaseService);
+      dbService.getCollectionCount.mockResolvedValue(0);
+
+      await spectator.component.onSetupComplete();
+
+      expect(spectator.component.hasSyncedData()).toBe(false);
     });
   });
 
@@ -76,20 +159,34 @@ describe('AppComponent', () => {
   });
 
   describe('template rendering', () => {
-    it('should display sync-screen when hasSyncedData is false', () => {
+    it('should display setup-screen when no credentials', () => {
+      spectator.component.hasCredentials.set(false);
       spectator.component.hasSyncedData.set(false);
       spectator.detectChanges();
 
+      expect(spectator.query('app-setup-screen')).toBeTruthy();
+      expect(spectator.query('app-sync-screen')).toBeFalsy();
+      expect(spectator.query('app-vinyl-player')).toBeFalsy();
+    });
+
+    it('should display sync-screen when credentials exist but no data', () => {
+      spectator.component.hasCredentials.set(true);
+      spectator.component.hasSyncedData.set(false);
+      spectator.detectChanges();
+
+      expect(spectator.query('app-setup-screen')).toBeFalsy();
       expect(spectator.query('app-sync-screen')).toBeTruthy();
       expect(spectator.query('app-vinyl-player')).toBeFalsy();
     });
 
-    it('should display vinyl-player when hasSyncedData is true', () => {
+    it('should display vinyl-player when credentials and data exist', () => {
+      spectator.component.hasCredentials.set(true);
       spectator.component.hasSyncedData.set(true);
       spectator.detectChanges();
 
-      expect(spectator.query('app-vinyl-player')).toBeTruthy();
+      expect(spectator.query('app-setup-screen')).toBeFalsy();
       expect(spectator.query('app-sync-screen')).toBeFalsy();
+      expect(spectator.query('app-vinyl-player')).toBeTruthy();
     });
   });
 });

@@ -130,6 +130,127 @@
 }
 
 // ==============================================
+// Discogs Account Section
+// ==============================================
+
+.account-info {
+  @include card-panel;
+}
+
+.account-status {
+  color: $text-primary;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+
+  strong {
+    color: $color-primary;
+  }
+}
+
+.edit-credentials-button {
+  @include btn-base;
+  background: transparent;
+  color: $text-muted;
+  border: 1px solid $overlay-card-border;
+
+  &:hover:not(:disabled) {
+    border-color: $color-primary;
+    color: $text-primary;
+  }
+}
+
+.credentials-form {
+  .form-group {
+    margin-bottom: 1rem;
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: $text-muted;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.625rem 0.75rem;
+      font-size: 0.875rem;
+      color: $text-primary;
+      background: $color-gray-800;
+      border: 1px solid $overlay-card-border;
+      border-radius: 0.375rem;
+      transition: border-color 0.2s ease;
+
+      &::placeholder {
+        color: $text-subdued;
+      }
+
+      &:focus {
+        outline: none;
+        border-color: $color-primary;
+      }
+    }
+  }
+
+  .token-input-wrapper {
+    display: flex;
+    gap: 0.5rem;
+
+    input {
+      flex: 1;
+    }
+
+    .toggle-visibility {
+      padding: 0.625rem 0.75rem;
+      font-size: 0.75rem;
+      color: $text-subdued;
+      background: $color-gray-700;
+      border: 1px solid $overlay-card-border;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background: $color-gray-600;
+      }
+    }
+  }
+
+  .error-message {
+    color: $color-error;
+    font-size: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 0.5rem;
+
+    .save-button {
+      @include btn-primary;
+      flex: 1;
+      padding: 0.625rem 1rem;
+    }
+
+    .cancel-button {
+      @include btn-base;
+      flex: 1;
+      padding: 0.625rem 1rem;
+      background: transparent;
+      color: $text-muted;
+      border: 1px solid $overlay-card-border;
+
+      &:hover:not(:disabled) {
+        border-color: $color-primary;
+        color: $text-primary;
+      }
+    }
+  }
+}
+
+// ==============================================
 // Stats Section
 // ==============================================
 

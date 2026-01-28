@@ -23,9 +23,14 @@ A personal listening tracker for your Discogs vinyl collection. Get personalized
 
 ### First Time Setup
 
-1. Launch the app and click "Sync from Discogs"
-2. The app imports your collection from Discogs (this may take a few minutes for large collections)
-3. Once synced, you're ready to start tracking your listening!
+1. Launch the app and you'll be prompted to connect your Discogs account
+2. Enter your Discogs username and personal access token
+   - [Get a token from Discogs Developer Settings](https://www.discogs.com/settings/developers)
+3. Click "Connect to Discogs" to save your credentials
+4. The app then syncs your collection (this may take a few minutes for large collections)
+5. Once synced, you're ready to start tracking your listening!
+
+Your credentials are stored locally in your browser and never sent anywhere except to the Discogs API.
 
 ### Using the App
 
@@ -79,6 +84,7 @@ Tap the menu icon in the top-right to access:
   - Percentage of collection played
 - **Most Played** - See your most played album
 - **Advanced** (collapsible section)
+  - **Discogs Account** - View connected username and edit credentials
   - **Collection Sync** - Re-sync from Discogs to add new purchases
   - **Backup & Restore** - Export/import play data as JSON
 
@@ -110,6 +116,17 @@ Export your play data to keep a backup or transfer to another device:
    - **Merge** - Adds imported play counts to existing counts
 2. Tap "Import Play Stats" and select your backup file
 3. Only releases in your current collection are imported (others are skipped)
+
+### Changing Your Discogs Account
+
+To update your credentials or switch to a different Discogs account:
+
+1. Open the menu drawer > Advanced > Discogs Account
+2. Tap "Edit Credentials"
+3. Enter your new username and personal access token
+4. Tap "Save" to update
+
+Note: Your play data is stored locally and will remain even if you change accounts.
 
 ### Re-syncing Your Collection
 
@@ -143,26 +160,18 @@ When you add new records to your Discogs collection:
    npm install
    ```
 
-3. Set up Discogs API credentials:
-   - Go to https://www.discogs.com/settings/developers
-   - Generate a new personal access token
-   - Update `src/environments/environment.ts`:
-     ```typescript
-     export const environment = {
-       production: false,
-       discogsToken: 'YOUR_TOKEN_HERE',
-       discogsUsername: 'YOUR_USERNAME_HERE',
-       discogsApiUrl: 'https://api.discogs.com',
-     };
-     ```
-
-4. Run the development server:
+3. Run the development server:
 
    ```bash
    ng serve
    ```
 
-5. Navigate to `http://localhost:4200`
+4. Navigate to `http://localhost:4200`
+
+5. On first launch, the app will prompt you for your Discogs credentials:
+   - [Get a personal access token from Discogs](https://www.discogs.com/settings/developers)
+   - Enter your username and token in the setup screen
+   - Credentials are stored in your browser's localStorage
 
 ### Running Tests
 
@@ -185,13 +194,15 @@ src/
 ├── app/
 │   ├── components/
 │   │   ├── vinyl-player/          # Main player interface
-│   │   ├── sync-screen/           # First-time sync UI
+│   │   ├── setup-screen/          # First-time credentials setup
+│   │   ├── sync-screen/           # Collection sync UI
 │   │   ├── menu-drawer/           # Side menu with stats, filters, settings
 │   │   ├── search-sheet/          # Collection search bottom sheet
 │   │   └── play-history-sheet/    # Recent plays bottom sheet
 │   ├── models/
 │   │   ├── release.model.ts       # Release data structure
 │   │   ├── discogs-api.model.ts   # Discogs API types
+│   │   ├── credentials.model.ts   # Discogs credentials types
 │   │   ├── collection-stats.model.ts  # Stats types
 │   │   ├── filter.model.ts        # Filter configuration
 │   │   ├── play-history.model.ts  # Play history entry
@@ -199,6 +210,7 @@ src/
 │   ├── services/
 │   │   ├── database.service.ts    # Dexie/IndexedDB wrapper
 │   │   ├── discogs.service.ts     # Discogs API integration
+│   │   ├── credentials.service.ts # Discogs credentials management
 │   │   ├── playback.service.ts    # Play tracking logic
 │   │   ├── recommendation.service.ts  # Recommendation algorithm
 │   │   ├── filter.service.ts      # Filter state management
@@ -211,8 +223,8 @@ src/
 │   ├── _variables.scss            # Color and design tokens
 │   └── _mixins.scss               # Reusable style patterns
 ├── environments/
-│   ├── environment.ts             # Development config
-│   └── environment.prod.ts        # Production config
+│   ├── environment.ts             # Development config (API URL only)
+│   └── environment.prod.ts        # Production config (API URL only)
 └── index.html
 ```
 
@@ -236,9 +248,9 @@ All data is stored locally in your browser using IndexedDB:
 - **Metadata Table** - App settings
   - Last sync timestamp
 
-- **Local Storage** - Play history (last 10 plays)
+- **Local Storage** - Play history (last 10 plays), filter preferences, Discogs credentials
 
-**Privacy** Your play data never leaves your device. It's stored entirely in your browser's local database.
+**Privacy**: Your data never leaves your device except for API calls to Discogs. Credentials, play history, and collection data are stored entirely in your browser.
 
 ## API Rate Limiting
 
@@ -338,8 +350,10 @@ The app is a static Angular application and can be deployed to:
 
 **Sync fails with authentication error:**
 
-- Verify your Discogs token is valid
-- Check that your username is correct in environment config
+- Verify your Discogs token is valid and hasn't expired
+- Check that your username is correct
+- Go to Menu > Advanced > Discogs Account to update your credentials
+- Generate a new token at [Discogs Developer Settings](https://www.discogs.com/settings/developers)
 
 **Collection not loading:**
 

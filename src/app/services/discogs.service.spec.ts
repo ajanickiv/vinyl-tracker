@@ -2,6 +2,7 @@ import { createServiceFactory, SpectatorService } from '@ngneat/spectator/jest';
 import { DiscogsService } from './discogs.service';
 import { DatabaseService } from './database.service';
 import { PlayHistoryService } from './play-history.service';
+import { CredentialsService } from './credentials.service';
 import { HttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { DiscogsCollectionResponse, DiscogsRelease } from '../models/discogs-api.model';
@@ -9,9 +10,28 @@ import { Release } from '../models/release.model';
 
 describe('DiscogsService', () => {
   let spectator: SpectatorService<DiscogsService>;
+  let mockCredentialsService: {
+    hasCredentials: jest.Mock;
+    getUsername: jest.Mock;
+    getToken: jest.Mock;
+  };
+
   const createService = createServiceFactory({
     service: DiscogsService,
     mocks: [HttpClient, DatabaseService, PlayHistoryService],
+    providers: [
+      {
+        provide: CredentialsService,
+        useFactory: () => {
+          mockCredentialsService = {
+            hasCredentials: jest.fn().mockReturnValue(true),
+            getUsername: jest.fn().mockReturnValue('testuser'),
+            getToken: jest.fn().mockReturnValue('testtoken'),
+          };
+          return mockCredentialsService;
+        },
+      },
+    ],
   });
 
   const mockDiscogsRelease: DiscogsRelease = {
@@ -19,14 +39,29 @@ describe('DiscogsService', () => {
     instance_id: 456,
     date_added: '2024-01-01T00:00:00Z',
     rating: 5,
-    notes: [{ value: 'Great album!' }],
+    notes: [{ value: 'Great album!', field_id: 1 }],
     basic_information: {
       id: 123,
       title: 'Test Album',
       year: 2020,
-      artists: [{ name: 'Test Artist', id: 1 }],
-      formats: [{ name: 'Vinyl', descriptions: ['LP', '12"'] }],
-      labels: [{ name: 'Test Label', id: 1 }],
+      master_id: 1000,
+      master_url: 'https://api.discogs.com/masters/1000',
+      resource_url: 'https://api.discogs.com/releases/123',
+      artists: [
+        {
+          name: 'Test Artist',
+          id: 1,
+          anv: '',
+          join: '',
+          role: '',
+          tracks: '',
+          resource_url: '',
+        },
+      ],
+      formats: [{ name: 'Vinyl', qty: '1', descriptions: ['LP', '12"'] }],
+      labels: [
+        { name: 'Test Label', id: 1, catno: '', entity_type: '', resource_url: '' },
+      ],
       genres: ['Rock'],
       styles: ['Alternative'],
       thumb: 'thumb.jpg',
@@ -107,6 +142,17 @@ describe('DiscogsService', () => {
   });
 
   describe('syncCollection', () => {
+    it('should return error when no credentials are configured', async () => {
+      const credentialsService = spectator.inject(CredentialsService);
+      credentialsService.hasCredentials.mockReturnValue(false);
+
+      const result = await spectator.service.syncCollection();
+
+      expect(result.success).toBe(false);
+      expect(result.totalSynced).toBe(0);
+      expect(result.error).toBe('No credentials configured');
+    });
+
     it('should sync single page collection successfully', async () => {
       const http = spectator.inject(HttpClient);
       const db = spectator.inject(DatabaseService);
