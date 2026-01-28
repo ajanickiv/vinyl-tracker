@@ -268,3 +268,51 @@
     border-radius: 0.125rem;
   }
 }
+
+// ==============================================
+// Form Input Patterns
+// ==============================================
+
+@mixin form-input($padding: 0.75rem 1rem, $font-size: 1rem) {
+  box-sizing: border-box;
+  width: 100%;
+  padding: $padding;
+  font-size: $font-size;
+  color: $text-primary;
+  background: $color-gray-800;
+  border: 1px solid $overlay-card-border;
+  border-radius: 0.5rem;
+  transition: border-color 0.2s ease;
+
+  &::placeholder {
+    color: $text-subdued;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary;
+  }
+}
+
+@mixin show-token-toggle($font-size: 0.875rem) {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  cursor: pointer;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+
+  input[type='checkbox'] {
+    width: 1rem;
+    height: 1rem;
+    accent-color: $color-primary;
+    cursor: pointer;
+  }
+
+  span {
+    font-size: $font-size;
+    color: $text-subdued;
+  }
+}

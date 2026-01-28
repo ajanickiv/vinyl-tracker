@@ -31,19 +31,18 @@
 
       <div class="form-group">
         <label for="token">Personal Access Token</label>
-        <div class="token-input-wrapper">
-          <input
-            [type]="showToken() ? 'text' : 'password'"
-            id="token"
-            [value]="token()"
-            (input)="onTokenChange($any($event.target).value)"
-            placeholder="Enter your personal access token"
-            autocomplete="current-password"
-          />
-          <button type="button" class="toggle-visibility" (click)="toggleShowToken()">
-            {{ showToken() ? 'Hide' : 'Show' }}
-          </button>
-        </div>
+        <input
+          [type]="showToken() ? 'text' : 'password'"
+          id="token"
+          [value]="token()"
+          (input)="onTokenChange($any($event.target).value)"
+          placeholder="Enter your personal access token"
+          autocomplete="current-password"
+        />
+        <label class="show-token-toggle">
+          <input type="checkbox" [checked]="showToken()" (change)="toggleShowToken()" />
+          <span>Show token</span>
+        </label>
       </div>
 
       @if (errorMessage()) {

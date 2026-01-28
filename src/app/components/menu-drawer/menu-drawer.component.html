@@ -155,22 +155,21 @@
                     </div>
                     <div class="form-group">
                       <label for="edit-token">Personal Access Token</label>
-                      <div class="token-input-wrapper">
+                      <input
+                        [type]="showEditToken() ? 'text' : 'password'"
+                        id="edit-token"
+                        [ngModel]="editToken()"
+                        (ngModelChange)="editToken.set($event)"
+                        placeholder="Enter new token"
+                      />
+                      <label class="show-token-toggle">
                         <input
-                          [type]="showEditToken() ? 'text' : 'password'"
-                          id="edit-token"
-                          [ngModel]="editToken()"
-                          (ngModelChange)="editToken.set($event)"
-                          placeholder="Enter new token"
+                          type="checkbox"
+                          [checked]="showEditToken()"
+                          (change)="toggleShowEditToken()"
                         />
-                        <button
-                          type="button"
-                          class="toggle-visibility"
-                          (click)="toggleShowEditToken()"
-                        >
-                          {{ showEditToken() ? 'Hide' : 'Show' }}
-                        </button>
-                      </div>
+                        <span>Show token</span>
+                      </label>
                     </div>
                     @if (credentialsMessage()) {
                       <p class="error-message">{{ credentialsMessage() }}</p>
