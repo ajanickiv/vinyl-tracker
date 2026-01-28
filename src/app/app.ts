@@ -9,8 +9,29 @@ import { CredentialsService } from './services/credentials.service';
   selector: 'app-root',
   standalone: true,
   imports: [SetupScreenComponent, SyncScreenComponent, VinylPlayerComponent],
+  styles: `
+    .loading-spinner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top-color: #1db954;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  `,
   template: `
-    @if (!hasCredentials()) {
+    @if (!isInitialized()) {
+      <div class="loading-spinner"><div class="spinner"></div></div>
+    } @else if (!hasCredentials()) {
       <app-setup-screen (setupComplete)="onSetupComplete()"></app-setup-screen>
     } @else if (hasSyncedData()) {
       <app-vinyl-player></app-vinyl-player>
@@ -20,6 +41,7 @@ import { CredentialsService } from './services/credentials.service';
   `,
 })
 export class AppComponent implements OnInit {
+  isInitialized = signal(false);
   hasCredentials = signal(false);
   hasSyncedData = signal(false);
 
@@ -35,6 +57,8 @@ export class AppComponent implements OnInit {
       const count = await this.db.getCollectionCount();
       this.hasSyncedData.set(count > 0);
     }
+
+    this.isInitialized.set(true);
   }
 
   async onSetupComplete() {

@@ -61,7 +61,9 @@ describe('AppComponent', () => {
     expect(spectator.component).toBeTruthy();
   });
 
-  it('should initialize with hasCredentials and hasSyncedData as false', () => {
+  it('should initialize with hasCredentials and hasSyncedData as false when no credentials exist', () => {
+    // Note: isInitialized is true because ngOnInit runs automatically during component creation
+    expect(spectator.component.isInitialized()).toBe(true);
     expect(spectator.component.hasCredentials()).toBe(false);
     expect(spectator.component.hasSyncedData()).toBe(false);
   });
@@ -116,6 +118,12 @@ describe('AppComponent', () => {
 
       expect(spectator.component.hasSyncedData()).toBe(false);
     });
+
+    it('should set isInitialized to true after initialization completes', async () => {
+      // ngOnInit runs automatically during component creation, so isInitialized is already true
+      // This test verifies the signal is set correctly after ngOnInit
+      expect(spectator.component.isInitialized()).toBe(true);
+    });
   });
 
   describe('onSetupComplete', () => {
@@ -159,7 +167,17 @@ describe('AppComponent', () => {
   });
 
   describe('template rendering', () => {
+    it('should display nothing when not initialized', () => {
+      spectator.component.isInitialized.set(false);
+      spectator.detectChanges();
+
+      expect(spectator.query('app-setup-screen')).toBeFalsy();
+      expect(spectator.query('app-sync-screen')).toBeFalsy();
+      expect(spectator.query('app-vinyl-player')).toBeFalsy();
+    });
+
     it('should display setup-screen when no credentials', () => {
+      spectator.component.isInitialized.set(true);
       spectator.component.hasCredentials.set(false);
       spectator.component.hasSyncedData.set(false);
       spectator.detectChanges();
@@ -170,6 +188,7 @@ describe('AppComponent', () => {
     });
 
     it('should display sync-screen when credentials exist but no data', () => {
+      spectator.component.isInitialized.set(true);
       spectator.component.hasCredentials.set(true);
       spectator.component.hasSyncedData.set(false);
       spectator.detectChanges();
@@ -180,6 +199,7 @@ describe('AppComponent', () => {
     });
 
     it('should display vinyl-player when credentials and data exist', () => {
+      spectator.component.isInitialized.set(true);
       spectator.component.hasCredentials.set(true);
       spectator.component.hasSyncedData.set(true);
       spectator.detectChanges();
