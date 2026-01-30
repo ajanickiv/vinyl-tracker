@@ -101,6 +101,29 @@
 }
 
 // ==============================================
+// Options Section
+// ==============================================
+
+.options-section {
+  @include card-panel(1rem);
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+@include toggle-switch;
+
+.toggle-label {
+  gap: 0.75rem;
+}
+
+.option-hint {
+  color: $text-subdued;
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+  line-height: 1.4;
+}
+
+// ==============================================
 // Sync Button
 // ==============================================
 

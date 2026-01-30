@@ -5,6 +5,7 @@ import { DatabaseService } from './services/database.service';
 import { CredentialsService } from './services/credentials.service';
 import { RecommendationService } from './services/recommendation.service';
 import { PlaybackService } from './services/playback.service';
+import { MasterReleaseService } from './services/master-release.service';
 import { SetupScreenComponent } from './components/setup-screen/setup-screen.component';
 import { SyncScreenComponent } from './components/sync-screen/sync-screen.component';
 import { VinylPlayerComponent } from './components/vinyl-player/vinyl-player.component';
@@ -19,7 +20,7 @@ describe('AppComponent', () => {
 
   const createComponent = createComponentFactory({
     component: AppComponent,
-    mocks: [DatabaseService, RecommendationService, PlaybackService],
+    mocks: [DatabaseService, RecommendationService, PlaybackService, MasterReleaseService],
     providers: [
       {
         provide: CredentialsService,

@@ -51,3 +51,10 @@ export interface DiscogsRelease {
     value: string;
   }[];
 }
+
+export interface DiscogsMasterRelease {
+  id: number;
+  year: number;
+  title: string;
+  resource_url: string;
+}

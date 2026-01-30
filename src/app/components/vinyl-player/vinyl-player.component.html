@@ -77,10 +77,26 @@
 
       <!-- Album Info -->
       <div class="album-info">
-        <h2 class="artist">{{ currentRelease()!.basicInfo.artists.join(', ') }}</h2>
+        <h2 class="artist">{{ currentRelease()!.basicInfo.artists | artistName }}</h2>
         <h3 class="title">{{ currentRelease()!.basicInfo.title }}</h3>
         <p class="meta">
-          {{ currentRelease()!.basicInfo.year }} • {{ getFormatString(currentRelease()!) }}
+          @if (
+            currentRelease()!.basicInfo.originalYear &&
+            currentRelease()!.basicInfo.year &&
+            currentRelease()!.basicInfo.originalYear !== currentRelease()!.basicInfo.year
+          ) {
+            {{ currentRelease()!.basicInfo.originalYear }} ({{
+              currentRelease()!.basicInfo.year
+            }}
+            pressing)
+          } @else if (currentRelease()!.basicInfo.originalYear) {
+            {{ currentRelease()!.basicInfo.originalYear }}
+          } @else if (currentRelease()!.basicInfo.year) {
+            {{ currentRelease()!.basicInfo.year }}
+          } @else {
+            Unknown year
+          }
+          • {{ getFormatString(currentRelease()!) }}
         </p>
       </div>
 
@@ -108,6 +124,16 @@
           Skip / Get Another
         </button>
       </div>
+
+      <!-- Master Release Fetch Progress -->
+      @if (masterFetchInProgress()) {
+        <div class="master-fetch-progress">
+          <span class="progress-text">Fetching release dates...</span>
+          <span class="progress-count"
+            >{{ masterFetchProgress().total - masterFetchProgress().completed }} remaining</span
+          >
+        </div>
+      }
     </div>
   } @else {
     <div class="empty-state">

@@ -14,6 +14,7 @@ describe('DiscogsService', () => {
     hasCredentials: jest.Mock;
     getUsername: jest.Mock;
     getToken: jest.Mock;
+    clearCredentials: jest.Mock;
   };
 
   const createService = createServiceFactory({
@@ -27,6 +28,7 @@ describe('DiscogsService', () => {
             hasCredentials: jest.fn().mockReturnValue(true),
             getUsername: jest.fn().mockReturnValue('testuser'),
             getToken: jest.fn().mockReturnValue('testtoken'),
+            clearCredentials: jest.fn(),
           };
           return mockCredentialsService;
         },
@@ -59,9 +61,7 @@ describe('DiscogsService', () => {
         },
       ],
       formats: [{ name: 'Vinyl', qty: '1', descriptions: ['LP', '12"'] }],
-      labels: [
-        { name: 'Test Label', id: 1, catno: '', entity_type: '', resource_url: '' },
-      ],
+      labels: [{ name: 'Test Label', id: 1, catno: '', entity_type: '', resource_url: '' }],
       genres: ['Rock'],
       styles: ['Alternative'],
       thumb: 'thumb.jpg',
@@ -107,6 +107,15 @@ describe('DiscogsService', () => {
       expect(playHistoryService.clearHistory).toHaveBeenCalled();
     });
 
+    it('should clear credentials', async () => {
+      const db = spectator.inject(DatabaseService);
+      db.clearAllData.mockResolvedValue(undefined);
+
+      await spectator.service.clearSyncedData();
+
+      expect(mockCredentialsService.clearCredentials).toHaveBeenCalled();
+    });
+
     it('should log confirmation message', async () => {
       const db = spectator.inject(DatabaseService);
       db.clearAllData.mockResolvedValue(undefined);
@@ -115,7 +124,7 @@ describe('DiscogsService', () => {
 
       await spectator.service.clearSyncedData();
 
-      expect(consoleSpy).toHaveBeenCalledWith('All synced data cleared');
+      expect(consoleSpy).toHaveBeenCalledWith('All synced data and credentials cleared');
 
       consoleSpy.mockRestore();
     });

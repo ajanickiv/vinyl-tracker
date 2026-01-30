@@ -21,6 +21,25 @@
         </ul>
       </div>
 
+      <div class="options-section">
+        <label class="toggle-label">
+          <button
+            class="toggle-button"
+            [class.active]="fetchReleaseDates()"
+            (click)="toggleFetchReleaseDates()"
+          >
+            <span class="toggle-track">
+              <span class="toggle-thumb"></span>
+            </span>
+          </button>
+          <span class="toggle-text">Fetch original release dates</span>
+        </label>
+        <p class="option-hint">
+          Retrieves original release years from Discogs. Disable for large collections to speed up
+          sync.
+        </p>
+      </div>
+
       <button class="sync-button" (click)="startSync()">
         <span class="button-icon">♫</span>
         Sync from Discogs

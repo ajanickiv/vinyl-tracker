@@ -5,6 +5,8 @@ export interface Release {
     title: string;
     artists: string[];
     year?: number;
+    masterId?: number; // Discogs master release ID
+    originalYear?: number; // Original release year from master
     formats: string[];
     thumb?: string;
     coverImage?: string;

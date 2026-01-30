@@ -297,6 +297,30 @@
 }
 
 // ==============================================
+// Master Fetch Progress
+// ==============================================
+
+.master-fetch-progress {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  color: $text-muted;
+}
+
+.progress-text {
+  opacity: 0.8;
+}
+
+.progress-count {
+  font-weight: 500;
+  color: $color-primary;
+}
+
+// ==============================================
 // Animations
 // ==============================================
 
