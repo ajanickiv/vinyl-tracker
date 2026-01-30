@@ -5,6 +5,7 @@ import { PlayHistoryService } from '../../services/play-history.service';
 import { DatabaseService } from '../../services/database.service';
 import { Release } from '../../models/release.model';
 import { PlayHistoryEntry } from '../../models/play-history.model';
+import { ArtistNamePipe } from '../../pipes/artist-name.pipe';
 
 export interface HistoryDisplayItem {
   entry: PlayHistoryEntry;
@@ -14,7 +15,7 @@ export interface HistoryDisplayItem {
 @Component({
   selector: 'app-play-history-sheet',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ArtistNamePipe],
   templateUrl: './play-history-sheet.component.html',
   styleUrls: ['./play-history-sheet.component.scss'],
 })

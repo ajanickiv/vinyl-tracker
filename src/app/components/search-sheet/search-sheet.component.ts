@@ -5,11 +5,12 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { DatabaseService } from '../../services/database.service';
 import { Release } from '../../models/release.model';
+import { ArtistNamePipe } from '../../pipes/artist-name.pipe';
 
 @Component({
   selector: 'app-search-sheet',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ArtistNamePipe],
   templateUrl: './search-sheet.component.html',
   styleUrls: ['./search-sheet.component.scss'],
 })

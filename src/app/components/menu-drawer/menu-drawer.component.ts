@@ -1,4 +1,4 @@
-import { Component, signal, input, output, OnDestroy, isDevMode } from '@angular/core';
+import { Component, signal, input, output, OnDestroy, isDevMode, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -9,15 +9,17 @@ import { PlaybackService } from '../../services/playback.service';
 import { FilterService } from '../../services/filter.service';
 import { PlayStatsExportService } from '../../services/play-stats-export.service';
 import { CredentialsService } from '../../services/credentials.service';
+import { MasterReleaseService } from '../../services/master-release.service';
 import { CollectionStats } from '../../models/collection-stats.model';
 import { ImportMode } from '../../models/play-stats-export.model';
+import { ArtistNamePipe } from '../../pipes/artist-name.pipe';
 import { SYNC_MESSAGE_DISPLAY_MS } from '../../constants/timing.constants';
 import { APP_VERSION } from '../../constants/app.constants';
 
 @Component({
   selector: 'app-menu-drawer',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ArtistNamePipe],
   templateUrl: './menu-drawer.component.html',
   styleUrls: ['./menu-drawer.component.scss'],
 })
@@ -31,6 +33,7 @@ export class MenuDrawerComponent implements OnDestroy {
   // Filter-related signals
   availableGenres = signal<string[]>([]);
   availableDecades = signal<string[]>([]);
+  availableOriginalDecades = signal<string[]>([]);
 
   // Export/Import signals
   exporting = signal(false);
@@ -47,6 +50,9 @@ export class MenuDrawerComponent implements OnDestroy {
   editToken = signal('');
   showEditToken = signal(false);
   credentialsMessage = signal('');
+
+  // Master release sync setting
+  masterReleaseSyncEnabled = signal(true);
 
   readonly isDevMode = isDevMode();
   readonly appVersion = APP_VERSION;
@@ -65,12 +71,21 @@ export class MenuDrawerComponent implements OnDestroy {
     public filterService: FilterService,
     private playStatsExportService: PlayStatsExportService,
     public credentialsService: CredentialsService,
+    private masterReleaseService: MasterReleaseService,
   ) {
     this.loadMenuData();
 
     // Subscribe to stats updates to refresh when plays change
     this.playbackService.statsUpdated$.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.refreshCollectionStats();
+    });
+
+    // Reload filter options and settings when drawer opens
+    effect(() => {
+      if (this.isOpen()) {
+        this.loadFilterOptions();
+        this.loadMasterReleaseSyncSetting();
+      }
     });
   }
 
@@ -139,7 +154,7 @@ export class MenuDrawerComponent implements OnDestroy {
         });
         this.availableGenres.set([...genreSet].sort());
 
-        // Extract unique decades
+        // Extract unique decades (pressing year)
         const decadeSet = new Set<string>();
         releases.forEach((r) => {
           if (r.basicInfo.year) {
@@ -148,6 +163,18 @@ export class MenuDrawerComponent implements OnDestroy {
           }
         });
         this.availableDecades.set([...decadeSet].sort((a, b) => parseInt(a) - parseInt(b)));
+
+        // Extract unique original decades (from master release)
+        const originalDecadeSet = new Set<string>();
+        releases.forEach((r) => {
+          if (r.basicInfo.originalYear) {
+            const decade = Math.floor(r.basicInfo.originalYear / 10) * 10;
+            originalDecadeSet.add(`${decade}s`);
+          }
+        });
+        this.availableOriginalDecades.set(
+          [...originalDecadeSet].sort((a, b) => parseInt(a) - parseInt(b)),
+        );
       })
       .catch((error) => {
         console.error('Failed to load filter options:', error);
@@ -178,34 +205,45 @@ export class MenuDrawerComponent implements OnDestroy {
     return this.filterService.filters().decades.includes(decade);
   }
 
+  toggleOriginalDecade(decade: string): void {
+    this.filterService.toggleOriginalDecade(decade);
+    this.filtersChanged.emit();
+  }
+
+  isOriginalDecadeSelected(decade: string): boolean {
+    return this.filterService.filters().originalDecades.includes(decade);
+  }
+
   onBackdropClick() {
     this.closeDrawer();
   }
 
-  resync(): void {
+  async resync(): Promise<void> {
     this.syncing.set(true);
     this.syncMessage.set('Syncing...');
 
-    this.discogsService
-      .syncCollection()
-      .then((result) => {
-        if (result.success) {
-          this.syncMessage.set(`✅ Synced ${result.totalSynced} releases!`);
-          this.loadMenuData();
-        } else {
-          this.syncMessage.set(`❌ Sync failed: ${result.error}`);
+    try {
+      const result = await this.discogsService.syncCollection();
+      if (result.success) {
+        this.syncMessage.set(`✅ Synced ${result.totalSynced} releases!`);
+        this.loadMenuData();
+
+        // Start background fetch of master release data if enabled
+        if (this.masterReleaseSyncEnabled()) {
+          await this.masterReleaseService.startBackgroundFetch();
         }
-      })
-      .catch((error) => {
-        console.error('Sync error:', error);
-        this.syncMessage.set('❌ Sync failed: Unexpected error');
-      })
-      .finally(() => {
-        setTimeout(() => {
-          this.syncing.set(false);
-          this.syncMessage.set('');
-        }, SYNC_MESSAGE_DISPLAY_MS);
-      });
+      } else {
+        this.syncMessage.set(`❌ Sync failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Sync error:', error);
+      this.syncMessage.set('❌ Sync failed: Unexpected error');
+    } finally {
+      setTimeout(() => {
+        this.syncing.set(false);
+        this.syncMessage.set('');
+      }, SYNC_MESSAGE_DISPLAY_MS);
+    }
   }
 
   clearData(): void {
@@ -334,5 +372,17 @@ export class MenuDrawerComponent implements OnDestroy {
 
   toggleShowEditToken(): void {
     this.showEditToken.update((v) => !v);
+  }
+
+  private loadMasterReleaseSyncSetting(): void {
+    this.db.isMasterReleaseSyncEnabled().then((enabled) => {
+      this.masterReleaseSyncEnabled.set(enabled);
+    });
+  }
+
+  toggleMasterReleaseSync(): void {
+    const newValue = !this.masterReleaseSyncEnabled();
+    this.masterReleaseSyncEnabled.set(newValue);
+    this.db.setMasterReleaseSyncEnabled(newValue);
   }
 }

@@ -45,10 +45,20 @@
                 }
               </div>
               <div class="result-info">
-                <p class="result-artist">{{ release.basicInfo.artists.join(', ') }}</p>
+                <p class="result-artist">{{ release.basicInfo.artists | artistName }}</p>
                 <p class="result-title">{{ release.basicInfo.title }}</p>
                 <p class="result-meta">
-                  {{ release.basicInfo.year || 'Unknown year' }}
+                  @if (
+                    release.basicInfo.originalYear &&
+                    release.basicInfo.year &&
+                    release.basicInfo.originalYear !== release.basicInfo.year
+                  ) {
+                    {{ release.basicInfo.originalYear }} ({{ release.basicInfo.year }})
+                  } @else if (release.basicInfo.originalYear) {
+                    {{ release.basicInfo.originalYear }}
+                  } @else {
+                    {{ release.basicInfo.year || 'Unknown year' }}
+                  }
                   @if (release.playCount > 0) {
                     <span class="play-count">{{ release.playCount }} plays</span>
                   }

@@ -210,6 +210,245 @@ describe('DatabaseService', () => {
     });
   });
 
+  describe('getReleasesNeedingMasterData', () => {
+    it('should return releases with masterId but no originalYear', async () => {
+      const releaseNeedingData = {
+        ...mockRelease,
+        basicInfo: {
+          ...mockRelease.basicInfo,
+          masterId: 1000,
+          originalYear: undefined,
+        },
+      };
+      (service.releases.toArray as jest.Mock).mockResolvedValue([releaseNeedingData]);
+
+      const result = await service.getReleasesNeedingMasterData();
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual(releaseNeedingData);
+    });
+
+    it('should filter out releases without masterId', async () => {
+      const releaseWithoutMasterId = {
+        ...mockRelease,
+        basicInfo: {
+          ...mockRelease.basicInfo,
+          masterId: undefined,
+          originalYear: undefined,
+        },
+      };
+      (service.releases.toArray as jest.Mock).mockResolvedValue([releaseWithoutMasterId]);
+
+      const result = await service.getReleasesNeedingMasterData();
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should filter out releases that already have originalYear', async () => {
+      const releaseWithOriginalYear = {
+        ...mockRelease,
+        basicInfo: {
+          ...mockRelease.basicInfo,
+          masterId: 1000,
+          originalYear: 1985,
+        },
+      };
+      (service.releases.toArray as jest.Mock).mockResolvedValue([releaseWithOriginalYear]);
+
+      const result = await service.getReleasesNeedingMasterData();
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should return empty array when no releases need data', async () => {
+      (service.releases.toArray as jest.Mock).mockResolvedValue([]);
+
+      const result = await service.getReleasesNeedingMasterData();
+
+      expect(result).toEqual([]);
+    });
+
+    it('should handle mix of releases needing and not needing data', async () => {
+      const releaseNeedingData = {
+        ...mockRelease,
+        id: 1,
+        basicInfo: { ...mockRelease.basicInfo, masterId: 1000, originalYear: undefined },
+      };
+      const releaseWithData = {
+        ...mockRelease,
+        id: 2,
+        basicInfo: { ...mockRelease.basicInfo, masterId: 1001, originalYear: 1990 },
+      };
+      const releaseNoMaster = {
+        ...mockRelease,
+        id: 3,
+        basicInfo: { ...mockRelease.basicInfo, masterId: undefined },
+      };
+
+      (service.releases.toArray as jest.Mock).mockResolvedValue([
+        releaseNeedingData,
+        releaseWithData,
+        releaseNoMaster,
+      ]);
+
+      const result = await service.getReleasesNeedingMasterData();
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(1);
+    });
+  });
+
+  describe('getReleasesWithOriginalYearCount', () => {
+    it('should count releases with originalYear populated', async () => {
+      const releaseWithYear = {
+        ...mockRelease,
+        basicInfo: { ...mockRelease.basicInfo, originalYear: 1985 },
+      };
+      (service.releases.toArray as jest.Mock).mockResolvedValue([releaseWithYear]);
+
+      const result = await service.getReleasesWithOriginalYearCount();
+
+      expect(result).toBe(1);
+    });
+
+    it('should return 0 when no releases have originalYear', async () => {
+      const releaseWithoutYear = {
+        ...mockRelease,
+        basicInfo: { ...mockRelease.basicInfo, originalYear: undefined },
+      };
+      (service.releases.toArray as jest.Mock).mockResolvedValue([releaseWithoutYear]);
+
+      const result = await service.getReleasesWithOriginalYearCount();
+
+      expect(result).toBe(0);
+    });
+
+    it('should return 0 for empty collection', async () => {
+      (service.releases.toArray as jest.Mock).mockResolvedValue([]);
+
+      const result = await service.getReleasesWithOriginalYearCount();
+
+      expect(result).toBe(0);
+    });
+
+    it('should count only releases with non-null originalYear', async () => {
+      const releases = [
+        { ...mockRelease, id: 1, basicInfo: { ...mockRelease.basicInfo, originalYear: 1985 } },
+        { ...mockRelease, id: 2, basicInfo: { ...mockRelease.basicInfo, originalYear: null } },
+        { ...mockRelease, id: 3, basicInfo: { ...mockRelease.basicInfo, originalYear: 1990 } },
+        { ...mockRelease, id: 4, basicInfo: { ...mockRelease.basicInfo, originalYear: undefined } },
+      ];
+      (service.releases.toArray as jest.Mock).mockResolvedValue(releases);
+
+      const result = await service.getReleasesWithOriginalYearCount();
+
+      expect(result).toBe(2);
+    });
+  });
+
+  describe('getMetadata', () => {
+    it('should return metadata value when key exists', async () => {
+      (service.metadata.get as jest.Mock).mockResolvedValue({
+        key: 'testKey',
+        value: 'testValue',
+      });
+
+      const result = await service.getMetadata('testKey');
+
+      expect(service.metadata.get).toHaveBeenCalledWith('testKey');
+      expect(result).toBe('testValue');
+    });
+
+    it('should return null when key does not exist', async () => {
+      (service.metadata.get as jest.Mock).mockResolvedValue(undefined);
+
+      const result = await service.getMetadata('nonExistentKey');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('setMetadata', () => {
+    it('should store metadata with key and value', async () => {
+      (service.metadata.put as jest.Mock).mockResolvedValue('testKey');
+
+      await service.setMetadata('testKey', 'testValue');
+
+      expect(service.metadata.put).toHaveBeenCalledWith({
+        key: 'testKey',
+        value: 'testValue',
+      });
+    });
+
+    it('should overwrite existing metadata', async () => {
+      (service.metadata.put as jest.Mock).mockResolvedValue('existingKey');
+
+      await service.setMetadata('existingKey', 'newValue');
+
+      expect(service.metadata.put).toHaveBeenCalledWith({
+        key: 'existingKey',
+        value: 'newValue',
+      });
+    });
+  });
+
+  describe('isMasterReleaseSyncEnabled', () => {
+    it('should return true when setting is not set (default)', async () => {
+      (service.metadata.get as jest.Mock).mockResolvedValue(undefined);
+
+      const result = await service.isMasterReleaseSyncEnabled();
+
+      expect(service.metadata.get).toHaveBeenCalledWith('masterReleaseSyncEnabled');
+      expect(result).toBe(true);
+    });
+
+    it('should return true when setting is "true"', async () => {
+      (service.metadata.get as jest.Mock).mockResolvedValue({
+        key: 'masterReleaseSyncEnabled',
+        value: 'true',
+      });
+
+      const result = await service.isMasterReleaseSyncEnabled();
+
+      expect(result).toBe(true);
+    });
+
+    it('should return false when setting is "false"', async () => {
+      (service.metadata.get as jest.Mock).mockResolvedValue({
+        key: 'masterReleaseSyncEnabled',
+        value: 'false',
+      });
+
+      const result = await service.isMasterReleaseSyncEnabled();
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('setMasterReleaseSyncEnabled', () => {
+    it('should store true as string', async () => {
+      (service.metadata.put as jest.Mock).mockResolvedValue('masterReleaseSyncEnabled');
+
+      await service.setMasterReleaseSyncEnabled(true);
+
+      expect(service.metadata.put).toHaveBeenCalledWith({
+        key: 'masterReleaseSyncEnabled',
+        value: 'true',
+      });
+    });
+
+    it('should store false as string', async () => {
+      (service.metadata.put as jest.Mock).mockResolvedValue('masterReleaseSyncEnabled');
+
+      await service.setMasterReleaseSyncEnabled(false);
+
+      expect(service.metadata.put).toHaveBeenCalledWith({
+        key: 'masterReleaseSyncEnabled',
+        value: 'false',
+      });
+    });
+  });
+
   describe('method integration', () => {
     it('should handle add and get flow', async () => {
       (service.releases.add as jest.Mock).mockResolvedValue(123);

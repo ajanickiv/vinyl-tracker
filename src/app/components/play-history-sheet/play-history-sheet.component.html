@@ -42,7 +42,7 @@
                   }
                 </div>
                 <div class="item-info">
-                  <p class="item-artist">{{ item.release.basicInfo.artists.join(', ') }}</p>
+                  <p class="item-artist">{{ item.release.basicInfo.artists | artistName }}</p>
                   <p class="item-title">{{ item.release.basicInfo.title }}</p>
                   <p class="item-time">{{ getRelativeTime(item.entry.playedAt) }}</p>
                 </div>

@@ -48,10 +48,28 @@
             </div>
           }
 
-          <!-- Decade Chips -->
+          <!-- Original Decade Chips (from Master Release) -->
+          @if (availableOriginalDecades().length > 0) {
+            <div class="filter-group">
+              <p class="filter-label">Release Decade</p>
+              <div class="chip-container">
+                @for (decade of availableOriginalDecades(); track decade) {
+                  <button
+                    class="chip"
+                    [class.selected]="isOriginalDecadeSelected(decade)"
+                    (click)="toggleOriginalDecade(decade)"
+                  >
+                    {{ decade }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Decade Chips (Pressing Year) -->
           @if (availableDecades().length > 0) {
             <div class="filter-group">
-              <p class="filter-label">Decades</p>
+              <p class="filter-label">Pressing Decade</p>
               <div class="chip-container">
                 @for (decade of availableDecades(); track decade) {
                   <button
@@ -108,7 +126,7 @@
               <div class="album-highlight">
                 <p class="album-title">{{ mostPlayed.basicInfo.title }}</p>
                 <p class="album-artist">
-                  {{ mostPlayed.basicInfo.artists.join(', ') }}
+                  {{ mostPlayed.basicInfo.artists | artistName }}
                 </p>
                 <p class="play-count">{{ mostPlayed.playCount }} plays</p>
               </div>
@@ -199,6 +217,26 @@
                 @if (syncMessage()) {
                   <p class="sync-message">{{ syncMessage() }}</p>
                 }
+
+                <!-- Master Release Sync Toggle -->
+                <div class="master-sync-toggle">
+                  <label class="toggle-label">
+                    <span class="toggle-text">Fetch original release dates</span>
+                    <button
+                      class="toggle-button"
+                      [class.active]="masterReleaseSyncEnabled()"
+                      (click)="toggleMasterReleaseSync()"
+                    >
+                      <span class="toggle-track">
+                        <span class="toggle-thumb"></span>
+                      </span>
+                    </button>
+                  </label>
+                  <p class="master-sync-hint">
+                    Retrieves original release years from Discogs in the background. Disable for
+                    large collections.
+                  </p>
+                </div>
               </div>
             </div>
 

@@ -1,19 +1,27 @@
-import { Component, signal, OnDestroy, ViewChild } from '@angular/core';
+import { Component, signal, OnDestroy, ViewChild, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subject, of, timer } from 'rxjs';
 import { takeUntil, tap, catchError, switchMap } from 'rxjs/operators';
 import { RecommendationService } from '../../services/recommendation.service';
 import { PlaybackService } from '../../services/playback.service';
+import { MasterReleaseService } from '../../services/master-release.service';
 import { Release } from '../../models/release.model';
 import { MenuDrawerComponent } from '../menu-drawer/menu-drawer.component';
 import { SearchSheetComponent } from '../search-sheet/search-sheet.component';
 import { PlayHistorySheetComponent } from '../play-history-sheet/play-history-sheet.component';
+import { ArtistNamePipe } from '../../pipes/artist-name.pipe';
 import { SPIN_ANIMATION_DURATION_MS } from '../../constants/timing.constants';
 
 @Component({
   selector: 'app-vinyl-player',
   standalone: true,
-  imports: [CommonModule, MenuDrawerComponent, SearchSheetComponent, PlayHistorySheetComponent],
+  imports: [
+    CommonModule,
+    MenuDrawerComponent,
+    SearchSheetComponent,
+    PlayHistorySheetComponent,
+    ArtistNamePipe,
+  ],
   templateUrl: './vinyl-player.component.html',
   styleUrls: ['./vinyl-player.component.scss'],
 })
@@ -29,9 +37,14 @@ export class VinylPlayerComponent implements OnDestroy {
 
   private destroy$ = new Subject<void>();
 
+  // Expose master fetch progress to template
+  masterFetchInProgress = computed(() => this.masterReleaseService.isInProgress());
+  masterFetchProgress = computed(() => this.masterReleaseService.progress());
+
   constructor(
     private recommendationService: RecommendationService,
     private playbackService: PlaybackService,
+    private masterReleaseService: MasterReleaseService,
   ) {
     this.loadInitialRecommendation();
   }

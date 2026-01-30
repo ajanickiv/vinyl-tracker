@@ -7,8 +7,12 @@ import { DatabaseService } from '../../services/database.service';
 import { DiscogsService } from '../../services/discogs.service';
 import { PlaybackService } from '../../services/playback.service';
 import { FilterService } from '../../services/filter.service';
+import { CredentialsService } from '../../services/credentials.service';
+import { PlayStatsExportService } from '../../services/play-stats-export.service';
+import { MasterReleaseService } from '../../services/master-release.service';
 import { CollectionStats } from '../../models/collection-stats.model';
 import { DEFAULT_FILTERS } from '../../models/filter.model';
+import { SYNC_MESSAGE_DISPLAY_MS } from '../../constants/timing.constants';
 
 describe('MenuDrawerComponent', () => {
   let spectator: Spectator<MenuDrawerComponent>;
@@ -18,6 +22,8 @@ describe('MenuDrawerComponent', () => {
     getAllReleases: jest.Mock;
     getRelease: jest.Mock;
     updateRelease: jest.Mock;
+    isMasterReleaseSyncEnabled: jest.Mock;
+    setMasterReleaseSyncEnabled: jest.Mock;
   };
   let mockPlaybackService: {
     getCollectionStats: jest.Mock;
@@ -34,6 +40,21 @@ describe('MenuDrawerComponent', () => {
     setExcludeBoxSets: jest.Mock;
     toggleGenre: jest.Mock;
     toggleDecade: jest.Mock;
+  };
+  let mockCredentialsService: {
+    getUsername: jest.Mock;
+    getToken: jest.Mock;
+    setCredentials: jest.Mock;
+    hasCredentials: jest.Mock;
+  };
+  let mockPlayStatsExportService: {
+    exportToFile: jest.Mock;
+    validateImportFile: jest.Mock;
+    importFromData: jest.Mock;
+  };
+  let mockMasterReleaseService: {
+    startBackgroundFetch: jest.Mock;
+    resumeIfNeeded: jest.Mock;
   };
 
   const createComponent = createComponentFactory({
@@ -56,6 +77,8 @@ describe('MenuDrawerComponent', () => {
       getAllReleases: jest.fn().mockResolvedValue([]),
       getRelease: jest.fn().mockResolvedValue(null),
       updateRelease: jest.fn().mockResolvedValue(undefined),
+      isMasterReleaseSyncEnabled: jest.fn().mockResolvedValue(true),
+      setMasterReleaseSyncEnabled: jest.fn().mockResolvedValue(undefined),
     };
 
     mockPlaybackService = {
@@ -77,6 +100,26 @@ describe('MenuDrawerComponent', () => {
       toggleDecade: jest.fn(),
     };
 
+    mockCredentialsService = {
+      getUsername: jest.fn().mockReturnValue('testuser'),
+      getToken: jest.fn().mockReturnValue('testtoken'),
+      setCredentials: jest.fn(),
+      hasCredentials: jest.fn().mockReturnValue(true),
+    };
+
+    mockPlayStatsExportService = {
+      exportToFile: jest.fn().mockResolvedValue(undefined),
+      validateImportFile: jest.fn().mockReturnValue({ valid: true, data: {} }),
+      importFromData: jest
+        .fn()
+        .mockResolvedValue({ success: true, imported: 0, skipped: 0, errors: [] }),
+    };
+
+    mockMasterReleaseService = {
+      startBackgroundFetch: jest.fn().mockResolvedValue(undefined),
+      resumeIfNeeded: jest.fn().mockResolvedValue(undefined),
+    };
+
     spectator = createComponent({
       props: {
         isOpen: false,
@@ -86,6 +129,9 @@ describe('MenuDrawerComponent', () => {
         { provide: PlaybackService, useValue: mockPlaybackService },
         { provide: DiscogsService, useValue: mockDiscogsService },
         { provide: FilterService, useValue: mockFilterService },
+        { provide: CredentialsService, useValue: mockCredentialsService },
+        { provide: PlayStatsExportService, useValue: mockPlayStatsExportService },
+        { provide: MasterReleaseService, useValue: mockMasterReleaseService },
       ],
     });
   });
@@ -444,6 +490,62 @@ describe('MenuDrawerComponent', () => {
       consoleSpy.mockRestore();
       jest.useRealTimers();
     });
+
+    it('should start master release fetch after successful sync when enabled', async () => {
+      jest.useFakeTimers();
+      mockDiscogsService.syncCollection.mockResolvedValue({
+        success: true,
+        totalSynced: 100,
+      });
+      mockDatabaseService.getLastSyncDate.mockResolvedValue(new Date());
+      mockPlaybackService.getCollectionStats.mockReturnValue(of(mockStats));
+      spectator.component.masterReleaseSyncEnabled.set(true);
+
+      spectator.component.resync();
+
+      await jest.runAllTimersAsync();
+
+      expect(mockMasterReleaseService.startBackgroundFetch).toHaveBeenCalled();
+
+      jest.useRealTimers();
+    });
+
+    it('should not start master release fetch after successful sync when disabled', async () => {
+      jest.useFakeTimers();
+      mockDiscogsService.syncCollection.mockResolvedValue({
+        success: true,
+        totalSynced: 100,
+      });
+      mockDatabaseService.getLastSyncDate.mockResolvedValue(new Date());
+      mockPlaybackService.getCollectionStats.mockReturnValue(of(mockStats));
+      spectator.component.masterReleaseSyncEnabled.set(false);
+
+      spectator.component.resync();
+
+      await jest.runAllTimersAsync();
+
+      expect(mockMasterReleaseService.startBackgroundFetch).not.toHaveBeenCalled();
+
+      jest.useRealTimers();
+    });
+
+    it('should not start master release fetch on failed sync even when enabled', async () => {
+      jest.useFakeTimers();
+      mockDiscogsService.syncCollection.mockResolvedValue({
+        success: false,
+        totalSynced: 0,
+        error: 'Network error',
+      });
+      spectator.component.masterReleaseSyncEnabled.set(true);
+
+      spectator.component.resync();
+
+      await jest.runAllTimersAsync();
+
+      expect(mockMasterReleaseService.startBackgroundFetch).not.toHaveBeenCalled();
+
+      jest.useRealTimers();
+    });
   });
 
   describe('loadMenuData error handling', () => {
@@ -781,6 +883,569 @@ describe('MenuDrawerComponent', () => {
 
       expect(playbackService.getCollectionStats).toHaveBeenCalled();
       expect(spectator.component.collectionStats()).toEqual(newStats);
+    });
+  });
+
+  describe('credentials editing', () => {
+    it('should initialize editingCredentials as false', () => {
+      expect(spectator.component.editingCredentials()).toBe(false);
+    });
+
+    describe('startEditCredentials', () => {
+      it('should set editingCredentials to true', () => {
+        spectator.component.startEditCredentials();
+
+        expect(spectator.component.editingCredentials()).toBe(true);
+      });
+
+      it('should populate editUsername from credentials service', () => {
+        mockCredentialsService.getUsername.mockReturnValue('existinguser');
+
+        spectator.component.startEditCredentials();
+
+        expect(spectator.component.editUsername()).toBe('existinguser');
+      });
+
+      it('should clear editToken', () => {
+        spectator.component.editToken.set('oldtoken');
+
+        spectator.component.startEditCredentials();
+
+        expect(spectator.component.editToken()).toBe('');
+      });
+
+      it('should reset showEditToken to false', () => {
+        spectator.component.showEditToken.set(true);
+
+        spectator.component.startEditCredentials();
+
+        expect(spectator.component.showEditToken()).toBe(false);
+      });
+
+      it('should clear credentialsMessage', () => {
+        spectator.component.credentialsMessage.set('Previous message');
+
+        spectator.component.startEditCredentials();
+
+        expect(spectator.component.credentialsMessage()).toBe('');
+      });
+
+      it('should handle null username from credentials service', () => {
+        mockCredentialsService.getUsername.mockReturnValue(null);
+
+        spectator.component.startEditCredentials();
+
+        expect(spectator.component.editUsername()).toBe('');
+      });
+    });
+
+    describe('cancelEditCredentials', () => {
+      it('should set editingCredentials to false', () => {
+        spectator.component.editingCredentials.set(true);
+
+        spectator.component.cancelEditCredentials();
+
+        expect(spectator.component.editingCredentials()).toBe(false);
+      });
+
+      it('should clear editUsername', () => {
+        spectator.component.editUsername.set('someuser');
+
+        spectator.component.cancelEditCredentials();
+
+        expect(spectator.component.editUsername()).toBe('');
+      });
+
+      it('should clear editToken', () => {
+        spectator.component.editToken.set('sometoken');
+
+        spectator.component.cancelEditCredentials();
+
+        expect(spectator.component.editToken()).toBe('');
+      });
+
+      it('should clear credentialsMessage', () => {
+        spectator.component.credentialsMessage.set('Some message');
+
+        spectator.component.cancelEditCredentials();
+
+        expect(spectator.component.credentialsMessage()).toBe('');
+      });
+    });
+
+    describe('saveCredentials', () => {
+      it('should show error when username is empty', () => {
+        spectator.component.editUsername.set('');
+        spectator.component.editToken.set('validtoken');
+
+        spectator.component.saveCredentials();
+
+        expect(spectator.component.credentialsMessage()).toBe('Username is required');
+        expect(mockCredentialsService.setCredentials).not.toHaveBeenCalled();
+      });
+
+      it('should show error when username is whitespace only', () => {
+        spectator.component.editUsername.set('   ');
+        spectator.component.editToken.set('validtoken');
+
+        spectator.component.saveCredentials();
+
+        expect(spectator.component.credentialsMessage()).toBe('Username is required');
+      });
+
+      it('should show error when token is empty', () => {
+        spectator.component.editUsername.set('validuser');
+        spectator.component.editToken.set('');
+
+        spectator.component.saveCredentials();
+
+        expect(spectator.component.credentialsMessage()).toBe('Token is required');
+        expect(mockCredentialsService.setCredentials).not.toHaveBeenCalled();
+      });
+
+      it('should show error when token is whitespace only', () => {
+        spectator.component.editUsername.set('validuser');
+        spectator.component.editToken.set('   ');
+
+        spectator.component.saveCredentials();
+
+        expect(spectator.component.credentialsMessage()).toBe('Token is required');
+      });
+
+      it('should save credentials when both fields are valid', () => {
+        spectator.component.editUsername.set('newuser');
+        spectator.component.editToken.set('newtoken');
+
+        spectator.component.saveCredentials();
+
+        expect(mockCredentialsService.setCredentials).toHaveBeenCalledWith({
+          username: 'newuser',
+          token: 'newtoken',
+        });
+      });
+
+      it('should trim whitespace from username and token', () => {
+        spectator.component.editUsername.set('  newuser  ');
+        spectator.component.editToken.set('  newtoken  ');
+
+        spectator.component.saveCredentials();
+
+        expect(mockCredentialsService.setCredentials).toHaveBeenCalledWith({
+          username: 'newuser',
+          token: 'newtoken',
+        });
+      });
+
+      it('should show success message after saving', () => {
+        spectator.component.editUsername.set('newuser');
+        spectator.component.editToken.set('newtoken');
+
+        spectator.component.saveCredentials();
+
+        expect(spectator.component.credentialsMessage()).toBe('Credentials saved!');
+      });
+
+      it('should set editingCredentials to false after saving', () => {
+        spectator.component.editingCredentials.set(true);
+        spectator.component.editUsername.set('newuser');
+        spectator.component.editToken.set('newtoken');
+
+        spectator.component.saveCredentials();
+
+        expect(spectator.component.editingCredentials()).toBe(false);
+      });
+
+      it('should clear success message after timeout', async () => {
+        jest.useFakeTimers();
+        spectator.component.editUsername.set('newuser');
+        spectator.component.editToken.set('newtoken');
+
+        spectator.component.saveCredentials();
+
+        expect(spectator.component.credentialsMessage()).toBe('Credentials saved!');
+
+        jest.advanceTimersByTime(SYNC_MESSAGE_DISPLAY_MS);
+
+        expect(spectator.component.credentialsMessage()).toBe('');
+
+        jest.useRealTimers();
+      });
+    });
+
+    describe('toggleShowEditToken', () => {
+      it('should toggle showEditToken from false to true', () => {
+        spectator.component.showEditToken.set(false);
+
+        spectator.component.toggleShowEditToken();
+
+        expect(spectator.component.showEditToken()).toBe(true);
+      });
+
+      it('should toggle showEditToken from true to false', () => {
+        spectator.component.showEditToken.set(true);
+
+        spectator.component.toggleShowEditToken();
+
+        expect(spectator.component.showEditToken()).toBe(false);
+      });
+    });
+  });
+
+  describe('export/import', () => {
+    describe('onExport', () => {
+      it('should set exporting to true while exporting', async () => {
+        mockPlayStatsExportService.exportToFile.mockReturnValue(new Promise(() => {}));
+
+        spectator.component.onExport();
+
+        expect(spectator.component.exporting()).toBe(true);
+      });
+
+      it('should show success message on successful export', async () => {
+        jest.useFakeTimers();
+        mockPlayStatsExportService.exportToFile.mockResolvedValue(undefined);
+
+        await spectator.component.onExport();
+
+        expect(spectator.component.importExportMessage()).toBe('Export downloaded successfully!');
+
+        jest.useRealTimers();
+      });
+
+      it('should set exporting to false after export completes', async () => {
+        mockPlayStatsExportService.exportToFile.mockResolvedValue(undefined);
+
+        await spectator.component.onExport();
+
+        expect(spectator.component.exporting()).toBe(false);
+      });
+
+      it('should show error message on export failure', async () => {
+        jest.useFakeTimers();
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+        mockPlayStatsExportService.exportToFile.mockRejectedValue(new Error('Export failed'));
+
+        await spectator.component.onExport();
+
+        expect(spectator.component.importExportMessage()).toBe('Export failed. Please try again.');
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Export failed:', expect.any(Error));
+
+        consoleErrorSpy.mockRestore();
+        jest.useRealTimers();
+      });
+
+      it('should clear message after timeout', async () => {
+        jest.useFakeTimers();
+        mockPlayStatsExportService.exportToFile.mockResolvedValue(undefined);
+
+        await spectator.component.onExport();
+
+        expect(spectator.component.importExportMessage()).toBe('Export downloaded successfully!');
+
+        jest.advanceTimersByTime(SYNC_MESSAGE_DISPLAY_MS);
+
+        expect(spectator.component.importExportMessage()).toBe('');
+
+        jest.useRealTimers();
+      });
+    });
+
+    describe('setImportMode', () => {
+      it('should set import mode to replace', () => {
+        spectator.component.setImportMode('replace');
+
+        expect(spectator.component.importMode()).toBe('replace');
+      });
+
+      it('should set import mode to merge', () => {
+        spectator.component.setImportMode('merge');
+
+        expect(spectator.component.importMode()).toBe('merge');
+      });
+    });
+
+    describe('onFileSelected', () => {
+      it('should do nothing when no file is selected', async () => {
+        const event = { target: { files: [] } } as unknown as Event;
+
+        await spectator.component.onFileSelected(event);
+
+        expect(spectator.component.importing()).toBe(false);
+        expect(mockPlayStatsExportService.validateImportFile).not.toHaveBeenCalled();
+      });
+
+      it('should set importing to true while importing', async () => {
+        const mockFile = new File(['{}'], 'test.json', { type: 'application/json' });
+        mockFile.text = jest.fn().mockResolvedValue('{}');
+        const event = { target: { files: [mockFile], value: '' } } as unknown as Event;
+        mockPlayStatsExportService.validateImportFile.mockReturnValue({ valid: true, data: {} });
+        mockPlayStatsExportService.importFromData.mockReturnValue(new Promise(() => {}));
+
+        spectator.component.onFileSelected(event);
+
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(spectator.component.importing()).toBe(true);
+      });
+
+      it('should show error for invalid file', async () => {
+        jest.useFakeTimers();
+        const mockFile = new File(['invalid'], 'test.json', { type: 'application/json' });
+        mockFile.text = jest.fn().mockResolvedValue('invalid');
+        const event = { target: { files: [mockFile], value: '' } } as unknown as Event;
+        mockPlayStatsExportService.validateImportFile.mockReturnValue({
+          valid: false,
+          errors: ['Invalid JSON format'],
+        });
+
+        await spectator.component.onFileSelected(event);
+
+        expect(spectator.component.importExportMessage()).toBe('Invalid file: Invalid JSON format');
+
+        jest.useRealTimers();
+      });
+
+      it('should show success message on successful import', async () => {
+        jest.useFakeTimers();
+        const mockFile = new File(['{}'], 'test.json', { type: 'application/json' });
+        mockFile.text = jest.fn().mockResolvedValue('{}');
+        const event = { target: { files: [mockFile], value: '' } } as unknown as Event;
+        mockPlayStatsExportService.validateImportFile.mockReturnValue({ valid: true, data: {} });
+        mockPlayStatsExportService.importFromData.mockResolvedValue({
+          success: true,
+          imported: 10,
+          skipped: 2,
+          errors: [],
+        });
+
+        await spectator.component.onFileSelected(event);
+
+        expect(spectator.component.importExportMessage()).toBe('Imported 10 releases, skipped 2');
+
+        jest.useRealTimers();
+      });
+
+      it('should show success message without skipped when none skipped', async () => {
+        jest.useFakeTimers();
+        const mockFile = new File(['{}'], 'test.json', { type: 'application/json' });
+        mockFile.text = jest.fn().mockResolvedValue('{}');
+        const event = { target: { files: [mockFile], value: '' } } as unknown as Event;
+        mockPlayStatsExportService.validateImportFile.mockReturnValue({ valid: true, data: {} });
+        mockPlayStatsExportService.importFromData.mockResolvedValue({
+          success: true,
+          imported: 10,
+          skipped: 0,
+          errors: [],
+        });
+
+        await spectator.component.onFileSelected(event);
+
+        expect(spectator.component.importExportMessage()).toBe('Imported 10 releases');
+
+        jest.useRealTimers();
+      });
+
+      it('should handle import error', async () => {
+        jest.useFakeTimers();
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+        const mockFile = new File(['{}'], 'test.json', { type: 'application/json' });
+        mockFile.text = jest.fn().mockRejectedValue(new Error('Read error'));
+        const event = { target: { files: [mockFile], value: '' } } as unknown as Event;
+
+        await spectator.component.onFileSelected(event);
+
+        expect(spectator.component.importExportMessage()).toBe('Import failed. Please try again.');
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Import failed:', expect.any(Error));
+
+        consoleErrorSpy.mockRestore();
+        jest.useRealTimers();
+      });
+    });
+  });
+
+  describe('original decade filter', () => {
+    const mockReleasesWithOriginalDecades = [
+      {
+        id: 1,
+        instanceId: 1,
+        basicInfo: {
+          title: 'Album 1',
+          artists: ['Artist 1'],
+          year: 2020,
+          originalYear: 1975,
+          formats: ['Vinyl'],
+          thumb: '',
+          coverImage: '',
+          labels: [],
+          genres: ['Rock'],
+          styles: [],
+        },
+        playCount: 0,
+        dateAdded: new Date(),
+        dateAddedToCollection: new Date(),
+      },
+      {
+        id: 2,
+        instanceId: 2,
+        basicInfo: {
+          title: 'Album 2',
+          artists: ['Artist 2'],
+          year: 2015,
+          originalYear: 1985,
+          formats: ['Vinyl'],
+          thumb: '',
+          coverImage: '',
+          labels: [],
+          genres: ['Jazz'],
+          styles: [],
+        },
+        playCount: 0,
+        dateAdded: new Date(),
+        dateAddedToCollection: new Date(),
+      },
+    ];
+
+    it('should extract unique original decades from releases', async () => {
+      mockDatabaseService.getAllReleases.mockResolvedValue(mockReleasesWithOriginalDecades);
+
+      spectator.component.loadMenuData();
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const originalDecades = spectator.component.availableOriginalDecades();
+      expect(originalDecades).toContain('1970s');
+      expect(originalDecades).toContain('1980s');
+      expect(originalDecades.length).toBe(2);
+    });
+
+    it('should sort original decades chronologically', async () => {
+      mockDatabaseService.getAllReleases.mockResolvedValue(mockReleasesWithOriginalDecades);
+
+      spectator.component.loadMenuData();
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const originalDecades = spectator.component.availableOriginalDecades();
+      expect(originalDecades).toEqual(['1970s', '1980s']);
+    });
+
+    it('should skip releases without originalYear', async () => {
+      const releasesWithMissingOriginalYear = [
+        ...mockReleasesWithOriginalDecades,
+        {
+          id: 3,
+          instanceId: 3,
+          basicInfo: {
+            title: 'Album 3',
+            artists: ['Artist 3'],
+            year: 2010,
+            originalYear: undefined,
+            formats: ['Vinyl'],
+            thumb: '',
+            coverImage: '',
+            labels: [],
+            genres: ['Pop'],
+            styles: [],
+          },
+          playCount: 0,
+          dateAdded: new Date(),
+          dateAddedToCollection: new Date(),
+        },
+      ];
+      mockDatabaseService.getAllReleases.mockResolvedValue(releasesWithMissingOriginalYear);
+
+      spectator.component.loadMenuData();
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const originalDecades = spectator.component.availableOriginalDecades();
+      expect(originalDecades.length).toBe(2);
+    });
+
+    describe('toggleOriginalDecade', () => {
+      beforeEach(() => {
+        (mockFilterService as any).toggleOriginalDecade = jest.fn();
+      });
+
+      it('should toggle original decade and emit filtersChanged', () => {
+        const filtersChangedSpy = jest.fn();
+        spectator.component.filtersChanged.subscribe(filtersChangedSpy);
+
+        spectator.component.toggleOriginalDecade('1970s');
+
+        expect((mockFilterService as any).toggleOriginalDecade).toHaveBeenCalledWith('1970s');
+        expect(filtersChangedSpy).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('isOriginalDecadeSelected', () => {
+      it('should return true for selected original decade', () => {
+        mockFilterService.filters.set({ ...DEFAULT_FILTERS, originalDecades: ['1970s', '1980s'] });
+
+        expect(spectator.component.isOriginalDecadeSelected('1970s')).toBe(true);
+        expect(spectator.component.isOriginalDecadeSelected('1980s')).toBe(true);
+      });
+
+      it('should return false for unselected original decade', () => {
+        mockFilterService.filters.set({ ...DEFAULT_FILTERS, originalDecades: ['1970s'] });
+
+        expect(spectator.component.isOriginalDecadeSelected('1990s')).toBe(false);
+      });
+    });
+  });
+
+  describe('master release sync toggle', () => {
+    it('should initialize masterReleaseSyncEnabled as true', () => {
+      expect(spectator.component.masterReleaseSyncEnabled()).toBe(true);
+    });
+
+    it('should load master release sync setting when drawer opens', async () => {
+      mockDatabaseService.isMasterReleaseSyncEnabled.mockResolvedValue(false);
+
+      spectator.setInput('isOpen', true);
+      spectator.detectChanges();
+
+      await Promise.resolve();
+
+      expect(mockDatabaseService.isMasterReleaseSyncEnabled).toHaveBeenCalled();
+    });
+
+    describe('toggleMasterReleaseSync', () => {
+      it('should toggle from true to false', () => {
+        spectator.component.masterReleaseSyncEnabled.set(true);
+
+        spectator.component.toggleMasterReleaseSync();
+
+        expect(spectator.component.masterReleaseSyncEnabled()).toBe(false);
+      });
+
+      it('should toggle from false to true', () => {
+        spectator.component.masterReleaseSyncEnabled.set(false);
+
+        spectator.component.toggleMasterReleaseSync();
+
+        expect(spectator.component.masterReleaseSyncEnabled()).toBe(true);
+      });
+
+      it('should save setting to database when toggled', () => {
+        spectator.component.masterReleaseSyncEnabled.set(true);
+
+        spectator.component.toggleMasterReleaseSync();
+
+        expect(mockDatabaseService.setMasterReleaseSyncEnabled).toHaveBeenCalledWith(false);
+      });
+
+      it('should save true when toggled from false', () => {
+        spectator.component.masterReleaseSyncEnabled.set(false);
+
+        spectator.component.toggleMasterReleaseSync();
+
+        expect(mockDatabaseService.setMasterReleaseSyncEnabled).toHaveBeenCalledWith(true);
+      });
     });
   });
 });

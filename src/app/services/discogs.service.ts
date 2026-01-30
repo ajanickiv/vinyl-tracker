@@ -31,12 +31,13 @@ export class DiscogsService {
   }
 
   /**
-   * Clear all synced data (useful for re-syncing from scratch)
+   * Clear all synced data and credentials (full app reset)
    */
   async clearSyncedData(): Promise<void> {
     await this.db.clearAllData();
     this.playHistoryService.clearHistory();
-    console.log('All synced data cleared');
+    this.credentialsService.clearCredentials();
+    console.log('All synced data and credentials cleared');
   }
 
   /**
@@ -105,7 +106,8 @@ export class DiscogsService {
       basicInfo: {
         title: basicInfo.title,
         artists: basicInfo.artists.map((a) => a.name),
-        year: basicInfo.year,
+        year: basicInfo.year || undefined,
+        masterId: basicInfo.master_id || undefined,
         formats: basicInfo.formats.map((f) => {
           const descriptions = f.descriptions ? ` (${f.descriptions.join(', ')})` : '';
           return `${f.name}${descriptions}`;

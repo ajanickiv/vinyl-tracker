@@ -4,6 +4,7 @@ import { SyncScreenComponent } from './components/sync-screen/sync-screen.compon
 import { VinylPlayerComponent } from './components/vinyl-player/vinyl-player.component';
 import { DatabaseService } from './services/database.service';
 import { CredentialsService } from './services/credentials.service';
+import { MasterReleaseService } from './services/master-release.service';
 
 @Component({
   selector: 'app-root',
@@ -25,7 +26,9 @@ import { CredentialsService } from './services/credentials.service';
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
   `,
   template: `
@@ -48,6 +51,7 @@ export class AppComponent implements OnInit {
   constructor(
     private db: DatabaseService,
     private credentialsService: CredentialsService,
+    private masterReleaseService: MasterReleaseService,
   ) {}
 
   async ngOnInit() {
@@ -56,6 +60,11 @@ export class AppComponent implements OnInit {
     if (this.hasCredentials()) {
       const count = await this.db.getCollectionCount();
       this.hasSyncedData.set(count > 0);
+
+      // Resume background fetch of master release data if needed
+      if (count > 0) {
+        this.masterReleaseService.resumeIfNeeded();
+      }
     }
 
     this.isInitialized.set(true);

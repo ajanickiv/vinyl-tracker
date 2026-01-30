@@ -14,7 +14,12 @@ export class FilterService {
 
   readonly hasActiveFilters = computed(() => {
     const f = this.filtersSignal();
-    return f.excludeBoxSets || f.genres.length > 0 || f.decades.length > 0;
+    return (
+      f.excludeBoxSets ||
+      f.genres.length > 0 ||
+      f.decades.length > 0 ||
+      f.originalDecades.length > 0
+    );
   });
 
   constructor() {}
@@ -47,6 +52,18 @@ export class FilterService {
       }
       const releaseDecade = this.getDecade(year);
       if (!filters.decades.includes(releaseDecade)) {
+        return false;
+      }
+    }
+
+    // Original decade filter (if any selected, original year must be in one)
+    if (filters.originalDecades.length > 0) {
+      const originalYear = release.basicInfo.originalYear;
+      if (!originalYear) {
+        return false;
+      }
+      const originalDecade = this.getDecade(originalYear);
+      if (!filters.originalDecades.includes(originalDecade)) {
         return false;
       }
     }
@@ -95,6 +112,24 @@ export class FilterService {
       ? current.filter((d) => d !== decade)
       : [...current, decade];
     this.setDecades(updated);
+  }
+
+  /**
+   * Set the selected original decades
+   */
+  setOriginalDecades(decades: string[]): void {
+    this.updateFilters({ originalDecades: decades });
+  }
+
+  /**
+   * Toggle an original decade in the filter
+   */
+  toggleOriginalDecade(decade: string): void {
+    const current = this.filtersSignal().originalDecades;
+    const updated = current.includes(decade)
+      ? current.filter((d) => d !== decade)
+      : [...current, decade];
+    this.setOriginalDecades(updated);
   }
 
   /**
