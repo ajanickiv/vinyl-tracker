@@ -13,7 +13,8 @@ A personal listening tracker for your Discogs vinyl collection. Get personalized
 - **Play Tracking** - Track play counts and last played dates for each release
 - **Search** - Quickly find any album in your collection with real-time search
 - **Play History** - View your 10 most recent plays with quick access to replay
-- **Filtering** - Filter recommendations by genre, decade, or exclude box sets
+- **Filtering** - Filter recommendations by genre, pressing decade, original decade, or exclude box sets
+- **Original Release Year** - Optionally sync master release data to see when albums were first released
 - **Collection Stats** - View stats about your listening habits and most played albums
 - **Backup & Restore** - Export and import your play data as JSON files
 - **Local Storage** - All play data stored locally in your browser using IndexedDB
@@ -78,7 +79,8 @@ Tap the menu icon in the top-right to access:
 - **Filters** - Customize recommendations
   - Toggle "Exclude Box Sets" to skip box set releases
   - Select genres to filter by (e.g., Rock, Jazz, Electronic)
-  - Select decades to filter by (e.g., 1970s, 1980s, 1990s)
+  - Select pressing decades to filter by when your pressing was released (e.g., a 2020 reissue)
+  - Select original decades to filter by when the album was first released (requires master release sync)
 - **Collection Stats** - View totals and percentages
   - Total releases, total plays, never played count
   - Percentage of collection played
@@ -86,6 +88,7 @@ Tap the menu icon in the top-right to access:
 - **Advanced** (collapsible section)
   - **Discogs Account** - View connected username and edit credentials
   - **Collection Sync** - Re-sync from Discogs to add new purchases
+  - **Master Release Sync** - Toggle to fetch original release years from Discogs master releases
   - **Backup & Restore** - Export/import play data as JSON
 
 ### Filtering Your Collection
@@ -96,8 +99,9 @@ Use filters to focus recommendations on specific parts of your collection:
 2. Under "Filters", you'll see available options based on your collection
 3. Toggle "Exclude Box Sets" to skip box set releases
 4. Tap genre chips to filter by one or more genres
-5. Tap decade chips to filter by era
-6. Filters apply immediately to recommendations
+5. Tap pressing decade chips to filter by when your specific pressing was released (e.g., find all your 2010s reissues)
+6. Tap original decade chips to filter by when albums were first released (e.g., find all albums originally from the 1970s, regardless of pressing year)
+7. Filters apply immediately to recommendations
 
 ### Backup & Restore
 
@@ -136,6 +140,27 @@ When you add new records to your Discogs collection:
 2. Tap "Re-sync from Discogs"
 3. New releases are added to your local database
 4. **Your play counts and dates are preserved** for existing releases
+
+### Master Release Sync (Original Release Years)
+
+Many releases in Discogs are reissues, remasters, or later pressings. Each release has a "pressing year" (when your specific copy was manufactured), but you may want to know when the album was _originally_ released. The master release sync feature fetches the original release year from Discogs master releases, allowing you to:
+
+- See when an album was originally released (displayed on the vinyl player alongside the pressing year)
+- Filter your collection by original decade (e.g., find all albums originally from the 1970s, even if you own a 2020 reissue)
+
+**Enabling Master Release Sync:**
+
+1. Open the menu drawer > Advanced
+2. Toggle "Master Release Sync" to On
+3. The app will fetch master release data in the background after each collection sync
+4. Progress is shown in the header while syncing
+
+**Notes:**
+
+- Master release data is fetched in the background to respect Discogs API rate limits
+- Not all releases have a master release (singles, compilations, etc.)
+- Original year data is cached locally and only needs to be fetched once per release
+- The sync can be paused/resumed automatically between sessions
 
 ## Development
 
@@ -215,7 +240,10 @@ src/
 │   │   ├── recommendation.service.ts  # Recommendation algorithm
 │   │   ├── filter.service.ts      # Filter state management
 │   │   ├── play-history.service.ts    # Recent plays tracking
-│   │   └── play-stats-export.service.ts # Backup/restore logic
+│   │   ├── play-stats-export.service.ts # Backup/restore logic
+│   │   └── master-release.service.ts # Fetches original years from Discogs master releases
+│   ├── pipes/
+│   │   └── artist-name.pipe.ts    # Cleans Discogs artist name disambiguation
 │   ├── constants/
 │   │   └── timing.constants.ts    # Animation and timing values
 │   └── app.ts                     # Root component
