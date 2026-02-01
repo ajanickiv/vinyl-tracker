@@ -30,8 +30,11 @@ export class PlaybackService {
       map((allReleases) => {
         let totalPlays = 0;
         let neverPlayed = 0;
+        let playedThisYear = 0;
         let mostPlayed: Release | undefined;
         let leastPlayed: Release | undefined;
+
+        const currentYear = new Date().getFullYear();
 
         for (const release of allReleases) {
           totalPlays += release.playCount;
@@ -49,12 +52,21 @@ export class PlaybackService {
           if (!mostPlayed || release.playCount > mostPlayed.playCount) {
             mostPlayed = release;
           }
+
+          // Track played this year
+          if (release.lastPlayedDate) {
+            const lastPlayedYear = new Date(release.lastPlayedDate).getFullYear();
+            if (lastPlayedYear === currentYear) {
+              playedThisYear++;
+            }
+          }
         }
 
         return {
           totalReleases: allReleases.length,
           totalPlays,
           neverPlayed,
+          playedThisYear,
           mostPlayed,
           leastPlayed,
         };
@@ -65,6 +77,7 @@ export class PlaybackService {
           totalReleases: 0,
           totalPlays: 0,
           neverPlayed: 0,
+          playedThisYear: 0,
           mostPlayed: undefined,
           leastPlayed: undefined,
         });

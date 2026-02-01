@@ -56,6 +56,12 @@ export class StatsSheetComponent implements OnInit, OnDestroy {
     return Math.round(((stats.totalReleases - stats.neverPlayed) / stats.totalReleases) * 100);
   }
 
+  getPlayedThisYearPercentage(): number {
+    const stats = this.collectionStats();
+    if (!stats || stats.totalReleases === 0) return 0;
+    return Math.round((stats.playedThisYear / stats.totalReleases) * 100);
+  }
+
   refreshStats(): void {
     this.loadStats();
   }

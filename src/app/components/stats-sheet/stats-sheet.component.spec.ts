@@ -47,6 +47,7 @@ describe('StatsSheetComponent', () => {
     totalReleases: 100,
     totalPlays: 250,
     neverPlayed: 30,
+    playedThisYear: 45,
     mostPlayed: createMockRelease(1, 'Most Played Album', 50),
     leastPlayed: createMockRelease(2, 'Least Played Album', 1),
   };
@@ -112,12 +113,72 @@ describe('StatsSheetComponent', () => {
           totalReleases: 0,
           totalPlays: 0,
           neverPlayed: 0,
+          playedThisYear: 0,
         }),
       );
 
       spectator.detectChanges();
 
       expect(spectator.component.getCollectionPlayedPercentage()).toBe(0);
+    });
+  });
+
+  describe('getPlayedThisYearPercentage', () => {
+    it('should calculate correct percentage', () => {
+      spectator.detectChanges();
+
+      // 45 / 100 * 100 = 45%
+      expect(spectator.component.getPlayedThisYearPercentage()).toBe(45);
+    });
+
+    it('should return 0 when no stats', () => {
+      expect(spectator.component.getPlayedThisYearPercentage()).toBe(0);
+    });
+
+    it('should return 0 when totalReleases is 0', () => {
+      mockPlaybackService.getCollectionStats.mockReturnValue(
+        of({
+          totalReleases: 0,
+          totalPlays: 0,
+          neverPlayed: 0,
+          playedThisYear: 0,
+        }),
+      );
+
+      spectator.detectChanges();
+
+      expect(spectator.component.getPlayedThisYearPercentage()).toBe(0);
+    });
+
+    it('should return 100 when all releases played this year', () => {
+      mockPlaybackService.getCollectionStats.mockReturnValue(
+        of({
+          totalReleases: 50,
+          totalPlays: 100,
+          neverPlayed: 0,
+          playedThisYear: 50,
+        }),
+      );
+
+      spectator.detectChanges();
+
+      expect(spectator.component.getPlayedThisYearPercentage()).toBe(100);
+    });
+
+    it('should round to nearest integer', () => {
+      mockPlaybackService.getCollectionStats.mockReturnValue(
+        of({
+          totalReleases: 3,
+          totalPlays: 5,
+          neverPlayed: 0,
+          playedThisYear: 1,
+        }),
+      );
+
+      spectator.detectChanges();
+
+      // 1/3 = 33.33... should round to 33
+      expect(spectator.component.getPlayedThisYearPercentage()).toBe(33);
     });
   });
 
