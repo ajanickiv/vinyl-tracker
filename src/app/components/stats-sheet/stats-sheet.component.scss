@@ -143,6 +143,10 @@
 
 .album-highlight {
   @include card-panel;
+  width: 100%;
+  text-align: left;
+  border: none;
+  font-family: inherit;
 
   p {
     margin: 0;
@@ -150,6 +154,21 @@
 
   &--discovery {
     border-left: 3px solid $color-primary;
+  }
+
+  &--tappable {
+    cursor: pointer;
+    transition:
+      background-color 0.2s ease,
+      transform 0.1s ease;
+
+    &:hover {
+      background-color: rgba($color-primary, 0.1);
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
   }
 }
 

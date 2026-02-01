@@ -37,6 +37,7 @@
     [isOpen]="statsOpen()"
     (close)="closeStats()"
     (filterApplied)="onFiltersChanged()"
+    (releaseSelected)="onReleaseSelected($event)"
   ></app-stats-sheet>
 
   @if (isLoading()) {

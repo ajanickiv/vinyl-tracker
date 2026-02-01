@@ -5,6 +5,7 @@ import { takeUntil, tap } from 'rxjs/operators';
 import { PlaybackService } from '../../services/playback.service';
 import { FilterService } from '../../services/filter.service';
 import { CollectionStats } from '../../models/collection-stats.model';
+import { Release } from '../../models/release.model';
 import { ArtistNamePipe } from '../../pipes/artist-name.pipe';
 
 @Component({
@@ -21,6 +22,7 @@ export class StatsSheetComponent implements OnInit, OnDestroy {
   isOpen = input.required<boolean>();
   close = output<void>();
   filterApplied = output<void>();
+  releaseSelected = output<Release>();
 
   private destroy$ = new Subject<void>();
 
@@ -70,6 +72,14 @@ export class StatsSheetComponent implements OnInit, OnDestroy {
     this.filterService.setNotPlayedIn6Months(true);
     this.filterApplied.emit();
     this.closeSheet();
+  }
+
+  selectOldestNeverPlayed(): void {
+    const stats = this.collectionStats();
+    if (stats?.oldestNeverPlayed) {
+      this.releaseSelected.emit(stats.oldestNeverPlayed);
+      this.closeSheet();
+    }
   }
 
   private loadStats(): void {
