@@ -1,0 +1,130 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+.sheet-container {
+  @include overlay-container;
+
+  &.open {
+    pointer-events: auto;
+
+    .backdrop {
+      opacity: 1;
+    }
+
+    .sheet {
+      transform: translateY(0);
+    }
+  }
+}
+
+.backdrop {
+  @include overlay-backdrop;
+}
+
+.sheet {
+  @include bottom-sheet;
+}
+
+@include drag-handle;
+
+.stats-header {
+  padding: 0 1rem 1rem;
+  border-bottom: 1px solid $overlay-card-border;
+}
+
+.header-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.stats-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: $color-gray-400;
+
+  p {
+    margin: 0;
+  }
+}
+
+.empty-state {
+  .empty-icon {
+    display: block;
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  .empty-hint {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+  }
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-item {
+  @include card-panel;
+  text-align: center;
+}
+
+.stat-value {
+  @include stat-value;
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  @include label-uppercase;
+}
+
+.highlight-section {
+  margin-top: 1rem;
+}
+
+.section-title {
+  color: $color-primary;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.album-highlight {
+  @include card-panel;
+
+  p {
+    margin: 0;
+  }
+}
+
+.album-title {
+  color: $text-primary;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.album-artist {
+  color: $color-primary;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.play-count {
+  color: $text-muted;
+  font-size: 0.875rem;
+}

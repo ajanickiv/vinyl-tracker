@@ -37,12 +37,14 @@
 
 .search-button,
 .history-button,
+.stats-button,
 .menu-button {
   @include btn-header;
 }
 
 .search-icon,
-.history-icon {
+.history-icon,
+.stats-icon {
   font-size: 1.125rem;
 }
 

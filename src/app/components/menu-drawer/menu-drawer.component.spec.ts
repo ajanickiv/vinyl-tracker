@@ -1,16 +1,13 @@
 import { fakeAsync, flush } from '@angular/core/testing';
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
 import { signal } from '@angular/core';
-import { of, Subject } from 'rxjs';
 import { MenuDrawerComponent } from './menu-drawer.component';
 import { DatabaseService } from '../../services/database.service';
 import { DiscogsService } from '../../services/discogs.service';
-import { PlaybackService } from '../../services/playback.service';
 import { FilterService } from '../../services/filter.service';
 import { CredentialsService } from '../../services/credentials.service';
 import { PlayStatsExportService } from '../../services/play-stats-export.service';
 import { MasterReleaseService } from '../../services/master-release.service';
-import { CollectionStats } from '../../models/collection-stats.model';
 import { DEFAULT_FILTERS } from '../../models/filter.model';
 import { SYNC_MESSAGE_DISPLAY_MS } from '../../constants/timing.constants';
 
@@ -24,12 +21,6 @@ describe('MenuDrawerComponent', () => {
     updateRelease: jest.Mock;
     isMasterReleaseSyncEnabled: jest.Mock;
     setMasterReleaseSyncEnabled: jest.Mock;
-  };
-  let mockPlaybackService: {
-    getCollectionStats: jest.Mock;
-    markAsPlayed: jest.Mock;
-    getPlayStats: jest.Mock;
-    statsUpdated$: Subject<void>;
   };
   let mockDiscogsService: {
     syncCollection: jest.Mock;
@@ -62,12 +53,6 @@ describe('MenuDrawerComponent', () => {
     detectChanges: false,
   });
 
-  const mockStats: CollectionStats = {
-    totalReleases: 100,
-    totalPlays: 500,
-    neverPlayed: 20,
-  };
-
   const mockLastSyncDate = new Date('2024-01-15T10:00:00Z');
 
   beforeEach(() => {
@@ -79,13 +64,6 @@ describe('MenuDrawerComponent', () => {
       updateRelease: jest.fn().mockResolvedValue(undefined),
       isMasterReleaseSyncEnabled: jest.fn().mockResolvedValue(true),
       setMasterReleaseSyncEnabled: jest.fn().mockResolvedValue(undefined),
-    };
-
-    mockPlaybackService = {
-      getCollectionStats: jest.fn().mockReturnValue(of(mockStats)),
-      markAsPlayed: jest.fn().mockReturnValue(of(null)),
-      getPlayStats: jest.fn().mockReturnValue(of(null)),
-      statsUpdated$: new Subject<void>(),
     };
 
     mockDiscogsService = {
@@ -126,7 +104,6 @@ describe('MenuDrawerComponent', () => {
       },
       providers: [
         { provide: DatabaseService, useValue: mockDatabaseService },
-        { provide: PlaybackService, useValue: mockPlaybackService },
         { provide: DiscogsService, useValue: mockDiscogsService },
         { provide: FilterService, useValue: mockFilterService },
         { provide: CredentialsService, useValue: mockCredentialsService },
@@ -145,13 +122,6 @@ describe('MenuDrawerComponent', () => {
   });
 
   describe('initialization', () => {
-    it('should have collectionStats signal defined', () => {
-      // Component loads data in constructor, so we can't test the initial null state easily
-      // Instead we verify the signal is defined and working
-      expect(spectator.component.collectionStats).toBeDefined();
-      expect(typeof spectator.component.collectionStats).toBe('function');
-    });
-
     it('should have lastSyncDate signal defined', () => {
       expect(spectator.component.lastSyncDate).toBeDefined();
       expect(typeof spectator.component.lastSyncDate).toBe('function');
@@ -167,15 +137,12 @@ describe('MenuDrawerComponent', () => {
 
     it('should load menu data on construction', fakeAsync(() => {
       const db = mockDatabaseService;
-      const playbackService = mockPlaybackService;
       db.getLastSyncDate.mockResolvedValue(mockLastSyncDate);
-      playbackService.getCollectionStats.mockReturnValue(of(mockStats));
 
       spectator.detectChanges();
       flush();
 
       expect(db.getLastSyncDate).toHaveBeenCalled();
-      expect(playbackService.getCollectionStats).toHaveBeenCalled();
     }));
   });
 
@@ -190,15 +157,6 @@ describe('MenuDrawerComponent', () => {
       expect(spectator.component.lastSyncDate()).toEqual(mockLastSyncDate);
     }));
 
-    it('should load collection stats from playback service', () => {
-      const playbackService = mockPlaybackService;
-      playbackService.getCollectionStats.mockReturnValue(of(mockStats));
-
-      spectator.component.loadMenuData();
-
-      expect(spectator.component.collectionStats()).toEqual(mockStats);
-    });
-
     it('should handle null last sync date', fakeAsync(() => {
       const db = mockDatabaseService;
       db.getLastSyncDate.mockResolvedValue(null);
@@ -208,22 +166,6 @@ describe('MenuDrawerComponent', () => {
 
       expect(spectator.component.lastSyncDate()).toBeNull();
     }));
-
-    it('should handle empty collection stats without division by zero', () => {
-      const playbackService = mockPlaybackService;
-      const emptyStats: CollectionStats = {
-        totalReleases: 0,
-        totalPlays: 0,
-        neverPlayed: 0,
-      };
-      playbackService.getCollectionStats.mockReturnValue(of(emptyStats));
-
-      spectator.component.loadMenuData();
-      spectator.detectChanges();
-
-      const statValue = spectator.query('.stat-item:last-child .stat-value');
-      expect(statValue?.textContent?.trim()).toBe('0%');
-    });
   });
 
   describe('closeDrawer', () => {
@@ -346,14 +288,12 @@ describe('MenuDrawerComponent', () => {
       jest.useFakeTimers();
       const discogsService = mockDiscogsService;
       const db = mockDatabaseService;
-      const playbackService = mockPlaybackService;
 
       discogsService.syncCollection.mockResolvedValue({
         success: true,
         totalSynced: 150,
       });
       db.getLastSyncDate.mockResolvedValue(new Date());
-      playbackService.getCollectionStats.mockReturnValue(of(mockStats));
 
       spectator.component.resync();
 
@@ -369,20 +309,17 @@ describe('MenuDrawerComponent', () => {
     it('should reload menu data after successful sync', fakeAsync(() => {
       const discogsService = mockDiscogsService;
       const db = mockDatabaseService;
-      const playbackService = mockPlaybackService;
 
       discogsService.syncCollection.mockResolvedValue({
         success: true,
         totalSynced: 150,
       });
       db.getLastSyncDate.mockResolvedValue(mockLastSyncDate);
-      playbackService.getCollectionStats.mockReturnValue(of(mockStats));
 
       spectator.component.resync();
       flush();
 
       expect(db.getLastSyncDate).toHaveBeenCalled();
-      expect(playbackService.getCollectionStats).toHaveBeenCalled();
     }));
 
     it('should display error message on failed sync', async () => {
@@ -408,7 +345,6 @@ describe('MenuDrawerComponent', () => {
     it('should not reload menu data on failed sync', fakeAsync(() => {
       const discogsService = mockDiscogsService;
       const db = mockDatabaseService;
-      const playbackService = mockPlaybackService;
 
       discogsService.syncCollection.mockResolvedValue({
         success: false,
@@ -418,27 +354,23 @@ describe('MenuDrawerComponent', () => {
 
       // Clear previous calls from constructor
       db.getLastSyncDate.mockClear();
-      playbackService.getCollectionStats.mockClear();
 
       spectator.component.resync();
       flush();
 
       expect(db.getLastSyncDate).not.toHaveBeenCalled();
-      expect(playbackService.getCollectionStats).not.toHaveBeenCalled();
     }));
 
     it('should clear syncing state after 3 seconds', async () => {
       jest.useFakeTimers();
       const discogsService = mockDiscogsService;
       const db = mockDatabaseService;
-      const playbackService = mockPlaybackService;
 
       discogsService.syncCollection.mockResolvedValue({
         success: true,
         totalSynced: 100,
       });
       db.getLastSyncDate.mockResolvedValue(new Date());
-      playbackService.getCollectionStats.mockReturnValue(of(mockStats));
 
       spectator.component.resync();
 
@@ -454,14 +386,12 @@ describe('MenuDrawerComponent', () => {
       jest.useFakeTimers();
       const discogsService = mockDiscogsService;
       const db = mockDatabaseService;
-      const playbackService = mockPlaybackService;
 
       discogsService.syncCollection.mockResolvedValue({
         success: true,
         totalSynced: 100,
       });
       db.getLastSyncDate.mockResolvedValue(new Date());
-      playbackService.getCollectionStats.mockReturnValue(of(mockStats));
 
       spectator.component.resync();
 
@@ -498,7 +428,6 @@ describe('MenuDrawerComponent', () => {
         totalSynced: 100,
       });
       mockDatabaseService.getLastSyncDate.mockResolvedValue(new Date());
-      mockPlaybackService.getCollectionStats.mockReturnValue(of(mockStats));
       spectator.component.masterReleaseSyncEnabled.set(true);
 
       spectator.component.resync();
@@ -517,7 +446,6 @@ describe('MenuDrawerComponent', () => {
         totalSynced: 100,
       });
       mockDatabaseService.getLastSyncDate.mockResolvedValue(new Date());
-      mockPlaybackService.getCollectionStats.mockReturnValue(of(mockStats));
       spectator.component.masterReleaseSyncEnabled.set(false);
 
       spectator.component.resync();
@@ -863,26 +791,6 @@ describe('MenuDrawerComponent', () => {
   describe('ngOnDestroy', () => {
     it('should complete destroy$ subject', () => {
       expect(() => spectator.component.ngOnDestroy()).not.toThrow();
-    });
-  });
-
-  describe('statsUpdated$ subscription', () => {
-    it('should refresh collection stats when statsUpdated$ emits', () => {
-      const playbackService = mockPlaybackService;
-      playbackService.getCollectionStats.mockClear();
-
-      const newStats: CollectionStats = {
-        totalReleases: 110,
-        totalPlays: 600,
-        neverPlayed: 15,
-      };
-      playbackService.getCollectionStats.mockReturnValue(of(newStats));
-
-      // Emit on statsUpdated$
-      playbackService.statsUpdated$.next();
-
-      expect(playbackService.getCollectionStats).toHaveBeenCalled();
-      expect(spectator.component.collectionStats()).toEqual(newStats);
     });
   });
 

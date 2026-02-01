@@ -202,55 +202,6 @@
 }
 
 // ==============================================
-// Stats Section
-// ==============================================
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-}
-
-.stat-item {
-  @include card-panel;
-  text-align: center;
-}
-
-.stat-value {
-  @include stat-value;
-  margin-bottom: 0.25rem;
-}
-
-.stat-label {
-  @include label-uppercase;
-}
-
-// ==============================================
-// Album Highlight (Most Played)
-// ==============================================
-
-.album-highlight {
-  @include card-panel;
-}
-
-.album-title {
-  color: $text-primary;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-}
-
-.album-artist {
-  color: $color-primary;
-  font-size: 0.875rem;
-  margin-bottom: 0.5rem;
-}
-
-.play-count {
-  color: $text-muted;
-  font-size: 0.875rem;
-}
-
-// ==============================================
 // Filters Section
 // ==============================================
 
