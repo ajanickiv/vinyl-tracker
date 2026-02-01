@@ -33,7 +33,11 @@
     (releaseSelected)="onHistoryReleaseSelected($event)"
   ></app-play-history-sheet>
 
-  <app-stats-sheet [isOpen]="statsOpen()" (close)="closeStats()"></app-stats-sheet>
+  <app-stats-sheet
+    [isOpen]="statsOpen()"
+    (close)="closeStats()"
+    (filterApplied)="onFiltersChanged()"
+  ></app-stats-sheet>
 
   @if (isLoading()) {
     <div class="loading">

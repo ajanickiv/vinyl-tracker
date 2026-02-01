@@ -25,10 +25,11 @@
             <div class="stat-value">{{ stats.totalPlays }}</div>
             <div class="stat-label">Total Plays</div>
           </div>
-          <div class="stat-item">
+          <button class="stat-item stat-item--tappable" (click)="applyNeverPlayedFilter()">
             <div class="stat-value">{{ stats.neverPlayed }}</div>
             <div class="stat-label">Never Played</div>
-          </div>
+            <div class="tap-hint">Tap to filter</div>
+          </button>
           <div class="stat-item">
             <div class="stat-value">{{ getCollectionPlayedPercentage() }}%</div>
             <div class="stat-label">Collection Played</div>

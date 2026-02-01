@@ -2,6 +2,7 @@ import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
 import { of, Subject } from 'rxjs';
 import { StatsSheetComponent } from './stats-sheet.component';
 import { PlaybackService } from '../../services/playback.service';
+import { FilterService } from '../../services/filter.service';
 import { CollectionStats } from '../../models/collection-stats.model';
 import { Release } from '../../models/release.model';
 
@@ -10,6 +11,9 @@ describe('StatsSheetComponent', () => {
   let mockPlaybackService: {
     getCollectionStats: jest.Mock;
     statsUpdated$: Subject<void>;
+  };
+  let mockFilterService: {
+    setNotPlayedIn6Months: jest.Mock;
   };
 
   const createComponent = createComponentFactory({
@@ -53,11 +57,18 @@ describe('StatsSheetComponent', () => {
       statsUpdated$: new Subject<void>(),
     };
 
+    mockFilterService = {
+      setNotPlayedIn6Months: jest.fn(),
+    };
+
     spectator = createComponent({
       props: {
         isOpen: false,
       },
-      providers: [{ provide: PlaybackService, useValue: mockPlaybackService }],
+      providers: [
+        { provide: PlaybackService, useValue: mockPlaybackService },
+        { provide: FilterService, useValue: mockFilterService },
+      ],
     });
   });
 
@@ -159,6 +170,45 @@ describe('StatsSheetComponent', () => {
       spectator.detectChanges();
 
       expect(() => spectator.component.ngOnDestroy()).not.toThrow();
+    });
+  });
+
+  describe('applyNeverPlayedFilter', () => {
+    it('should enable the notPlayedIn6Months filter', () => {
+      spectator.component.applyNeverPlayedFilter();
+
+      expect(mockFilterService.setNotPlayedIn6Months).toHaveBeenCalledWith(true);
+    });
+
+    it('should emit filterApplied event', () => {
+      const filterAppliedSpy = jest.fn();
+      spectator.component.filterApplied.subscribe(filterAppliedSpy);
+
+      spectator.component.applyNeverPlayedFilter();
+
+      expect(filterAppliedSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should close the sheet', () => {
+      const closeSpy = jest.fn();
+      spectator.component.close.subscribe(closeSpy);
+
+      spectator.component.applyNeverPlayedFilter();
+
+      expect(closeSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should enable filter, emit filterApplied, and close in sequence', () => {
+      const filterAppliedSpy = jest.fn();
+      const closeSpy = jest.fn();
+      spectator.component.filterApplied.subscribe(filterAppliedSpy);
+      spectator.component.close.subscribe(closeSpy);
+
+      spectator.component.applyNeverPlayedFilter();
+
+      expect(mockFilterService.setNotPlayedIn6Months).toHaveBeenCalledWith(true);
+      expect(filterAppliedSpy).toHaveBeenCalledTimes(1);
+      expect(closeSpy).toHaveBeenCalledTimes(1);
     });
   });
 });

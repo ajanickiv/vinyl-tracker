@@ -80,6 +80,33 @@
 .stat-item {
   @include card-panel;
   text-align: center;
+
+  &--tappable {
+    cursor: pointer;
+    transition:
+      background-color 0.2s ease,
+      transform 0.1s ease;
+    border: 1px solid transparent;
+    position: relative;
+
+    &:hover {
+      background-color: rgba($color-primary, 0.1);
+      border-color: $color-primary;
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+}
+
+.tap-hint {
+  font-size: 0.625rem;
+  color: $color-primary;
+  margin-top: 0.375rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
 }
 
 .stat-value {

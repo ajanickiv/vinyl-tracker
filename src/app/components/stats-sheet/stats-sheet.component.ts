@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
 import { takeUntil, tap } from 'rxjs/operators';
 import { PlaybackService } from '../../services/playback.service';
+import { FilterService } from '../../services/filter.service';
 import { CollectionStats } from '../../models/collection-stats.model';
 import { ArtistNamePipe } from '../../pipes/artist-name.pipe';
 
@@ -19,10 +20,14 @@ export class StatsSheetComponent implements OnInit, OnDestroy {
 
   isOpen = input.required<boolean>();
   close = output<void>();
+  filterApplied = output<void>();
 
   private destroy$ = new Subject<void>();
 
-  constructor(private playbackService: PlaybackService) {}
+  constructor(
+    private playbackService: PlaybackService,
+    private filterService: FilterService,
+  ) {}
 
   ngOnInit(): void {
     this.loadStats();
@@ -53,6 +58,12 @@ export class StatsSheetComponent implements OnInit, OnDestroy {
 
   refreshStats(): void {
     this.loadStats();
+  }
+
+  applyNeverPlayedFilter(): void {
+    this.filterService.setNotPlayedIn6Months(true);
+    this.filterApplied.emit();
+    this.closeSheet();
   }
 
   private loadStats(): void {
