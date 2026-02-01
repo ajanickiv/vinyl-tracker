@@ -30,6 +30,22 @@
             </label>
           </div>
 
+          <!-- Not Played in 6 Months Toggle -->
+          <div class="filter-group">
+            <label class="toggle-label">
+              <span class="toggle-text">Not played in 6+ months</span>
+              <button
+                class="toggle-button"
+                [class.active]="filterService.filters().notPlayedIn6Months"
+                (click)="toggleNotPlayedIn6Months()"
+              >
+                <span class="toggle-track">
+                  <span class="toggle-thumb"></span>
+                </span>
+              </button>
+            </label>
+          </div>
+
           <!-- Genre Chips -->
           @if (availableGenres().length > 0) {
             <div class="filter-group">

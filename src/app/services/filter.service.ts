@@ -18,7 +18,8 @@ export class FilterService {
       f.excludeBoxSets ||
       f.genres.length > 0 ||
       f.decades.length > 0 ||
-      f.originalDecades.length > 0
+      f.originalDecades.length > 0 ||
+      f.notPlayedIn6Months
     );
   });
 
@@ -64,6 +65,13 @@ export class FilterService {
       }
       const originalDecade = this.getDecade(originalYear);
       if (!filters.originalDecades.includes(originalDecade)) {
+        return false;
+      }
+    }
+
+    // Not played in 6 months filter
+    if (filters.notPlayedIn6Months) {
+      if (!this.isNotPlayedIn6Months(release)) {
         return false;
       }
     }
@@ -133,6 +141,13 @@ export class FilterService {
   }
 
   /**
+   * Set the not played in 6 months filter
+   */
+  setNotPlayedIn6Months(enabled: boolean): void {
+    this.updateFilters({ notPlayedIn6Months: enabled });
+  }
+
+  /**
    * Reset all filters to defaults
    */
   resetFilters(): void {
@@ -145,6 +160,20 @@ export class FilterService {
    */
   private isBoxSet(release: Release): boolean {
     return release.basicInfo.formats?.some((f) => f.toLowerCase().includes('box set')) ?? false;
+  }
+
+  /**
+   * Check if a release hasn't been played in 6 months (or never played)
+   */
+  private isNotPlayedIn6Months(release: Release): boolean {
+    if (!release.lastPlayedDate) {
+      return true; // Never played counts as "not played in 6 months"
+    }
+
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    return new Date(release.lastPlayedDate) < sixMonthsAgo;
   }
 
   /**

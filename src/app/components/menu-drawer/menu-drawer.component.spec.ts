@@ -29,6 +29,7 @@ describe('MenuDrawerComponent', () => {
   let mockFilterService: {
     filters: ReturnType<typeof signal>;
     setExcludeBoxSets: jest.Mock;
+    setNotPlayedIn6Months: jest.Mock;
     toggleGenre: jest.Mock;
     toggleDecade: jest.Mock;
   };
@@ -74,6 +75,7 @@ describe('MenuDrawerComponent', () => {
     mockFilterService = {
       filters: signal({ ...DEFAULT_FILTERS }),
       setExcludeBoxSets: jest.fn(),
+      setNotPlayedIn6Months: jest.fn(),
       toggleGenre: jest.fn(),
       toggleDecade: jest.fn(),
     };
@@ -658,6 +660,17 @@ describe('MenuDrawerComponent', () => {
       spectator.component.toggleExcludeBoxSets();
 
       expect(mockFilterService.setExcludeBoxSets).toHaveBeenCalledWith(false);
+      expect(filtersChangedSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should toggle notPlayedIn6Months and emit filtersChanged', () => {
+      const filtersChangedSpy = jest.fn();
+      spectator.component.filtersChanged.subscribe(filtersChangedSpy);
+      mockFilterService.filters.set({ ...DEFAULT_FILTERS, notPlayedIn6Months: false });
+
+      spectator.component.toggleNotPlayedIn6Months();
+
+      expect(mockFilterService.setNotPlayedIn6Months).toHaveBeenCalledWith(true);
       expect(filtersChangedSpy).toHaveBeenCalledTimes(1);
     });
 

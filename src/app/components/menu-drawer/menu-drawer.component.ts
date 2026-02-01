@@ -162,6 +162,12 @@ export class MenuDrawerComponent implements OnDestroy {
     this.filtersChanged.emit();
   }
 
+  toggleNotPlayedIn6Months(): void {
+    const current = this.filterService.filters().notPlayedIn6Months;
+    this.filterService.setNotPlayedIn6Months(!current);
+    this.filtersChanged.emit();
+  }
+
   toggleGenre(genre: string): void {
     this.filterService.toggleGenre(genre);
     this.filtersChanged.emit();
