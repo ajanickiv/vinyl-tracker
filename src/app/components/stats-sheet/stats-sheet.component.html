@@ -52,6 +52,17 @@
             </div>
           }
         }
+
+        @if (stats.oldestNeverPlayed; as oldest) {
+          <div class="highlight-section">
+            <h3 class="section-title">Oldest Never Played</h3>
+            <div class="album-highlight album-highlight--discovery">
+              <p class="album-title">{{ oldest.basicInfo.title }}</p>
+              <p class="album-artist">{{ oldest.basicInfo.artists | artistName }}</p>
+              <p class="album-year">{{ oldest.basicInfo.originalYear || oldest.basicInfo.year }}</p>
+            </div>
+          </div>
+        }
       } @else {
         <div class="empty-state">
           <span class="empty-icon">&#x1F4CA;</span>

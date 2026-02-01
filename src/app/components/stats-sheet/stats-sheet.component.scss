@@ -147,6 +147,10 @@
   p {
     margin: 0;
   }
+
+  &--discovery {
+    border-left: 3px solid $color-primary;
+  }
 }
 
 .album-title {
@@ -162,6 +166,11 @@
 }
 
 .play-count {
+  color: $text-muted;
+  font-size: 0.875rem;
+}
+
+.album-year {
   color: $text-muted;
   font-size: 0.875rem;
 }

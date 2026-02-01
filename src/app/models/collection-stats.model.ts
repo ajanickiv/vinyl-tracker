@@ -7,4 +7,5 @@ export interface CollectionStats {
   playedThisYear: number;
   mostPlayed?: Release;
   leastPlayed?: Release;
+  oldestNeverPlayed?: Release;
 }

@@ -33,6 +33,8 @@ export class PlaybackService {
         let playedThisYear = 0;
         let mostPlayed: Release | undefined;
         let leastPlayed: Release | undefined;
+        let oldestNeverPlayed: Release | undefined;
+        let oldestNeverPlayedYear: number | undefined;
 
         const currentYear = new Date().getFullYear();
 
@@ -41,6 +43,15 @@ export class PlaybackService {
 
           if (release.playCount === 0) {
             neverPlayed++;
+
+            // Track oldest never-played (prefer originalYear, fall back to year)
+            const releaseYear = release.basicInfo.originalYear || release.basicInfo.year;
+            if (releaseYear) {
+              if (!oldestNeverPlayedYear || releaseYear < oldestNeverPlayedYear) {
+                oldestNeverPlayed = release;
+                oldestNeverPlayedYear = releaseYear;
+              }
+            }
           } else {
             // Track least played (only among played releases)
             if (!leastPlayed || release.playCount < leastPlayed.playCount) {
@@ -69,6 +80,7 @@ export class PlaybackService {
           playedThisYear,
           mostPlayed,
           leastPlayed,
+          oldestNeverPlayed,
         };
       }),
       catchError((error) => {
@@ -80,6 +92,7 @@ export class PlaybackService {
           playedThisYear: 0,
           mostPlayed: undefined,
           leastPlayed: undefined,
+          oldestNeverPlayed: undefined,
         });
       }),
     );
