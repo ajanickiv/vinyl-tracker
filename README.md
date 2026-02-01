@@ -13,9 +13,9 @@ A personal listening tracker for your Discogs vinyl collection. Get personalized
 - **Play Tracking** - Track play counts and last played dates for each release
 - **Search** - Quickly find any album in your collection with real-time search
 - **Play History** - View your 10 most recent plays with quick access to replay
-- **Filtering** - Filter recommendations by genre, pressing decade, original decade, or exclude box sets
+- **Filtering** - Filter recommendations by genre, pressing decade, original decade, exclude box sets, or albums not played in 6+ months
 - **Original Release Year** - Optionally sync master release data to see when albums were first released
-- **Collection Stats** - View stats about your listening habits and most played albums
+- **Collection Stats** - Dedicated stats drawer with collection coverage metrics, most played album, and oldest never-played discovery
 - **Backup & Restore** - Export and import your play data as JSON files
 - **Local Storage** - All play data stored locally in your browser using IndexedDB
 - **Mobile First** - Optimized for mobile devices with a clean, touch-friendly interface
@@ -47,6 +47,7 @@ Your credentials are stored locally in your browser and never sent anywhere exce
 
 - **Search (magnifying glass)** - Open the search sheet to find any album
 - **History (clock)** - View your 10 most recent plays
+- **Stats (bar chart)** - Open the collection stats drawer
 - **Menu (three dots)** - Open the settings drawer
 
 **Search Sheet**
@@ -63,6 +64,17 @@ Your credentials are stored locally in your browser and never sent anywhere exce
 - Tap any entry to load it on the turntable
 - Albums no longer in your collection appear grayed out
 
+**Stats Drawer**
+
+- Tap the stats icon to see collection coverage metrics
+- **Total Releases** - Number of albums in your collection
+- **Total Plays** - Sum of all play counts
+- **Never Played** - Tappable stat that applies the "not played in 6+ months" filter
+- **Collection Played %** - Percentage of collection played at least once
+- **Played This Year %** - Percentage of collection played in the current year
+- **Most Played** - Your most listened-to album with play count
+- **Oldest Never Played** - Tap to load the oldest unplayed album and start discovering neglected gems
+
 **Recommendation Algorithm**
 
 - **Never played items** are always recommended first (random selection)
@@ -78,13 +90,10 @@ Tap the menu icon in the top-right to access:
 
 - **Filters** - Customize recommendations
   - Toggle "Exclude Box Sets" to skip box set releases
+  - Toggle "Not Played in 6+ Months" to focus on neglected albums
   - Select genres to filter by (e.g., Rock, Jazz, Electronic)
   - Select pressing decades to filter by when your pressing was released (e.g., a 2020 reissue)
   - Select original decades to filter by when the album was first released (requires master release sync)
-- **Collection Stats** - View totals and percentages
-  - Total releases, total plays, never played count
-  - Percentage of collection played
-- **Most Played** - See your most played album
 - **Advanced** (collapsible section)
   - **Discogs Account** - View connected username and edit credentials
   - **Collection Sync** - Re-sync from Discogs to add new purchases
@@ -98,10 +107,11 @@ Use filters to focus recommendations on specific parts of your collection:
 1. Open the menu drawer
 2. Under "Filters", you'll see available options based on your collection
 3. Toggle "Exclude Box Sets" to skip box set releases
-4. Tap genre chips to filter by one or more genres
-5. Tap pressing decade chips to filter by when your specific pressing was released (e.g., find all your 2010s reissues)
-6. Tap original decade chips to filter by when albums were first released (e.g., find all albums originally from the 1970s, regardless of pressing year)
-7. Filters apply immediately to recommendations
+4. Toggle "Not Played in 6+ Months" to focus on neglected albums (or tap "Never Played" in the stats drawer)
+5. Tap genre chips to filter by one or more genres
+6. Tap pressing decade chips to filter by when your specific pressing was released (e.g., find all your 2010s reissues)
+7. Tap original decade chips to filter by when albums were first released (e.g., find all albums originally from the 1970s, regardless of pressing year)
+8. Filters apply immediately to recommendations
 
 ### Backup & Restore
 
@@ -221,9 +231,10 @@ src/
 │   │   ├── vinyl-player/          # Main player interface
 │   │   ├── setup-screen/          # First-time credentials setup
 │   │   ├── sync-screen/           # Collection sync UI
-│   │   ├── menu-drawer/           # Side menu with stats, filters, settings
+│   │   ├── menu-drawer/           # Side menu with filters and settings
 │   │   ├── search-sheet/          # Collection search bottom sheet
-│   │   └── play-history-sheet/    # Recent plays bottom sheet
+│   │   ├── play-history-sheet/    # Recent plays bottom sheet
+│   │   └── stats-sheet/           # Collection stats bottom sheet
 │   ├── models/
 │   │   ├── release.model.ts       # Release data structure
 │   │   ├── discogs-api.model.ts   # Discogs API types
