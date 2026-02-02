@@ -1,0 +1,50 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/favicon.svg",
+          "/favicon.ico",
+          "/index.html",
+          "/manifest.webmanifest",
+          "/*.css",
+          "/*.js"
+        ]
+      }
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/icons/**/*",
+          "/**/*.svg",
+          "/**/*.png",
+          "/**/*.jpg",
+          "/**/*.jpeg",
+          "/**/*.webp",
+          "/**/*.woff",
+          "/**/*.woff2"
+        ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "discogs-images",
+      "urls": ["https://i.discogs.com/**"],
+      "cacheConfig": {
+        "maxSize": 200,
+        "maxAge": "30d",
+        "strategy": "freshness",
+        "timeout": "5s"
+      }
+    }
+  ]
+}
