@@ -3,13 +3,14 @@ import { firstValueFrom } from 'rxjs';
 import { PlaybackService } from './playback.service';
 import { DatabaseService } from './database.service';
 import { PlayHistoryService } from './play-history.service';
+import { AchievementsService } from './achievements.service';
 import { Release } from '../models/release.model';
 
 describe('PlaybackService', () => {
   let spectator: SpectatorService<PlaybackService>;
   const createService = createServiceFactory({
     service: PlaybackService,
-    mocks: [DatabaseService, PlayHistoryService],
+    mocks: [DatabaseService, PlayHistoryService, AchievementsService],
   });
 
   const mockRelease1: Release = {
@@ -327,8 +328,11 @@ describe('PlaybackService', () => {
   describe('markAsPlayed', () => {
     it('should increment play count', async () => {
       const db = spectator.inject(DatabaseService);
+      const achievementsService = spectator.inject(AchievementsService);
       db.getRelease.mockResolvedValue(mockRelease1);
       db.updateRelease.mockResolvedValue(1);
+      db.getAllReleases.mockResolvedValue([mockRelease1]);
+      achievementsService.checkForNewUnlocks.mockReturnValue([]);
 
       const result = await firstValueFrom(spectator.service.markAsPlayed(1));
 
@@ -337,8 +341,11 @@ describe('PlaybackService', () => {
 
     it('should set lastPlayedDate to current date', async () => {
       const db = spectator.inject(DatabaseService);
+      const achievementsService = spectator.inject(AchievementsService);
       db.getRelease.mockResolvedValue(mockRelease1);
       db.updateRelease.mockResolvedValue(1);
+      db.getAllReleases.mockResolvedValue([mockRelease1]);
+      achievementsService.checkForNewUnlocks.mockReturnValue([]);
 
       const before = new Date();
       const result = await firstValueFrom(spectator.service.markAsPlayed(1));
@@ -351,8 +358,11 @@ describe('PlaybackService', () => {
 
     it('should call db.updateRelease with correct parameters', async () => {
       const db = spectator.inject(DatabaseService);
+      const achievementsService = spectator.inject(AchievementsService);
       db.getRelease.mockResolvedValue(mockRelease1);
       db.updateRelease.mockResolvedValue(1);
+      db.getAllReleases.mockResolvedValue([mockRelease1]);
+      achievementsService.checkForNewUnlocks.mockReturnValue([]);
 
       await firstValueFrom(spectator.service.markAsPlayed(1));
 
@@ -394,8 +404,11 @@ describe('PlaybackService', () => {
 
     it('should increment play count from 0 for never played release', async () => {
       const db = spectator.inject(DatabaseService);
+      const achievementsService = spectator.inject(AchievementsService);
       db.getRelease.mockResolvedValue(mockRelease2);
       db.updateRelease.mockResolvedValue(1);
+      db.getAllReleases.mockResolvedValue([mockRelease2]);
+      achievementsService.checkForNewUnlocks.mockReturnValue([]);
 
       const result = await firstValueFrom(spectator.service.markAsPlayed(2));
 
@@ -404,8 +417,11 @@ describe('PlaybackService', () => {
 
     it('should preserve other release properties', async () => {
       const db = spectator.inject(DatabaseService);
+      const achievementsService = spectator.inject(AchievementsService);
       db.getRelease.mockResolvedValue(mockRelease1);
       db.updateRelease.mockResolvedValue(1);
+      db.getAllReleases.mockResolvedValue([mockRelease1]);
+      achievementsService.checkForNewUnlocks.mockReturnValue([]);
 
       const result = await firstValueFrom(spectator.service.markAsPlayed(1));
 
@@ -417,8 +433,11 @@ describe('PlaybackService', () => {
     it('should add release to play history', async () => {
       const db = spectator.inject(DatabaseService);
       const playHistoryService = spectator.inject(PlayHistoryService);
+      const achievementsService = spectator.inject(AchievementsService);
       db.getRelease.mockResolvedValue(mockRelease1);
       db.updateRelease.mockResolvedValue(1);
+      db.getAllReleases.mockResolvedValue([mockRelease1]);
+      achievementsService.checkForNewUnlocks.mockReturnValue([]);
 
       await firstValueFrom(spectator.service.markAsPlayed(1));
 
@@ -427,8 +446,11 @@ describe('PlaybackService', () => {
 
     it('should emit on statsUpdated$ after marking as played', async () => {
       const db = spectator.inject(DatabaseService);
+      const achievementsService = spectator.inject(AchievementsService);
       db.getRelease.mockResolvedValue(mockRelease1);
       db.updateRelease.mockResolvedValue(1);
+      db.getAllReleases.mockResolvedValue([mockRelease1]);
+      achievementsService.checkForNewUnlocks.mockReturnValue([]);
 
       const statsUpdatedSpy = jest.fn();
       spectator.service.statsUpdated$.subscribe(statsUpdatedSpy);
@@ -436,6 +458,32 @@ describe('PlaybackService', () => {
       await firstValueFrom(spectator.service.markAsPlayed(1));
 
       expect(statsUpdatedSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should emit achievementUnlocked$ when new badges are unlocked', async () => {
+      const db = spectator.inject(DatabaseService);
+      const achievementsService = spectator.inject(AchievementsService);
+      const mockBadge = {
+        id: 'starter',
+        name: 'Starter',
+        description: 'Test',
+        category: 'collection',
+        requirement: 10,
+      };
+      db.getRelease.mockResolvedValue(mockRelease1);
+      db.updateRelease.mockResolvedValue(1);
+      db.getAllReleases.mockResolvedValue([mockRelease1]);
+      achievementsService.checkForNewUnlocks.mockReturnValue([mockBadge as any]);
+
+      const achievementSpy = jest.fn();
+      spectator.service.achievementUnlocked$.subscribe(achievementSpy);
+
+      await firstValueFrom(spectator.service.markAsPlayed(1));
+
+      // Wait for async tap to complete
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(achievementSpy).toHaveBeenCalledWith([mockBadge]);
     });
 
     it('should not add to history if release not found', async () => {

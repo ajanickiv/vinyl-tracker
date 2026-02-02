@@ -6,6 +6,7 @@ import { DatabaseService } from './services/database.service';
 import { CredentialsService } from './services/credentials.service';
 import { MasterReleaseService } from './services/master-release.service';
 import { PwaUpdateService } from './services/pwa-update.service';
+import { AchievementsService } from './services/achievements.service';
 
 @Component({
   selector: 'app-root',
@@ -54,6 +55,7 @@ export class AppComponent implements OnInit {
     private credentialsService: CredentialsService,
     private masterReleaseService: MasterReleaseService,
     private pwaUpdateService: PwaUpdateService,
+    private achievementsService: AchievementsService,
   ) {}
 
   async ngOnInit() {
@@ -65,8 +67,11 @@ export class AppComponent implements OnInit {
       this.hasSyncedData.set(count > 0);
 
       // Resume background fetch of master release data if needed
+      // and initialize achievements for retroactive badge unlocks
       if (count > 0) {
         this.masterReleaseService.resumeIfNeeded();
+        const releases = await this.db.getAllReleases();
+        this.achievementsService.initialize(releases);
       }
     }
 
@@ -80,7 +85,10 @@ export class AppComponent implements OnInit {
     this.hasSyncedData.set(count > 0);
   }
 
-  onSyncComplete() {
+  async onSyncComplete() {
     this.hasSyncedData.set(true);
+    // Initialize achievements after first sync
+    const releases = await this.db.getAllReleases();
+    this.achievementsService.initialize(releases);
   }
 }
