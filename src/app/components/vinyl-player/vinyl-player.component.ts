@@ -11,8 +11,10 @@ import { SearchSheetComponent } from '../search-sheet/search-sheet.component';
 import { PlayHistorySheetComponent } from '../play-history-sheet/play-history-sheet.component';
 import { StatsSheetComponent } from '../stats-sheet/stats-sheet.component';
 import { AchievementsSheetComponent } from '../achievements-sheet/achievements-sheet.component';
+import { AchievementToastComponent } from '../achievement-toast/achievement-toast.component';
 import { ArtistNamePipe } from '../../pipes/artist-name.pipe';
 import { SPIN_ANIMATION_DURATION_MS } from '../../constants/timing.constants';
+import { BadgeDefinition } from '../../models/achievement.model';
 
 @Component({
   selector: 'app-vinyl-player',
@@ -24,6 +26,7 @@ import { SPIN_ANIMATION_DURATION_MS } from '../../constants/timing.constants';
     PlayHistorySheetComponent,
     StatsSheetComponent,
     AchievementsSheetComponent,
+    AchievementToastComponent,
     ArtistNamePipe,
   ],
   templateUrl: './vinyl-player.component.html',
@@ -40,8 +43,10 @@ export class VinylPlayerComponent implements OnDestroy {
   historyOpen = signal(false);
   statsOpen = signal(false);
   achievementsOpen = signal(false);
+  pendingToast = signal<BadgeDefinition | null>(null);
 
   private destroy$ = new Subject<void>();
+  private toastQueue: BadgeDefinition[] = [];
 
   // Expose master fetch progress to template
   masterFetchInProgress = computed(() => this.masterReleaseService.isInProgress());
@@ -53,6 +58,27 @@ export class VinylPlayerComponent implements OnDestroy {
     private masterReleaseService: MasterReleaseService,
   ) {
     this.loadInitialRecommendation();
+    this.subscribeToAchievements();
+  }
+
+  private subscribeToAchievements(): void {
+    this.playbackService.achievementUnlocked$.pipe(takeUntil(this.destroy$)).subscribe((badges) => {
+      // Queue all unlocked badges
+      this.toastQueue.push(...badges);
+      // Show first toast if none is currently displayed
+      if (!this.pendingToast()) {
+        this.showNextToast();
+      }
+    });
+  }
+
+  private showNextToast(): void {
+    const nextBadge = this.toastQueue.shift();
+    this.pendingToast.set(nextBadge || null);
+  }
+
+  dismissToast(): void {
+    this.showNextToast();
   }
 
   ngOnDestroy(): void {

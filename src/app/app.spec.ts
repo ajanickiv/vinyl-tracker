@@ -1,5 +1,5 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { AppComponent } from './app';
 import { DatabaseService } from './services/database.service';
 import { CredentialsService } from './services/credentials.service';
@@ -65,6 +65,8 @@ describe('AppComponent', () => {
         neverPlayed: 0,
       }),
     );
+    // Add achievementUnlocked$ Subject for VinylPlayerComponent
+    (playbackService as any).achievementUnlocked$ = new Subject<any[]>();
   });
 
   it('should create', () => {

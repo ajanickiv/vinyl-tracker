@@ -157,4 +157,9 @@
       <p>Please sync your Discogs collection first.</p>
     </div>
   }
+
+  @if (pendingToast()) {
+    <app-achievement-toast [badge]="pendingToast()!" (dismiss)="dismissToast()">
+    </app-achievement-toast>
+  }
 </div>
