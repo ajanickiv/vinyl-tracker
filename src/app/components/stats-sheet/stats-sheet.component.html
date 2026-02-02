@@ -1,0 +1,79 @@
+<div class="sheet-container" [class.open]="isOpen()">
+  <div class="backdrop" (click)="onBackdropClick()"></div>
+
+  <div class="sheet">
+    <div class="drag-handle">
+      <div class="handle-bar"></div>
+    </div>
+
+    <div class="stats-header">
+      <h2 class="header-title">Collection Stats</h2>
+    </div>
+
+    <div class="stats-content">
+      @if (isLoading()) {
+        <div class="loading-state">
+          <p>Loading stats...</p>
+        </div>
+      } @else if (collectionStats(); as stats) {
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value">{{ stats.totalReleases }}</div>
+            <div class="stat-label">Total Releases</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{{ stats.totalPlays }}</div>
+            <div class="stat-label">Total Plays</div>
+          </div>
+          <button class="stat-item stat-item--tappable" (click)="applyNeverPlayedFilter()">
+            <div class="stat-value">{{ stats.neverPlayed }}</div>
+            <div class="stat-label">Never Played</div>
+            <div class="tap-hint">Tap to filter</div>
+          </button>
+          <div class="stat-item">
+            <div class="stat-value">{{ getCollectionPlayedPercentage() }}%</div>
+            <div class="stat-label">Collection Played</div>
+          </div>
+          <div class="stat-item stat-item--highlight">
+            <div class="stat-value">{{ getPlayedThisYearPercentage() }}%</div>
+            <div class="stat-label">Played This Year</div>
+          </div>
+        </div>
+
+        @if (stats.mostPlayed; as mostPlayed) {
+          @if (mostPlayed.playCount > 0) {
+            <div class="highlight-section">
+              <h3 class="section-title">Most Played</h3>
+              <div class="album-highlight">
+                <p class="album-title">{{ mostPlayed.basicInfo.title }}</p>
+                <p class="album-artist">{{ mostPlayed.basicInfo.artists | artistName }}</p>
+                <p class="play-count">{{ mostPlayed.playCount }} plays</p>
+              </div>
+            </div>
+          }
+        }
+
+        @if (stats.oldestNeverPlayed; as oldest) {
+          <div class="highlight-section">
+            <h3 class="section-title">Oldest Never Played</h3>
+            <button
+              class="album-highlight album-highlight--discovery album-highlight--tappable"
+              (click)="selectOldestNeverPlayed()"
+            >
+              <p class="album-title">{{ oldest.basicInfo.title }}</p>
+              <p class="album-artist">{{ oldest.basicInfo.artists | artistName }}</p>
+              <p class="album-year">{{ oldest.basicInfo.originalYear || oldest.basicInfo.year }}</p>
+              <p class="tap-hint">Tap to play</p>
+            </button>
+          </div>
+        }
+      } @else {
+        <div class="empty-state">
+          <span class="empty-icon">&#x1F4CA;</span>
+          <p>No stats available</p>
+          <p class="empty-hint">Sync your collection to see stats</p>
+        </div>
+      }
+    </div>
+  </div>
+</div>

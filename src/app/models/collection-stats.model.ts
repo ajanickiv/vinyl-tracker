@@ -4,6 +4,8 @@ export interface CollectionStats {
   totalReleases: number;
   totalPlays: number;
   neverPlayed: number;
+  playedThisYear: number;
   mostPlayed?: Release;
   leastPlayed?: Release;
+  oldestNeverPlayed?: Release;
 }

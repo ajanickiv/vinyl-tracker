@@ -9,6 +9,7 @@ import { Release } from '../../models/release.model';
 import { MenuDrawerComponent } from '../menu-drawer/menu-drawer.component';
 import { SearchSheetComponent } from '../search-sheet/search-sheet.component';
 import { PlayHistorySheetComponent } from '../play-history-sheet/play-history-sheet.component';
+import { StatsSheetComponent } from '../stats-sheet/stats-sheet.component';
 import { ArtistNamePipe } from '../../pipes/artist-name.pipe';
 import { SPIN_ANIMATION_DURATION_MS } from '../../constants/timing.constants';
 
@@ -20,6 +21,7 @@ import { SPIN_ANIMATION_DURATION_MS } from '../../constants/timing.constants';
     MenuDrawerComponent,
     SearchSheetComponent,
     PlayHistorySheetComponent,
+    StatsSheetComponent,
     ArtistNamePipe,
   ],
   templateUrl: './vinyl-player.component.html',
@@ -34,6 +36,7 @@ export class VinylPlayerComponent implements OnDestroy {
   menuOpen = signal(false);
   searchOpen = signal(false);
   historyOpen = signal(false);
+  statsOpen = signal(false);
 
   private destroy$ = new Subject<void>();
 
@@ -167,6 +170,14 @@ export class VinylPlayerComponent implements OnDestroy {
 
   closeHistory(): void {
     this.historyOpen.set(false);
+  }
+
+  toggleStats(): void {
+    this.statsOpen.set(!this.statsOpen());
+  }
+
+  closeStats(): void {
+    this.statsOpen.set(false);
   }
 
   onHistoryReleaseSelected(release: Release): void {

@@ -6,6 +6,9 @@
     <button class="history-button" (click)="toggleHistory()">
       <span class="history-icon">&#x1F553;</span>
     </button>
+    <button class="stats-button" (click)="toggleStats()">
+      <span class="stats-icon">&#x1F4CA;</span>
+    </button>
     <button class="menu-button" (click)="toggleMenu()">
       <span class="menu-icon">⋮</span>
     </button>
@@ -29,6 +32,13 @@
     (close)="closeHistory()"
     (releaseSelected)="onHistoryReleaseSelected($event)"
   ></app-play-history-sheet>
+
+  <app-stats-sheet
+    [isOpen]="statsOpen()"
+    (close)="closeStats()"
+    (filterApplied)="onFiltersChanged()"
+    (releaseSelected)="onReleaseSelected($event)"
+  ></app-stats-sheet>
 
   @if (isLoading()) {
     <div class="loading">
@@ -85,9 +95,7 @@
             currentRelease()!.basicInfo.year &&
             currentRelease()!.basicInfo.originalYear !== currentRelease()!.basicInfo.year
           ) {
-            {{ currentRelease()!.basicInfo.originalYear }} ({{
-              currentRelease()!.basicInfo.year
-            }}
+            {{ currentRelease()!.basicInfo.originalYear }} ({{ currentRelease()!.basicInfo.year }}
             pressing)
           } @else if (currentRelease()!.basicInfo.originalYear) {
             {{ currentRelease()!.basicInfo.originalYear }}

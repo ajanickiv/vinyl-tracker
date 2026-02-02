@@ -30,6 +30,22 @@
             </label>
           </div>
 
+          <!-- Not Played in 6 Months Toggle -->
+          <div class="filter-group">
+            <label class="toggle-label">
+              <span class="toggle-text">Not played in 6+ months</span>
+              <button
+                class="toggle-button"
+                [class.active]="filterService.filters().notPlayedIn6Months"
+                (click)="toggleNotPlayedIn6Months()"
+              >
+                <span class="toggle-track">
+                  <span class="toggle-thumb"></span>
+                </span>
+              </button>
+            </label>
+          </div>
+
           <!-- Genre Chips -->
           @if (availableGenres().length > 0) {
             <div class="filter-group">
@@ -85,55 +101,6 @@
           }
         </div>
       </div>
-
-      <!-- Stats Section -->
-      @if (collectionStats(); as stats) {
-        <div class="menu-section">
-          <h3>Collection Stats</h3>
-          <div class="stats-grid">
-            <div class="stat-item">
-              <div class="stat-value">{{ stats.totalReleases }}</div>
-              <div class="stat-label">Total Releases</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-value">{{ stats.totalPlays }}</div>
-              <div class="stat-label">Total Plays</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-value">{{ stats.neverPlayed }}</div>
-              <div class="stat-label">Never Played</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-value">
-                {{
-                  stats.totalReleases > 0
-                    ? (
-                        ((stats.totalReleases - stats.neverPlayed) / stats.totalReleases) *
-                        100
-                      ).toFixed(0)
-                    : 0
-                }}%
-              </div>
-              <div class="stat-label">Collection Played</div>
-            </div>
-          </div>
-        </div>
-
-        @if (stats.mostPlayed; as mostPlayed) {
-          @if (mostPlayed.playCount > 0) {
-            <div class="menu-section">
-              <h3>Most Played</h3>
-              <div class="album-highlight">
-                <p class="album-title">{{ mostPlayed.basicInfo.title }}</p>
-                <p class="album-artist">
-                  {{ mostPlayed.basicInfo.artists | artistName }}
-                </p>
-                <p class="play-count">{{ mostPlayed.playCount }} plays</p>
-              </div>
-            </div>
-          }
-        }
-      }
 
       <!-- Advanced Section (Collapsible) -->
       <div class="advanced-section">

@@ -3,6 +3,7 @@ export interface RecommendationFilters {
   genres: string[];
   decades: string[];
   originalDecades: string[];
+  notPlayedIn6Months: boolean;
 }
 
 export const DEFAULT_FILTERS: RecommendationFilters = {
@@ -10,4 +11,5 @@ export const DEFAULT_FILTERS: RecommendationFilters = {
   genres: [],
   decades: [],
   originalDecades: [],
+  notPlayedIn6Months: false,
 };

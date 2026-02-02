@@ -96,8 +96,10 @@ describe('PlaybackService', () => {
         totalReleases: 0,
         totalPlays: 0,
         neverPlayed: 0,
+        playedThisYear: 0,
         mostPlayed: undefined,
         leastPlayed: undefined,
+        oldestNeverPlayed: undefined,
       });
     });
 
@@ -171,6 +173,154 @@ describe('PlaybackService', () => {
       expect(stats.neverPlayed).toBe(0);
       expect(stats.mostPlayed).toEqual(mockRelease1);
       expect(stats.leastPlayed).toEqual(mockRelease1);
+    });
+
+    describe('playedThisYear', () => {
+      it('should count releases played in current year', async () => {
+        const currentYear = new Date().getFullYear();
+        const releasesPlayedThisYear: Release[] = [
+          { ...mockRelease1, lastPlayedDate: new Date(currentYear, 2, 15) }, // Mar 15
+          { ...mockRelease2, playCount: 1, lastPlayedDate: new Date(currentYear, 5, 20) }, // Jun 20
+          { ...mockRelease3, lastPlayedDate: new Date(currentYear - 1, 11, 1) }, // Dec 1 last year
+        ];
+
+        const db = spectator.inject(DatabaseService);
+        db.getAllReleases.mockResolvedValue(releasesPlayedThisYear);
+
+        const stats = await firstValueFrom(spectator.service.getCollectionStats());
+
+        expect(stats.playedThisYear).toBe(2);
+      });
+
+      it('should return 0 when no releases played this year', async () => {
+        const lastYear = new Date().getFullYear() - 1;
+        const releasesNotPlayedThisYear: Release[] = [
+          { ...mockRelease1, lastPlayedDate: new Date(lastYear, 0, 15) }, // Jan 15 last year
+          { ...mockRelease3, lastPlayedDate: new Date(lastYear, 5, 20) }, // Jun 20 last year
+        ];
+
+        const db = spectator.inject(DatabaseService);
+        db.getAllReleases.mockResolvedValue(releasesNotPlayedThisYear);
+
+        const stats = await firstValueFrom(spectator.service.getCollectionStats());
+
+        expect(stats.playedThisYear).toBe(0);
+      });
+
+      it('should not count never-played releases', async () => {
+        const neverPlayedRelease = { ...mockRelease2, playCount: 0, lastPlayedDate: undefined };
+
+        const db = spectator.inject(DatabaseService);
+        db.getAllReleases.mockResolvedValue([neverPlayedRelease]);
+
+        const stats = await firstValueFrom(spectator.service.getCollectionStats());
+
+        expect(stats.playedThisYear).toBe(0);
+      });
+
+      it('should count all releases if all played this year', async () => {
+        const currentYear = new Date().getFullYear();
+        const allPlayedThisYear: Release[] = [
+          { ...mockRelease1, lastPlayedDate: new Date(currentYear, 0, 15) }, // Jan 15
+          { ...mockRelease2, playCount: 1, lastPlayedDate: new Date(currentYear, 5, 15) }, // Jun 15
+          { ...mockRelease3, lastPlayedDate: new Date(currentYear, 11, 15) }, // Dec 15
+        ];
+
+        const db = spectator.inject(DatabaseService);
+        db.getAllReleases.mockResolvedValue(allPlayedThisYear);
+
+        const stats = await firstValueFrom(spectator.service.getCollectionStats());
+
+        expect(stats.playedThisYear).toBe(3);
+      });
+    });
+
+    describe('oldestNeverPlayed', () => {
+      it('should find the oldest never-played release by year', async () => {
+        const neverPlayed1970: Release = {
+          ...mockRelease1,
+          playCount: 0,
+          lastPlayedDate: undefined,
+          basicInfo: { ...mockRelease1.basicInfo, year: 1970 },
+        };
+        const neverPlayed1985: Release = {
+          ...mockRelease2,
+          playCount: 0,
+          basicInfo: { ...mockRelease2.basicInfo, year: 1985 },
+        };
+
+        const db = spectator.inject(DatabaseService);
+        db.getAllReleases.mockResolvedValue([neverPlayed1985, neverPlayed1970]);
+
+        const stats = await firstValueFrom(spectator.service.getCollectionStats());
+
+        expect(stats.oldestNeverPlayed).toEqual(neverPlayed1970);
+      });
+
+      it('should prefer originalYear over year when finding oldest', async () => {
+        const releaseWithOriginalYear: Release = {
+          ...mockRelease1,
+          playCount: 0,
+          lastPlayedDate: undefined,
+          basicInfo: { ...mockRelease1.basicInfo, year: 2020, originalYear: 1965 },
+        };
+        const releaseWithOnlyYear: Release = {
+          ...mockRelease2,
+          playCount: 0,
+          basicInfo: { ...mockRelease2.basicInfo, year: 1980 },
+        };
+
+        const db = spectator.inject(DatabaseService);
+        db.getAllReleases.mockResolvedValue([releaseWithOnlyYear, releaseWithOriginalYear]);
+
+        const stats = await firstValueFrom(spectator.service.getCollectionStats());
+
+        expect(stats.oldestNeverPlayed).toEqual(releaseWithOriginalYear);
+      });
+
+      it('should return undefined when no never-played releases exist', async () => {
+        const db = spectator.inject(DatabaseService);
+        db.getAllReleases.mockResolvedValue([mockRelease1, mockRelease3]); // Both have plays
+
+        const stats = await firstValueFrom(spectator.service.getCollectionStats());
+
+        expect(stats.oldestNeverPlayed).toBeUndefined();
+      });
+
+      it('should return undefined when never-played releases have no year', async () => {
+        const neverPlayedNoYear: Release = {
+          ...mockRelease2,
+          playCount: 0,
+          basicInfo: { ...mockRelease2.basicInfo, year: undefined, originalYear: undefined },
+        };
+
+        const db = spectator.inject(DatabaseService);
+        db.getAllReleases.mockResolvedValue([neverPlayedNoYear]);
+
+        const stats = await firstValueFrom(spectator.service.getCollectionStats());
+
+        expect(stats.oldestNeverPlayed).toBeUndefined();
+      });
+
+      it('should only consider never-played releases', async () => {
+        const playedOldRelease: Release = {
+          ...mockRelease1,
+          playCount: 5,
+          basicInfo: { ...mockRelease1.basicInfo, year: 1960 },
+        };
+        const neverPlayedNewerRelease: Release = {
+          ...mockRelease2,
+          playCount: 0,
+          basicInfo: { ...mockRelease2.basicInfo, year: 1990 },
+        };
+
+        const db = spectator.inject(DatabaseService);
+        db.getAllReleases.mockResolvedValue([playedOldRelease, neverPlayedNewerRelease]);
+
+        const stats = await firstValueFrom(spectator.service.getCollectionStats());
+
+        expect(stats.oldestNeverPlayed).toEqual(neverPlayedNewerRelease);
+      });
     });
   });
 

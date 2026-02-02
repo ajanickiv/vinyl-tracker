@@ -104,6 +104,13 @@ describe('FilterService', () => {
 
       expect(service.hasActiveFilters()).toBe(false);
     });
+
+    it('should return true when notPlayedIn6Months is enabled', () => {
+      service.setExcludeBoxSets(false);
+      service.setNotPlayedIn6Months(true);
+
+      expect(service.hasActiveFilters()).toBe(true);
+    });
   });
 
   describe('matchesFilters', () => {
@@ -327,6 +334,76 @@ describe('FilterService', () => {
       });
     });
 
+    describe('not played in 6 months filter', () => {
+      beforeEach(() => {
+        service.setExcludeBoxSets(false);
+      });
+
+      it('should include releases never played when filter enabled', () => {
+        service.setNotPlayedIn6Months(true);
+        const release = createMockRelease({
+          lastPlayedDate: undefined,
+        });
+
+        expect(service.matchesFilters(release)).toBe(true);
+      });
+
+      it('should include releases played more than 6 months ago when filter enabled', () => {
+        service.setNotPlayedIn6Months(true);
+        const sevenMonthsAgo = new Date();
+        sevenMonthsAgo.setMonth(sevenMonthsAgo.getMonth() - 7);
+
+        const release = createMockRelease({
+          lastPlayedDate: sevenMonthsAgo,
+        });
+
+        expect(service.matchesFilters(release)).toBe(true);
+      });
+
+      it('should exclude releases played within 6 months when filter enabled', () => {
+        service.setNotPlayedIn6Months(true);
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+        const release = createMockRelease({
+          lastPlayedDate: threeMonthsAgo,
+        });
+
+        expect(service.matchesFilters(release)).toBe(false);
+      });
+
+      it('should exclude releases played today when filter enabled', () => {
+        service.setNotPlayedIn6Months(true);
+        const release = createMockRelease({
+          lastPlayedDate: new Date(),
+        });
+
+        expect(service.matchesFilters(release)).toBe(false);
+      });
+
+      it('should include all releases when filter is disabled', () => {
+        service.setNotPlayedIn6Months(false);
+        const release = createMockRelease({
+          lastPlayedDate: new Date(),
+        });
+
+        expect(service.matchesFilters(release)).toBe(true);
+      });
+
+      it('should include releases played exactly 6 months ago', () => {
+        service.setNotPlayedIn6Months(true);
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+        sixMonthsAgo.setDate(sixMonthsAgo.getDate() - 1); // One day past 6 months
+
+        const release = createMockRelease({
+          lastPlayedDate: sixMonthsAgo,
+        });
+
+        expect(service.matchesFilters(release)).toBe(true);
+      });
+    });
+
     describe('combined filters', () => {
       it('should require all filters to pass', () => {
         service.setExcludeBoxSets(true);
@@ -462,6 +539,23 @@ describe('FilterService', () => {
       service.toggleDecade('1980s');
 
       expect(service.filters().decades).toEqual(['1990s']);
+    });
+  });
+
+  describe('setNotPlayedIn6Months', () => {
+    it('should update the notPlayedIn6Months filter', () => {
+      service.setNotPlayedIn6Months(true);
+      expect(service.filters().notPlayedIn6Months).toBe(true);
+
+      service.setNotPlayedIn6Months(false);
+      expect(service.filters().notPlayedIn6Months).toBe(false);
+    });
+
+    it('should persist to localStorage', () => {
+      service.setNotPlayedIn6Months(true);
+
+      const stored = JSON.parse(localStorage.getItem('vinyl-tracker-filters')!);
+      expect(stored.notPlayedIn6Months).toBe(true);
     });
   });
 

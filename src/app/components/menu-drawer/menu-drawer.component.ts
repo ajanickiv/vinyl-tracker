@@ -2,29 +2,24 @@ import { Component, signal, input, output, OnDestroy, isDevMode, effect } from '
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { takeUntil, tap } from 'rxjs/operators';
 import { DatabaseService } from '../../services/database.service';
 import { DiscogsService } from '../../services/discogs.service';
-import { PlaybackService } from '../../services/playback.service';
 import { FilterService } from '../../services/filter.service';
 import { PlayStatsExportService } from '../../services/play-stats-export.service';
 import { CredentialsService } from '../../services/credentials.service';
 import { MasterReleaseService } from '../../services/master-release.service';
-import { CollectionStats } from '../../models/collection-stats.model';
 import { ImportMode } from '../../models/play-stats-export.model';
-import { ArtistNamePipe } from '../../pipes/artist-name.pipe';
 import { SYNC_MESSAGE_DISPLAY_MS } from '../../constants/timing.constants';
 import { APP_VERSION } from '../../constants/app.constants';
 
 @Component({
   selector: 'app-menu-drawer',
   standalone: true,
-  imports: [CommonModule, FormsModule, ArtistNamePipe],
+  imports: [CommonModule, FormsModule],
   templateUrl: './menu-drawer.component.html',
   styleUrls: ['./menu-drawer.component.scss'],
 })
 export class MenuDrawerComponent implements OnDestroy {
-  collectionStats = signal<CollectionStats | null>(null);
   lastSyncDate = signal<Date | null>(null);
   syncing = signal(false);
   syncMessage = signal('');
@@ -67,18 +62,12 @@ export class MenuDrawerComponent implements OnDestroy {
   constructor(
     private db: DatabaseService,
     private discogsService: DiscogsService,
-    private playbackService: PlaybackService,
     public filterService: FilterService,
     private playStatsExportService: PlayStatsExportService,
     public credentialsService: CredentialsService,
     private masterReleaseService: MasterReleaseService,
   ) {
     this.loadMenuData();
-
-    // Subscribe to stats updates to refresh when plays change
-    this.playbackService.statsUpdated$.pipe(takeUntil(this.destroy$)).subscribe(() => {
-      this.refreshCollectionStats();
-    });
 
     // Reload filter options and settings when drawer opens
     effect(() => {
@@ -125,22 +114,8 @@ export class MenuDrawerComponent implements OnDestroy {
         console.error('Failed to load last sync date:', error);
       });
 
-    this.refreshCollectionStats();
-
     // Load available genres and decades for filter chips
     this.loadFilterOptions();
-  }
-
-  private refreshCollectionStats(): void {
-    this.playbackService
-      .getCollectionStats()
-      .pipe(
-        tap((stats) => {
-          this.collectionStats.set(stats);
-        }),
-        takeUntil(this.destroy$),
-      )
-      .subscribe();
   }
 
   private loadFilterOptions(): void {
@@ -184,6 +159,12 @@ export class MenuDrawerComponent implements OnDestroy {
   toggleExcludeBoxSets(): void {
     const current = this.filterService.filters().excludeBoxSets;
     this.filterService.setExcludeBoxSets(!current);
+    this.filtersChanged.emit();
+  }
+
+  toggleNotPlayedIn6Months(): void {
+    const current = this.filterService.filters().notPlayedIn6Months;
+    this.filterService.setNotPlayedIn6Months(!current);
     this.filtersChanged.emit();
   }
 
