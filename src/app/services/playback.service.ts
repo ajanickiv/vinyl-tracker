@@ -3,9 +3,11 @@ import { Observable, Subject, from, of } from 'rxjs';
 import { map, catchError, switchMap, tap } from 'rxjs/operators';
 import { DatabaseService } from './database.service';
 import { PlayHistoryService } from './play-history.service';
+import { AchievementsService } from './achievements.service';
 import { Release } from '../models/release.model';
 import { CollectionStats } from '../models/collection-stats.model';
 import { PlayStats } from '../models/play-stats.model';
+import { BadgeDefinition } from '../models/achievement.model';
 
 @Injectable({
   providedIn: 'root',
@@ -17,9 +19,16 @@ export class PlaybackService {
    */
   readonly statsUpdated$ = new Subject<void>();
 
+  /**
+   * Emits when new achievements are unlocked
+   * Components can subscribe to show toast notifications
+   */
+  readonly achievementUnlocked$ = new Subject<BadgeDefinition[]>();
+
   constructor(
     private db: DatabaseService,
     private playHistoryService: PlayHistoryService,
+    private achievementsService: AchievementsService,
   ) {}
 
   /**
@@ -122,11 +131,17 @@ export class PlaybackService {
             lastPlayedDate: updatedRelease.lastPlayedDate,
           }),
         ).pipe(
-          tap(() => {
+          tap(async () => {
             // Add to play history
             this.playHistoryService.addToHistory(releaseId);
             // Notify subscribers that stats have changed
             this.statsUpdated$.next();
+            // Check for new badge unlocks
+            const allReleases = await this.db.getAllReleases();
+            const newBadges = this.achievementsService.checkForNewUnlocks(allReleases);
+            if (newBadges.length > 0) {
+              this.achievementUnlocked$.next(newBadges);
+            }
           }),
           map(() => {
             console.log(

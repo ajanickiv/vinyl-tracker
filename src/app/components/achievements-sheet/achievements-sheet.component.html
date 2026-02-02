@@ -1,0 +1,57 @@
+<div class="sheet-container" [class.open]="isOpen()">
+  <div class="backdrop" (click)="onBackdropClick()"></div>
+
+  <div class="sheet">
+    <div class="drag-handle">
+      <div class="handle-bar"></div>
+    </div>
+
+    <div class="achievements-header">
+      <h2 class="header-title">Achievements</h2>
+      <div class="header-progress">{{ getUnlockedCount() }}/{{ getTotalCount() }}</div>
+    </div>
+
+    <div class="achievements-content">
+      @if (isLoading()) {
+        <div class="loading-state">
+          <p>Loading achievements...</p>
+        </div>
+      } @else if (badges().length > 0) {
+        <div class="badges-grid">
+          @for (badge of badges(); track badge.badge.id) {
+            <div
+              class="badge-item"
+              [class.unlocked]="badge.isUnlocked"
+              [class.locked]="!badge.isUnlocked"
+            >
+              <div
+                class="badge-icon"
+                [class.icon-unlocked]="badge.isUnlocked"
+                [class.icon-locked]="!badge.isUnlocked"
+                [innerHTML]="getBadgeIcon(badge.badge.id)"
+              ></div>
+              <div class="badge-name">{{ badge.badge.name }}</div>
+              <div class="badge-description">{{ badge.badge.description }}</div>
+              @if (!badge.isUnlocked) {
+                <div class="badge-progress">
+                  <div class="progress-bar">
+                    <div class="progress-fill" [style.width.%]="getProgressPercentage(badge)"></div>
+                  </div>
+                  <div class="progress-text">{{ formatProgress(badge) }}</div>
+                </div>
+              } @else {
+                <div class="badge-unlocked-text">&#x2713; Unlocked</div>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">
+          <span class="empty-icon">&#x1F3C6;</span>
+          <p>No achievements available</p>
+          <p class="empty-hint">Sync your collection to start earning badges</p>
+        </div>
+      }
+    </div>
+  </div>
+</div>

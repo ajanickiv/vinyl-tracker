@@ -1,0 +1,11 @@
+<div class="toast-container">
+  <div class="toast-content">
+    <div class="badge-icon" [innerHTML]="getBadgeIcon(badge().id)"></div>
+    <div class="toast-text">
+      <div class="toast-title">Achievement Unlocked!</div>
+      <div class="badge-name">{{ badge().name }}</div>
+      <div class="badge-description">{{ badge().description }}</div>
+    </div>
+  </div>
+  <button class="dismiss-btn" (click)="onDismiss()">OK</button>
+</div>

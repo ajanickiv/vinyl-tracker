@@ -1,5 +1,5 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { AppComponent } from './app';
 import { DatabaseService } from './services/database.service';
 import { CredentialsService } from './services/credentials.service';
@@ -7,6 +7,7 @@ import { RecommendationService } from './services/recommendation.service';
 import { PlaybackService } from './services/playback.service';
 import { MasterReleaseService } from './services/master-release.service';
 import { PwaUpdateService } from './services/pwa-update.service';
+import { AchievementsService } from './services/achievements.service';
 import { SetupScreenComponent } from './components/setup-screen/setup-screen.component';
 import { SyncScreenComponent } from './components/sync-screen/sync-screen.component';
 import { VinylPlayerComponent } from './components/vinyl-player/vinyl-player.component';
@@ -27,6 +28,7 @@ describe('AppComponent', () => {
       PlaybackService,
       MasterReleaseService,
       PwaUpdateService,
+      AchievementsService,
     ],
     providers: [
       {
@@ -63,6 +65,8 @@ describe('AppComponent', () => {
         neverPlayed: 0,
       }),
     );
+    // Add achievementUnlocked$ Subject for VinylPlayerComponent
+    (playbackService as any).achievementUnlocked$ = new Subject<any[]>();
   });
 
   it('should create', () => {
@@ -89,6 +93,7 @@ describe('AppComponent', () => {
       const dbService = spectator.inject(DatabaseService);
       mockCredentialsService.hasCredentials.mockReturnValue(true);
       dbService.getCollectionCount.mockResolvedValue(5);
+      dbService.getAllReleases.mockResolvedValue([]);
 
       await spectator.component.ngOnInit();
 
@@ -111,6 +116,7 @@ describe('AppComponent', () => {
       const dbService = spectator.inject(DatabaseService);
       mockCredentialsService.hasCredentials.mockReturnValue(true);
       dbService.getCollectionCount.mockResolvedValue(5);
+      dbService.getAllReleases.mockResolvedValue([]);
 
       await spectator.component.ngOnInit();
 
@@ -165,12 +171,25 @@ describe('AppComponent', () => {
   });
 
   describe('onSyncComplete', () => {
-    it('should set hasSyncedData to true', () => {
+    it('should set hasSyncedData to true', async () => {
+      const dbService = spectator.inject(DatabaseService);
+      dbService.getAllReleases.mockResolvedValue([]);
       expect(spectator.component.hasSyncedData()).toBe(false);
 
-      spectator.component.onSyncComplete();
+      await spectator.component.onSyncComplete();
 
       expect(spectator.component.hasSyncedData()).toBe(true);
+    });
+
+    it('should initialize achievements with releases', async () => {
+      const dbService = spectator.inject(DatabaseService);
+      const achievementsService = spectator.inject(AchievementsService);
+      const mockReleases = [{ id: 1 }];
+      dbService.getAllReleases.mockResolvedValue(mockReleases);
+
+      await spectator.component.onSyncComplete();
+
+      expect(achievementsService.initialize).toHaveBeenCalledWith(mockReleases);
     });
   });
 

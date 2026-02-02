@@ -27,6 +27,7 @@ describe('VinylPlayerComponent', () => {
     getCollectionStats: jest.Mock;
     getPlayStats: jest.Mock;
     statsUpdated$: Subject<void>;
+    achievementUnlocked$: Subject<any[]>;
   };
   let mockDatabaseService: {
     getLastSyncDate: jest.Mock;
@@ -85,6 +86,7 @@ describe('VinylPlayerComponent', () => {
       getCollectionStats: jest.fn().mockReturnValue(of({})),
       getPlayStats: jest.fn().mockReturnValue(of(null)),
       statsUpdated$: new Subject<void>(),
+      achievementUnlocked$: new Subject<any[]>(),
     };
 
     mockDatabaseService = {
