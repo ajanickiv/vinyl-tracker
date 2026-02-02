@@ -1,11 +1,13 @@
 import { Component, signal, input, output, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { AchievementsService } from '../../services/achievements.service';
 import { DatabaseService } from '../../services/database.service';
 import { PlaybackService } from '../../services/playback.service';
 import { BadgeProgress, BadgeCategory } from '../../models/achievement.model';
+import { BADGE_ICONS } from '../../constants/badge-icons.constants';
 
 @Component({
   selector: 'app-achievements-sheet',
@@ -27,7 +29,13 @@ export class AchievementsSheetComponent implements OnInit, OnDestroy {
     private achievementsService: AchievementsService,
     private db: DatabaseService,
     private playbackService: PlaybackService,
+    private sanitizer: DomSanitizer,
   ) {}
+
+  getBadgeIcon(badgeId: string): SafeHtml {
+    const svg = BADGE_ICONS[badgeId as keyof typeof BADGE_ICONS] || BADGE_ICONS['starter'];
+    return this.sanitizer.bypassSecurityTrustHtml(svg);
+  }
 
   ngOnInit(): void {
     this.loadBadges();

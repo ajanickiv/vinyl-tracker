@@ -16,6 +16,7 @@ A personal listening tracker for your Discogs vinyl collection. Get personalized
 - **Filtering** - Filter recommendations by genre, pressing decade, original decade, exclude box sets, or albums not played in 6+ months
 - **Original Release Year** - Optionally sync master release data to see when albums were first released
 - **Collection Stats** - Dedicated stats drawer with collection coverage metrics, most played album, and oldest never-played discovery
+- **Achievements** - Earn 15 badges across 6 categories for collection milestones, play activity, and music discovery
 - **Backup & Restore** - Export and import your play data as JSON files
 - **Local Storage** - All play data stored locally in your browser using IndexedDB
 - **Mobile First** - Optimized for mobile devices with a clean, touch-friendly interface
@@ -49,6 +50,7 @@ Your credentials are stored locally in your browser and never sent anywhere exce
 - **Search (magnifying glass)** - Open the search sheet to find any album
 - **History (clock)** - View your 10 most recent plays
 - **Stats (bar chart)** - Open the collection stats drawer
+- **Achievements (trophy)** - Open the achievements drawer
 - **Menu (three dots)** - Open the settings drawer
 
 **Search Sheet**
@@ -75,6 +77,21 @@ Your credentials are stored locally in your browser and never sent anywhere exce
 - **Played This Year %** - Percentage of collection played in the current year
 - **Most Played** - Your most listened-to album with play count
 - **Oldest Never Played** - Tap to load the oldest unplayed album and start discovering neglected gems
+
+**Achievements Drawer**
+
+- Tap the trophy icon to view your achievements progress
+- 15 badges across 6 categories reward your listening habits:
+  - **Collection** - Starter (10 albums), Collector (50), Archivist (100)
+  - **Play Count** - Century (100 plays), Devoted (500), Obsessed (1000)
+  - **Coverage** - No Dust (100% of collection played)
+  - **Discovery** - Genre Explorer (5+ genres), Decade Hopper (5+ decades)
+  - **Artist** - Fan (10 plays same artist), Superfan (25), Fanatic (50)
+  - **Album** - On Repeat (10 plays same album), Worn Grooves (25), Needle Dropper (50)
+- Locked badges show grayscale icons with progress bars
+- Unlocked badges display colored icons with a copper highlight
+- A toast notification appears when you earn a new badge
+- Existing users receive retroactive credit for already-earned achievements
 
 **Recommendation Algorithm**
 
@@ -235,7 +252,9 @@ src/
 │   │   ├── menu-drawer/           # Side menu with filters and settings
 │   │   ├── search-sheet/          # Collection search bottom sheet
 │   │   ├── play-history-sheet/    # Recent plays bottom sheet
-│   │   └── stats-sheet/           # Collection stats bottom sheet
+│   │   ├── stats-sheet/           # Collection stats bottom sheet
+│   │   ├── achievements-sheet/    # Achievements/badges bottom sheet
+│   │   └── achievement-toast/     # Badge unlock notification
 │   ├── models/
 │   │   ├── release.model.ts       # Release data structure
 │   │   ├── discogs-api.model.ts   # Discogs API types
@@ -243,7 +262,8 @@ src/
 │   │   ├── collection-stats.model.ts  # Stats types
 │   │   ├── filter.model.ts        # Filter configuration
 │   │   ├── play-history.model.ts  # Play history entry
-│   │   └── play-stats-export.model.ts # Export/import format
+│   │   ├── play-stats-export.model.ts # Export/import format
+│   │   └── achievement.model.ts   # Badge definitions and progress
 │   ├── services/
 │   │   ├── database.service.ts    # Dexie/IndexedDB wrapper
 │   │   ├── discogs.service.ts     # Discogs API integration
@@ -254,11 +274,13 @@ src/
 │   │   ├── play-history.service.ts    # Recent plays tracking
 │   │   ├── play-stats-export.service.ts # Backup/restore logic
 │   │   ├── master-release.service.ts # Fetches original years from Discogs master releases
-│   │   └── pwa-update.service.ts    # Service worker update handling
+│   │   ├── pwa-update.service.ts    # Service worker update handling
+│   │   └── achievements.service.ts  # Badge tracking and progress calculation
 │   ├── pipes/
 │   │   └── artist-name.pipe.ts    # Cleans Discogs artist name disambiguation
 │   ├── constants/
-│   │   └── timing.constants.ts    # Animation and timing values
+│   │   ├── timing.constants.ts    # Animation and timing values
+│   │   └── badge-icons.constants.ts # SVG icons for achievement badges
 │   └── app.ts                     # Root component
 ├── styles/
 │   ├── _variables.scss            # Color and design tokens

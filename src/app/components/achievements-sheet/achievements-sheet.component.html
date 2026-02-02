@@ -24,13 +24,12 @@
               [class.unlocked]="badge.isUnlocked"
               [class.locked]="!badge.isUnlocked"
             >
-              <div class="badge-icon">
-                @if (badge.isUnlocked) {
-                  <span class="icon-unlocked">&#x2605;</span>
-                } @else {
-                  <span class="icon-locked">&#x2606;</span>
-                }
-              </div>
+              <div
+                class="badge-icon"
+                [class.icon-unlocked]="badge.isUnlocked"
+                [class.icon-locked]="!badge.isUnlocked"
+                [innerHTML]="getBadgeIcon(badge.badge.id)"
+              ></div>
               <div class="badge-name">{{ badge.badge.name }}</div>
               <div class="badge-description">{{ badge.badge.description }}</div>
               @if (!badge.isUnlocked) {
