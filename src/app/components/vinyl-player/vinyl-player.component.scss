@@ -38,13 +38,15 @@
 .search-button,
 .history-button,
 .stats-button,
+.achievements-button,
 .menu-button {
   @include btn-header;
 }
 
 .search-icon,
 .history-icon,
-.stats-icon {
+.stats-icon,
+.achievements-icon {
   font-size: 1.125rem;
 }
 

@@ -9,6 +9,9 @@
     <button class="stats-button" (click)="toggleStats()">
       <span class="stats-icon">&#x1F4CA;</span>
     </button>
+    <button class="achievements-button" (click)="toggleAchievements()">
+      <span class="achievements-icon">&#x1F3C6;</span>
+    </button>
     <button class="menu-button" (click)="toggleMenu()">
       <span class="menu-icon">⋮</span>
     </button>
@@ -39,6 +42,11 @@
     (filterApplied)="onFiltersChanged()"
     (releaseSelected)="onReleaseSelected($event)"
   ></app-stats-sheet>
+
+  <app-achievements-sheet
+    [isOpen]="achievementsOpen()"
+    (close)="closeAchievements()"
+  ></app-achievements-sheet>
 
   @if (isLoading()) {
     <div class="loading">
