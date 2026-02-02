@@ -19,6 +19,7 @@ A personal listening tracker for your Discogs vinyl collection. Get personalized
 - **Backup & Restore** - Export and import your play data as JSON files
 - **Local Storage** - All play data stored locally in your browser using IndexedDB
 - **Mobile First** - Optimized for mobile devices with a clean, touch-friendly interface
+- **PWA Support** - Install as an app on mobile or desktop, works offline with cached assets
 
 ## How It Works
 
@@ -252,7 +253,8 @@ src/
 │   │   ├── filter.service.ts      # Filter state management
 │   │   ├── play-history.service.ts    # Recent plays tracking
 │   │   ├── play-stats-export.service.ts # Backup/restore logic
-│   │   └── master-release.service.ts # Fetches original years from Discogs master releases
+│   │   ├── master-release.service.ts # Fetches original years from Discogs master releases
+│   │   └── pwa-update.service.ts    # Service worker update handling
 │   ├── pipes/
 │   │   └── artist-name.pipe.ts    # Cleans Discogs artist name disambiguation
 │   ├── constants/
@@ -274,6 +276,7 @@ src/
 - **Dexie.js** - IndexedDB wrapper for local storage
 - **Discogs API** - Music database and collection access
 - **SCSS** - Styling with Copper color theme and reusable mixins
+- **Service Worker** - PWA support with offline caching via @angular/service-worker
 
 ## Data Storage
 
@@ -378,7 +381,6 @@ The app is a static Angular application and can be deployed to:
 
 ## Future Enhancement Ideas
 
-- PWA support for offline use
 - Listening streaks ("X days in a row")
 - Share what you're listening to on social media
 - Multi-device sync with backend storage

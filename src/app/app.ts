@@ -5,6 +5,7 @@ import { VinylPlayerComponent } from './components/vinyl-player/vinyl-player.com
 import { DatabaseService } from './services/database.service';
 import { CredentialsService } from './services/credentials.service';
 import { MasterReleaseService } from './services/master-release.service';
+import { PwaUpdateService } from './services/pwa-update.service';
 
 @Component({
   selector: 'app-root',
@@ -52,9 +53,11 @@ export class AppComponent implements OnInit {
     private db: DatabaseService,
     private credentialsService: CredentialsService,
     private masterReleaseService: MasterReleaseService,
+    private pwaUpdateService: PwaUpdateService,
   ) {}
 
   async ngOnInit() {
+    this.pwaUpdateService.initialize();
     this.hasCredentials.set(this.credentialsService.hasCredentials());
 
     if (this.hasCredentials()) {
