@@ -12,38 +12,8 @@ import { AchievementsService } from './services/achievements.service';
   selector: 'app-root',
   standalone: true,
   imports: [SetupScreenComponent, SyncScreenComponent, VinylPlayerComponent],
-  styles: `
-    .loading-spinner {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(255, 255, 255, 0.1);
-      border-top-color: #1db954;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-  `,
-  template: `
-    @if (!isInitialized()) {
-      <div class="loading-spinner"><div class="spinner"></div></div>
-    } @else if (!hasCredentials()) {
-      <app-setup-screen (setupComplete)="onSetupComplete()"></app-setup-screen>
-    } @else if (hasSyncedData()) {
-      <app-vinyl-player></app-vinyl-player>
-    } @else {
-      <app-sync-screen (syncComplete)="onSyncComplete()"></app-sync-screen>
-    }
-  `,
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit {
   isInitialized = signal(false);
