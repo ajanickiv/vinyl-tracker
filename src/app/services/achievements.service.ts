@@ -5,12 +5,24 @@ import {
   BadgeDefinition,
   BadgeId,
   BadgeProgress,
+  BadgeUnlockData,
   BADGE_DEFINITIONS,
   DEFAULT_ACHIEVEMENTS_STATE,
+  TierConfig,
+  TierLevel,
+  CoverageTierLevel,
+  isTieredBadge,
 } from '../models/achievement.model';
 import { Release } from '../models/release.model';
 
 const STORAGE_KEY = 'vinyl-tracker-achievements';
+
+/** Event emitted when a badge is unlocked or upgraded */
+export interface BadgeUnlockEvent {
+  badge: BadgeDefinition;
+  tier?: TierConfig;
+  isUpgrade: boolean;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -21,13 +33,13 @@ export class AchievementsService {
   /** Read-only access to achievements state */
   readonly state = this.stateSignal.asReadonly();
 
-  /** Computed count of unlocked badges */
+  /** Computed count of unlocked badges (counts unique badges, not tiers) */
   readonly unlockedCount = computed(() => {
     return Object.keys(this.stateSignal().unlockedBadges).length;
   });
 
-  /** Emits when new badges are unlocked (not including retroactive unlocks) */
-  readonly badgeUnlocked$ = new Subject<BadgeDefinition[]>();
+  /** Emits when badges are unlocked or upgraded (not including retroactive unlocks) */
+  readonly badgeUnlocked$ = new Subject<BadgeUnlockEvent[]>();
 
   constructor() {}
 
@@ -39,49 +51,92 @@ export class AchievementsService {
   initialize(releases: Release[]): void {
     const progress = this.calculateAllProgress(releases);
     const currentState = this.stateSignal();
-    const newUnlockedBadges: Record<string, string> = {};
+    const updatedBadges: Record<string, BadgeUnlockData> = { ...currentState.unlockedBadges };
+    let hasChanges = false;
 
-    for (const badge of progress) {
-      if (badge.isUnlocked && !currentState.unlockedBadges[badge.badge.id]) {
-        // Retroactively unlock without notification
-        newUnlockedBadges[badge.badge.id] = new Date().toISOString();
+    for (const badgeProgress of progress) {
+      if (!badgeProgress.isUnlocked) continue;
+
+      const badgeId = badgeProgress.badge.id;
+      const existingData = currentState.unlockedBadges[badgeId];
+      const currentTier = badgeProgress.currentTier;
+
+      if (!existingData) {
+        // New badge unlock (retroactive)
+        updatedBadges[badgeId] = {
+          firstUnlockedAt: new Date().toISOString(),
+          highestTier: currentTier?.level,
+          lastUpgradeAt: currentTier ? new Date().toISOString() : undefined,
+        };
+        hasChanges = true;
+      } else if (currentTier && this.isHigherTier(currentTier.level, existingData.highestTier)) {
+        // Tier upgrade (retroactive)
+        updatedBadges[badgeId] = {
+          ...existingData,
+          highestTier: currentTier.level,
+          lastUpgradeAt: new Date().toISOString(),
+        };
+        hasChanges = true;
       }
     }
 
-    if (Object.keys(newUnlockedBadges).length > 0) {
-      this.stateSignal.set({
-        unlockedBadges: { ...currentState.unlockedBadges, ...newUnlockedBadges },
-      });
+    if (hasChanges) {
+      this.stateSignal.set({ unlockedBadges: updatedBadges });
       this.saveState();
     }
   }
 
   /**
-   * Check for new badge unlocks after a play event.
-   * Emits badgeUnlocked$ for newly unlocked badges.
+   * Check for new badge unlocks or tier upgrades after a play event.
+   * Emits badgeUnlocked$ for newly unlocked badges or tier upgrades.
    */
-  checkForNewUnlocks(releases: Release[]): BadgeDefinition[] {
+  checkForNewUnlocks(releases: Release[]): BadgeUnlockEvent[] {
     const progress = this.calculateAllProgress(releases);
     const currentState = this.stateSignal();
-    const newlyUnlocked: BadgeDefinition[] = [];
-    const newUnlockedBadges: Record<string, string> = {};
+    const newEvents: BadgeUnlockEvent[] = [];
+    const updatedBadges: Record<string, BadgeUnlockData> = { ...currentState.unlockedBadges };
 
-    for (const badge of progress) {
-      if (badge.isUnlocked && !currentState.unlockedBadges[badge.badge.id]) {
-        newUnlockedBadges[badge.badge.id] = new Date().toISOString();
-        newlyUnlocked.push(badge.badge);
+    for (const badgeProgress of progress) {
+      if (!badgeProgress.isUnlocked) continue;
+
+      const badgeId = badgeProgress.badge.id;
+      const existingData = currentState.unlockedBadges[badgeId];
+      const currentTier = badgeProgress.currentTier;
+
+      if (!existingData) {
+        // New badge unlock
+        updatedBadges[badgeId] = {
+          firstUnlockedAt: new Date().toISOString(),
+          highestTier: currentTier?.level,
+          lastUpgradeAt: currentTier ? new Date().toISOString() : undefined,
+        };
+        newEvents.push({
+          badge: badgeProgress.badge,
+          tier: currentTier,
+          isUpgrade: false,
+        });
+      } else if (currentTier && this.isHigherTier(currentTier.level, existingData.highestTier)) {
+        // Tier upgrade
+        updatedBadges[badgeId] = {
+          ...existingData,
+          highestTier: currentTier.level,
+          lastUpgradeAt: new Date().toISOString(),
+        };
+        newEvents.push({
+          badge: badgeProgress.badge,
+          tier: currentTier,
+          isUpgrade: true,
+        });
       }
     }
 
-    if (newlyUnlocked.length > 0) {
-      this.stateSignal.set({
-        unlockedBadges: { ...currentState.unlockedBadges, ...newUnlockedBadges },
-      });
+    if (newEvents.length > 0) {
+      this.stateSignal.set({ unlockedBadges: updatedBadges });
       this.saveState();
-      this.badgeUnlocked$.next(newlyUnlocked);
+      this.badgeUnlocked$.next(newEvents);
     }
 
-    return newlyUnlocked;
+    return newEvents;
   }
 
   /**
@@ -92,91 +147,166 @@ export class AchievementsService {
     const state = this.stateSignal();
 
     return BADGE_DEFINITIONS.map((badge) => {
-      const { current, required } = this.getBadgeProgress(badge, stats);
-      const isUnlocked = current >= required || !!state.unlockedBadges[badge.id];
-      const unlockedAt = state.unlockedBadges[badge.id]
-        ? new Date(state.unlockedBadges[badge.id])
-        : undefined;
+      const currentValue = this.getBadgeCurrentValue(badge.id, stats);
 
-      return {
-        badge,
-        isUnlocked,
-        current,
-        required,
-        unlockedAt,
-      };
+      if (isTieredBadge(badge)) {
+        return this.calculateTieredBadgeProgress(badge, currentValue, state);
+      } else {
+        return this.calculateSimpleBadgeProgress(badge, currentValue, state);
+      }
     });
   }
 
   /**
-   * Get progress for a specific badge.
-   */
-  getBadgeProgress(
-    badge: BadgeDefinition,
-    stats: CollectionAchievementStats,
-  ): { current: number; required: number } {
-    const required = badge.requirement;
-    let current = 0;
-
-    switch (badge.id) {
-      // Collection badges
-      case 'starter':
-      case 'collector':
-      case 'archivist':
-        current = stats.totalReleases;
-        break;
-
-      // Play count badges
-      case 'century':
-      case 'devoted':
-      case 'obsessed':
-        current = stats.totalPlays;
-        break;
-
-      // Coverage badge (percentage)
-      case 'no-dust':
-        current = stats.coveragePercentage;
-        break;
-
-      // Discovery badges
-      case 'genre-explorer':
-        current = stats.uniqueGenresPlayed;
-        break;
-      case 'decade-hopper':
-        current = stats.uniqueDecadesPlayed;
-        break;
-
-      // Artist dedication badges
-      case 'fan':
-      case 'superfan':
-      case 'fanatic':
-        current = stats.maxArtistPlays;
-        break;
-
-      // Album replay badges
-      case 'on-repeat':
-      case 'worn-grooves':
-      case 'needle-dropper':
-        current = stats.maxAlbumPlays;
-        break;
-    }
-
-    return { current, required };
-  }
-
-  /**
-   * Check if a specific badge is unlocked.
+   * Check if a specific badge is unlocked (has at least first tier).
    */
   isBadgeUnlocked(badgeId: BadgeId): boolean {
     return !!this.stateSignal().unlockedBadges[badgeId];
   }
 
   /**
+   * Get unlock data for a badge (if unlocked).
+   */
+  getBadgeUnlockData(badgeId: BadgeId): BadgeUnlockData | undefined {
+    return this.stateSignal().unlockedBadges[badgeId];
+  }
+
+  /**
    * Get unlock date for a badge (if unlocked).
    */
   getUnlockDate(badgeId: BadgeId): Date | undefined {
-    const timestamp = this.stateSignal().unlockedBadges[badgeId];
-    return timestamp ? new Date(timestamp) : undefined;
+    const data = this.stateSignal().unlockedBadges[badgeId];
+    return data ? new Date(data.firstUnlockedAt) : undefined;
+  }
+
+  /**
+   * Calculate progress for a tiered badge.
+   */
+  private calculateTieredBadgeProgress(
+    badge: BadgeDefinition,
+    currentValue: number,
+    state: AchievementsState,
+  ): BadgeProgress {
+    const tiers = badge.tiers!;
+    const unlockData = state.unlockedBadges[badge.id];
+
+    // Find current and next tier based on current value
+    let currentTier: TierConfig | undefined;
+    let nextTier: TierConfig | undefined;
+
+    for (let i = 0; i < tiers.length; i++) {
+      if (currentValue >= tiers[i].threshold) {
+        currentTier = tiers[i];
+        nextTier = tiers[i + 1];
+      }
+    }
+
+    // If no tier reached yet, next tier is the first one
+    if (!currentTier) {
+      nextTier = tiers[0];
+    }
+
+    const isUnlocked = !!currentTier || !!unlockData;
+    const required = nextTier?.threshold ?? currentTier?.threshold ?? tiers[0].threshold;
+
+    return {
+      badge,
+      isUnlocked,
+      current: currentValue,
+      required,
+      currentTier,
+      nextTier,
+      unlockedAt: unlockData ? new Date(unlockData.firstUnlockedAt) : undefined,
+    };
+  }
+
+  /**
+   * Calculate progress for a simple (non-tiered) badge.
+   */
+  private calculateSimpleBadgeProgress(
+    badge: BadgeDefinition,
+    currentValue: number,
+    state: AchievementsState,
+  ): BadgeProgress {
+    const required = badge.requirement ?? 0;
+    const unlockData = state.unlockedBadges[badge.id];
+    const isUnlocked = currentValue >= required || !!unlockData;
+
+    return {
+      badge,
+      isUnlocked,
+      current: currentValue,
+      required,
+      unlockedAt: unlockData ? new Date(unlockData.firstUnlockedAt) : undefined,
+    };
+  }
+
+  /**
+   * Get current value for a badge based on stats.
+   */
+  private getBadgeCurrentValue(badgeId: BadgeId, stats: CollectionAchievementStats): number {
+    switch (badgeId) {
+      case 'collector':
+        return stats.totalReleases;
+      case 'spins':
+        return stats.totalPlays;
+      case 'coverage':
+        return stats.coveragePercentage;
+      case 'genre-explorer':
+        return stats.uniqueGenresPlayed;
+      case 'decade-hopper':
+        return stats.uniqueDecadesPlayed;
+      case 'devotion':
+        return stats.maxArtistPlays;
+      case 'favorite':
+        return stats.maxAlbumPlays;
+      default:
+        return 0;
+    }
+  }
+
+  /**
+   * Check if newTier is higher than existingTier.
+   */
+  private isHigherTier(
+    newTier: TierLevel | CoverageTierLevel,
+    existingTier?: TierLevel | CoverageTierLevel,
+  ): boolean {
+    if (!existingTier) return true;
+
+    // Standard tier order
+    const standardOrder: TierLevel[] = [
+      'bronze',
+      'silver',
+      'gold',
+      'platinum',
+      'diamond',
+      'legendary',
+    ];
+
+    // Coverage tier order
+    const coverageOrder: CoverageTierLevel[] = [
+      'needle-drop',
+      'flip-side',
+      'inner-groove',
+      'mint-condition',
+    ];
+
+    const standardNewIdx = standardOrder.indexOf(newTier as TierLevel);
+    const standardExistingIdx = standardOrder.indexOf(existingTier as TierLevel);
+
+    if (standardNewIdx !== -1 && standardExistingIdx !== -1) {
+      return standardNewIdx > standardExistingIdx;
+    }
+
+    const coverageNewIdx = coverageOrder.indexOf(newTier as CoverageTierLevel);
+    const coverageExistingIdx = coverageOrder.indexOf(existingTier as CoverageTierLevel);
+
+    if (coverageNewIdx !== -1 && coverageExistingIdx !== -1) {
+      return coverageNewIdx > coverageExistingIdx;
+    }
+
+    return false;
   }
 
   /**
@@ -254,7 +384,6 @@ export class AchievementsService {
 
   /**
    * Get the decade string for a year (e.g., 1985 -> "1980s").
-   * Reuses logic from filter.service.ts.
    */
   private getDecade(year: number): string {
     const decade = Math.floor(year / 10) * 10;
@@ -268,12 +397,38 @@ export class AchievementsService {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        return { ...DEFAULT_ACHIEVEMENTS_STATE, ...JSON.parse(stored) };
+        const parsed = JSON.parse(stored);
+        // Migrate old format (string timestamps) to new format (BadgeUnlockData)
+        const migrated = this.migrateState(parsed);
+        return { ...DEFAULT_ACHIEVEMENTS_STATE, ...migrated };
       }
     } catch (error) {
       console.error('Failed to load achievements:', error);
     }
     return { ...DEFAULT_ACHIEVEMENTS_STATE };
+  }
+
+  /**
+   * Migrate old state format to new format.
+   * Old format: { unlockedBadges: { badgeId: "timestamp" } }
+   * New format: { unlockedBadges: { badgeId: BadgeUnlockData } }
+   */
+  private migrateState(state: AchievementsState): AchievementsState {
+    const migratedBadges: Record<string, BadgeUnlockData> = {};
+
+    for (const [badgeId, data] of Object.entries(state.unlockedBadges)) {
+      if (typeof data === 'string') {
+        // Old format - migrate to new format
+        migratedBadges[badgeId] = {
+          firstUnlockedAt: data,
+        };
+      } else {
+        // Already new format
+        migratedBadges[badgeId] = data;
+      }
+    }
+
+    return { unlockedBadges: migratedBadges };
   }
 
   /**

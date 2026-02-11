@@ -6,7 +6,13 @@ import { takeUntil } from 'rxjs/operators';
 import { AchievementsService } from '../../services/achievements.service';
 import { DatabaseService } from '../../services/database.service';
 import { PlaybackService } from '../../services/playback.service';
-import { BadgeProgress, BadgeCategory } from '../../models/achievement.model';
+import {
+  BadgeProgress,
+  TierLevel,
+  CoverageTierLevel,
+  TIER_COLORS,
+  isTieredBadge,
+} from '../../models/achievement.model';
 import { BADGE_ICONS } from '../../constants/badge-icons.constants';
 
 @Component({
@@ -33,7 +39,7 @@ export class AchievementsSheetComponent implements OnInit, OnDestroy {
   ) {}
 
   getBadgeIcon(badgeId: string): SafeHtml {
-    const svg = BADGE_ICONS[badgeId as keyof typeof BADGE_ICONS] || BADGE_ICONS['starter'];
+    const svg = BADGE_ICONS[badgeId as keyof typeof BADGE_ICONS] || BADGE_ICONS['collector'];
     return this.sanitizer.bypassSecurityTrustHtml(svg);
   }
 
@@ -67,30 +73,60 @@ export class AchievementsSheetComponent implements OnInit, OnDestroy {
     return this.badges().length;
   }
 
-  getBadgesByCategory(category: BadgeCategory): BadgeProgress[] {
-    return this.badges().filter((b) => b.badge.category === category);
+  /** Check if badge is tiered */
+  isTiered(badge: BadgeProgress): boolean {
+    return isTieredBadge(badge.badge);
   }
 
-  getCategoryLabel(category: BadgeCategory): string {
-    const labels: Record<BadgeCategory, string> = {
-      collection: 'Collection',
-      plays: 'Play Count',
-      coverage: 'Coverage',
-      discovery: 'Discovery',
-      artist: 'Artist',
-      album: 'Album',
-    };
-    return labels[category];
+  /** Get tier display name for current tier */
+  getTierName(badge: BadgeProgress): string {
+    if (!badge.currentTier) return '';
+    return badge.currentTier.name;
   }
 
+  /** Get tier color for styling */
+  getTierColor(badge: BadgeProgress): string {
+    if (!badge.currentTier) return '';
+    return TIER_COLORS[badge.currentTier.level as TierLevel | CoverageTierLevel] || '';
+  }
+
+  /** Get progress percentage toward next tier (or current if maxed) */
   getProgressPercentage(badge: BadgeProgress): number {
-    if (badge.isUnlocked) return 100;
-    return Math.min(100, Math.round((badge.current / badge.required) * 100));
+    if (!badge.nextTier) {
+      // At max tier or non-tiered unlocked
+      return badge.isUnlocked
+        ? 100
+        : Math.min(100, Math.round((badge.current / badge.required) * 100));
+    }
+
+    // Calculate progress to next tier
+    const prevThreshold = badge.currentTier?.threshold ?? 0;
+    const nextThreshold = badge.nextTier.threshold;
+    const range = nextThreshold - prevThreshold;
+    const progress = badge.current - prevThreshold;
+
+    return Math.min(100, Math.round((progress / range) * 100));
   }
 
+  /** Format progress text showing current/next tier threshold */
   formatProgress(badge: BadgeProgress): string {
-    if (badge.isUnlocked) return 'Unlocked';
-    return `${badge.current}/${badge.required}`;
+    if (badge.isUnlocked && !badge.nextTier) {
+      // At max tier
+      return badge.currentTier ? `Max: ${badge.currentTier.name}` : 'Unlocked';
+    }
+
+    const target = badge.nextTier?.threshold ?? badge.required;
+    return `${badge.current}/${target}`;
+  }
+
+  /** Get the next tier name for display */
+  getNextTierName(badge: BadgeProgress): string {
+    return badge.nextTier?.name ?? '';
+  }
+
+  /** Check if badge is at max tier */
+  isMaxTier(badge: BadgeProgress): boolean {
+    return badge.isUnlocked && !badge.nextTier && this.isTiered(badge);
   }
 
   private async loadBadges(): Promise<void> {

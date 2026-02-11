@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { AchievementsService } from './achievements.service';
+import { AchievementsService, BadgeUnlockEvent } from './achievements.service';
 import { Release } from '../models/release.model';
 
 describe('AchievementsService', () => {
@@ -36,75 +36,131 @@ describe('AchievementsService', () => {
     expect(service).toBeTruthy();
   });
 
-  describe('Collection badges', () => {
-    it('should unlock Starter badge at 10 albums', () => {
+  describe('Collector badge (tiered)', () => {
+    it('should unlock Bronze tier at 10 albums', () => {
       const releases = Array.from({ length: 10 }, () => createMockRelease());
       const progress = service.calculateAllProgress(releases);
 
-      const starter = progress.find((p) => p.badge.id === 'starter');
-      expect(starter?.current).toBe(10);
-      expect(starter?.isUnlocked).toBe(true);
+      const collector = progress.find((p) => p.badge.id === 'collector');
+      expect(collector?.current).toBe(10);
+      expect(collector?.isUnlocked).toBe(true);
+      expect(collector?.currentTier?.level).toBe('bronze');
+      expect(collector?.nextTier?.level).toBe('silver');
     });
 
-    it('should not unlock Starter badge with 9 albums', () => {
+    it('should not unlock with 9 albums', () => {
       const releases = Array.from({ length: 9 }, () => createMockRelease());
       const progress = service.calculateAllProgress(releases);
 
-      const starter = progress.find((p) => p.badge.id === 'starter');
-      expect(starter?.current).toBe(9);
-      expect(starter?.isUnlocked).toBe(false);
+      const collector = progress.find((p) => p.badge.id === 'collector');
+      expect(collector?.current).toBe(9);
+      expect(collector?.isUnlocked).toBe(false);
+      expect(collector?.currentTier).toBeUndefined();
+      expect(collector?.nextTier?.level).toBe('bronze');
     });
 
-    it('should unlock Collector badge at 50 albums', () => {
+    it('should unlock Silver tier at 50 albums', () => {
       const releases = Array.from({ length: 50 }, () => createMockRelease());
       const progress = service.calculateAllProgress(releases);
 
       const collector = progress.find((p) => p.badge.id === 'collector');
-      expect(collector?.current).toBe(50);
-      expect(collector?.isUnlocked).toBe(true);
+      expect(collector?.currentTier?.level).toBe('silver');
+      expect(collector?.nextTier?.level).toBe('gold');
     });
 
-    it('should unlock Archivist badge at 100 albums', () => {
+    it('should unlock Gold tier at 100 albums', () => {
       const releases = Array.from({ length: 100 }, () => createMockRelease());
       const progress = service.calculateAllProgress(releases);
 
-      const archivist = progress.find((p) => p.badge.id === 'archivist');
-      expect(archivist?.current).toBe(100);
-      expect(archivist?.isUnlocked).toBe(true);
+      const collector = progress.find((p) => p.badge.id === 'collector');
+      expect(collector?.currentTier?.level).toBe('gold');
+    });
+
+    it('should unlock Legendary tier at 2500 albums', () => {
+      const releases = Array.from({ length: 2500 }, () => createMockRelease());
+      const progress = service.calculateAllProgress(releases);
+
+      const collector = progress.find((p) => p.badge.id === 'collector');
+      expect(collector?.currentTier?.level).toBe('legendary');
+      expect(collector?.nextTier).toBeUndefined();
     });
   });
 
-  describe('Play count badges', () => {
-    it('should unlock Century badge at 100 total plays', () => {
+  describe('Spins badge (tiered)', () => {
+    it('should unlock Bronze tier at 100 total plays', () => {
       const releases = [createMockRelease({ playCount: 50 }), createMockRelease({ playCount: 50 })];
       const progress = service.calculateAllProgress(releases);
 
-      const century = progress.find((p) => p.badge.id === 'century');
-      expect(century?.current).toBe(100);
-      expect(century?.isUnlocked).toBe(true);
+      const spins = progress.find((p) => p.badge.id === 'spins');
+      expect(spins?.current).toBe(100);
+      expect(spins?.isUnlocked).toBe(true);
+      expect(spins?.currentTier?.level).toBe('bronze');
     });
 
-    it('should unlock Devoted badge at 500 total plays', () => {
+    it('should unlock Silver tier at 500 total plays', () => {
       const releases = [createMockRelease({ playCount: 500 })];
       const progress = service.calculateAllProgress(releases);
 
-      const devoted = progress.find((p) => p.badge.id === 'devoted');
-      expect(devoted?.current).toBe(500);
-      expect(devoted?.isUnlocked).toBe(true);
+      const spins = progress.find((p) => p.badge.id === 'spins');
+      expect(spins?.currentTier?.level).toBe('silver');
     });
 
-    it('should unlock Obsessed badge at 1000 total plays', () => {
-      const releases = [createMockRelease({ playCount: 1000 })];
+    it('should unlock Legendary tier at 10000 total plays', () => {
+      const releases = [createMockRelease({ playCount: 10000 })];
       const progress = service.calculateAllProgress(releases);
 
-      const obsessed = progress.find((p) => p.badge.id === 'obsessed');
-      expect(obsessed?.current).toBe(1000);
-      expect(obsessed?.isUnlocked).toBe(true);
+      const spins = progress.find((p) => p.badge.id === 'spins');
+      expect(spins?.currentTier?.level).toBe('legendary');
+      expect(spins?.nextTier).toBeUndefined();
     });
   });
 
-  describe('Coverage badge', () => {
-    it('should unlock No Dust badge when all albums played', () => {
+  describe('Coverage badge (vinyl-themed tiers)', () => {
+    it('should unlock Needle Drop tier at 25% coverage', () => {
+      const releases = [
+        createMockRelease({ playCount: 1 }),
+        createMockRelease({ playCount: 0 }),
+        createMockRelease({ playCount: 0 }),
+        createMockRelease({ playCount: 0 }),
+      ];
+      const progress = service.calculateAllProgress(releases);
+
+      const coverage = progress.find((p) => p.badge.id === 'coverage');
+      expect(coverage?.current).toBe(25);
+      expect(coverage?.isUnlocked).toBe(true);
+      expect(coverage?.currentTier?.level).toBe('needle-drop');
+      expect(coverage?.currentTier?.name).toBe('Needle Drop');
+    });
+
+    it('should unlock Flip Side tier at 50% coverage', () => {
+      const releases = [
+        createMockRelease({ playCount: 1 }),
+        createMockRelease({ playCount: 1 }),
+        createMockRelease({ playCount: 0 }),
+        createMockRelease({ playCount: 0 }),
+      ];
+      const progress = service.calculateAllProgress(releases);
+
+      const coverage = progress.find((p) => p.badge.id === 'coverage');
+      expect(coverage?.currentTier?.level).toBe('flip-side');
+      expect(coverage?.currentTier?.name).toBe('Flip Side');
+    });
+
+    it('should unlock Inner Groove tier at 75% coverage', () => {
+      const releases = [
+        createMockRelease({ playCount: 1 }),
+        createMockRelease({ playCount: 1 }),
+        createMockRelease({ playCount: 1 }),
+        createMockRelease({ playCount: 0 }),
+      ];
+      const progress = service.calculateAllProgress(releases);
+
+      const coverage = progress.find((p) => p.badge.id === 'coverage');
+      expect(coverage?.currentTier?.level).toBe('inner-groove');
+      expect(coverage?.currentTier?.name).toBe('Inner Groove');
+    });
+
+    it('should unlock Mint Condition tier at 100% coverage', () => {
       const releases = [
         createMockRelease({ playCount: 1 }),
         createMockRelease({ playCount: 1 }),
@@ -112,22 +168,24 @@ describe('AchievementsService', () => {
       ];
       const progress = service.calculateAllProgress(releases);
 
-      const noDust = progress.find((p) => p.badge.id === 'no-dust');
-      expect(noDust?.current).toBe(100);
-      expect(noDust?.isUnlocked).toBe(true);
+      const coverage = progress.find((p) => p.badge.id === 'coverage');
+      expect(coverage?.current).toBe(100);
+      expect(coverage?.currentTier?.level).toBe('mint-condition');
+      expect(coverage?.currentTier?.name).toBe('Mint Condition');
+      expect(coverage?.nextTier).toBeUndefined();
     });
 
-    it('should not unlock No Dust badge with unplayed albums', () => {
-      const releases = [createMockRelease({ playCount: 1 }), createMockRelease({ playCount: 0 })];
+    it('should not unlock with no plays', () => {
+      const releases = [createMockRelease({ playCount: 0 }), createMockRelease({ playCount: 0 })];
       const progress = service.calculateAllProgress(releases);
 
-      const noDust = progress.find((p) => p.badge.id === 'no-dust');
-      expect(noDust?.current).toBe(50);
-      expect(noDust?.isUnlocked).toBe(false);
+      const coverage = progress.find((p) => p.badge.id === 'coverage');
+      expect(coverage?.current).toBe(0);
+      expect(coverage?.isUnlocked).toBe(false);
     });
   });
 
-  describe('Discovery badges', () => {
+  describe('Discovery badges (non-tiered)', () => {
     it('should unlock Genre Explorer badge with 5+ genres played', () => {
       const genres = ['Rock', 'Jazz', 'Electronic', 'Hip Hop', 'Classical'];
       const releases = genres.map((genre) =>
@@ -141,6 +199,7 @@ describe('AchievementsService', () => {
       const genreExplorer = progress.find((p) => p.badge.id === 'genre-explorer');
       expect(genreExplorer?.current).toBe(5);
       expect(genreExplorer?.isUnlocked).toBe(true);
+      expect(genreExplorer?.currentTier).toBeUndefined(); // Non-tiered badge
     });
 
     it('should not count unplayed albums for Genre Explorer', () => {
@@ -194,8 +253,8 @@ describe('AchievementsService', () => {
     });
   });
 
-  describe('Artist dedication badges', () => {
-    it('should unlock Fan badge with 10 plays of same artist', () => {
+  describe('Devotion badge (tiered - artist dedication)', () => {
+    it('should unlock Bronze tier with 10 plays of same artist', () => {
       const releases = [
         createMockRelease({
           playCount: 10,
@@ -204,9 +263,10 @@ describe('AchievementsService', () => {
       ];
       const progress = service.calculateAllProgress(releases);
 
-      const fan = progress.find((p) => p.badge.id === 'fan');
-      expect(fan?.current).toBe(10);
-      expect(fan?.isUnlocked).toBe(true);
+      const devotion = progress.find((p) => p.badge.id === 'devotion');
+      expect(devotion?.current).toBe(10);
+      expect(devotion?.isUnlocked).toBe(true);
+      expect(devotion?.currentTier?.level).toBe('bronze');
     });
 
     it('should aggregate plays across multiple albums by same artist', () => {
@@ -222,12 +282,12 @@ describe('AchievementsService', () => {
       ];
       const progress = service.calculateAllProgress(releases);
 
-      const fan = progress.find((p) => p.badge.id === 'fan');
-      expect(fan?.current).toBe(11);
-      expect(fan?.isUnlocked).toBe(true);
+      const devotion = progress.find((p) => p.badge.id === 'devotion');
+      expect(devotion?.current).toBe(11);
+      expect(devotion?.isUnlocked).toBe(true);
     });
 
-    it('should unlock Superfan badge at 25 artist plays', () => {
+    it('should unlock Silver tier at 25 artist plays', () => {
       const releases = [
         createMockRelease({
           playCount: 25,
@@ -236,48 +296,49 @@ describe('AchievementsService', () => {
       ];
       const progress = service.calculateAllProgress(releases);
 
-      const superfan = progress.find((p) => p.badge.id === 'superfan');
-      expect(superfan?.isUnlocked).toBe(true);
+      const devotion = progress.find((p) => p.badge.id === 'devotion');
+      expect(devotion?.currentTier?.level).toBe('silver');
     });
 
-    it('should unlock Fanatic badge at 50 artist plays', () => {
+    it('should unlock Legendary tier at 500 artist plays', () => {
       const releases = [
         createMockRelease({
-          playCount: 50,
+          playCount: 500,
           basicInfo: { title: 'Album 1', artists: ['Artist'], formats: [] },
         }),
       ];
       const progress = service.calculateAllProgress(releases);
 
-      const fanatic = progress.find((p) => p.badge.id === 'fanatic');
-      expect(fanatic?.isUnlocked).toBe(true);
+      const devotion = progress.find((p) => p.badge.id === 'devotion');
+      expect(devotion?.currentTier?.level).toBe('legendary');
     });
   });
 
-  describe('Album replay badges', () => {
-    it('should unlock On Repeat badge at 10 plays of same album', () => {
+  describe('Favorite badge (tiered - album replay)', () => {
+    it('should unlock Bronze tier at 10 plays of same album', () => {
       const releases = [createMockRelease({ playCount: 10 })];
       const progress = service.calculateAllProgress(releases);
 
-      const onRepeat = progress.find((p) => p.badge.id === 'on-repeat');
-      expect(onRepeat?.current).toBe(10);
-      expect(onRepeat?.isUnlocked).toBe(true);
+      const favorite = progress.find((p) => p.badge.id === 'favorite');
+      expect(favorite?.current).toBe(10);
+      expect(favorite?.isUnlocked).toBe(true);
+      expect(favorite?.currentTier?.level).toBe('bronze');
     });
 
-    it('should unlock Worn Grooves badge at 25 plays', () => {
+    it('should unlock Silver tier at 25 plays', () => {
       const releases = [createMockRelease({ playCount: 25 })];
       const progress = service.calculateAllProgress(releases);
 
-      const wornGrooves = progress.find((p) => p.badge.id === 'worn-grooves');
-      expect(wornGrooves?.isUnlocked).toBe(true);
+      const favorite = progress.find((p) => p.badge.id === 'favorite');
+      expect(favorite?.currentTier?.level).toBe('silver');
     });
 
-    it('should unlock Needle Dropper badge at 50 plays', () => {
-      const releases = [createMockRelease({ playCount: 50 })];
+    it('should unlock Legendary tier at 500 plays', () => {
+      const releases = [createMockRelease({ playCount: 500 })];
       const progress = service.calculateAllProgress(releases);
 
-      const needleDropper = progress.find((p) => p.badge.id === 'needle-dropper');
-      expect(needleDropper?.isUnlocked).toBe(true);
+      const favorite = progress.find((p) => p.badge.id === 'favorite');
+      expect(favorite?.currentTier?.level).toBe('legendary');
     });
   });
 
@@ -285,16 +346,36 @@ describe('AchievementsService', () => {
     it('should emit badgeUnlocked$ when new badge is unlocked', (done) => {
       const releases = Array.from({ length: 10 }, () => createMockRelease());
 
-      service.badgeUnlocked$.subscribe((badges) => {
-        expect(badges.length).toBeGreaterThan(0);
-        expect(badges.some((b) => b.id === 'starter')).toBe(true);
+      service.badgeUnlocked$.subscribe((events: BadgeUnlockEvent[]) => {
+        expect(events.length).toBeGreaterThan(0);
+        expect(events.some((e) => e.badge.id === 'collector')).toBe(true);
+        expect(events[0].isUpgrade).toBe(false);
         done();
       });
 
       service.checkForNewUnlocks(releases);
     });
 
-    it('should not emit for already unlocked badges', () => {
+    it('should emit for tier upgrades', (done) => {
+      // First, unlock Bronze tier
+      const releases10 = Array.from({ length: 10 }, () => createMockRelease());
+      service.checkForNewUnlocks(releases10);
+
+      // Then, upgrade to Silver tier
+      const releases50 = Array.from({ length: 50 }, () => createMockRelease());
+
+      service.badgeUnlocked$.subscribe((events: BadgeUnlockEvent[]) => {
+        const collectorEvent = events.find((e) => e.badge.id === 'collector');
+        expect(collectorEvent).toBeTruthy();
+        expect(collectorEvent?.isUpgrade).toBe(true);
+        expect(collectorEvent?.tier?.level).toBe('silver');
+        done();
+      });
+
+      service.checkForNewUnlocks(releases50);
+    });
+
+    it('should not emit for already unlocked badges at same tier', () => {
       const releases = Array.from({ length: 10 }, () => createMockRelease());
       let emitCount = 0;
 
@@ -306,7 +387,7 @@ describe('AchievementsService', () => {
       service.checkForNewUnlocks(releases);
       expect(emitCount).toBe(1);
 
-      // Second check should not emit
+      // Second check should not emit (same tier)
       service.checkForNewUnlocks(releases);
       expect(emitCount).toBe(1);
     });
@@ -318,7 +399,8 @@ describe('AchievementsService', () => {
       const stored = localStorage.getItem('vinyl-tracker-achievements');
       expect(stored).toBeTruthy();
       const state = JSON.parse(stored!);
-      expect(state.unlockedBadges['starter']).toBeTruthy();
+      expect(state.unlockedBadges['collector']).toBeTruthy();
+      expect(state.unlockedBadges['collector'].highestTier).toBe('bronze');
     });
   });
 
@@ -337,16 +419,37 @@ describe('AchievementsService', () => {
       expect(emitCount).toBe(0);
 
       // But badge should be unlocked
-      expect(service.isBadgeUnlocked('starter')).toBe(true);
+      expect(service.isBadgeUnlocked('collector')).toBe(true);
     });
 
-    it('should persist retroactive unlocks', () => {
-      const releases = Array.from({ length: 10 }, () => createMockRelease());
+    it('should persist retroactive unlocks with tier info', () => {
+      const releases = Array.from({ length: 50 }, () => createMockRelease());
       service.initialize(releases);
 
       const stored = localStorage.getItem('vinyl-tracker-achievements');
       const state = JSON.parse(stored!);
-      expect(state.unlockedBadges['starter']).toBeTruthy();
+      expect(state.unlockedBadges['collector'].highestTier).toBe('silver');
+    });
+  });
+
+  describe('state migration', () => {
+    it('should migrate old format (string timestamps) to new format', () => {
+      // Old format: { unlockedBadges: { badgeId: "timestamp" } }
+      const oldState = {
+        unlockedBadges: {
+          collector: '2024-01-01T00:00:00.000Z',
+        },
+      };
+      localStorage.setItem('vinyl-tracker-achievements', JSON.stringify(oldState));
+
+      // Reset and recreate service to load from storage
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({});
+      const newService = TestBed.inject(AchievementsService);
+
+      expect(newService.isBadgeUnlocked('collector')).toBe(true);
+      const unlockDate = newService.getUnlockDate('collector');
+      expect(unlockDate?.toISOString()).toBe('2024-01-01T00:00:00.000Z');
     });
   });
 
@@ -354,7 +457,10 @@ describe('AchievementsService', () => {
     it('should load unlocked badges from localStorage', () => {
       const mockState = {
         unlockedBadges: {
-          starter: '2024-01-01T00:00:00.000Z',
+          collector: {
+            firstUnlockedAt: '2024-01-01T00:00:00.000Z',
+            highestTier: 'bronze',
+          },
         },
       };
       localStorage.setItem('vinyl-tracker-achievements', JSON.stringify(mockState));
@@ -364,14 +470,17 @@ describe('AchievementsService', () => {
       TestBed.configureTestingModule({});
       const newService = TestBed.inject(AchievementsService);
 
-      expect(newService.isBadgeUnlocked('starter')).toBe(true);
+      expect(newService.isBadgeUnlocked('collector')).toBe(true);
       expect(newService.unlockedCount()).toBe(1);
     });
 
     it('should return unlock date for unlocked badges', () => {
       const mockState = {
         unlockedBadges: {
-          starter: '2024-01-15T10:30:00.000Z',
+          collector: {
+            firstUnlockedAt: '2024-01-15T10:30:00.000Z',
+            highestTier: 'bronze',
+          },
         },
       };
       localStorage.setItem('vinyl-tracker-achievements', JSON.stringify(mockState));
@@ -380,7 +489,7 @@ describe('AchievementsService', () => {
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({});
       const newService = TestBed.inject(AchievementsService);
-      const unlockDate = newService.getUnlockDate('starter');
+      const unlockDate = newService.getUnlockDate('collector');
 
       expect(unlockDate).toBeInstanceOf(Date);
       expect(unlockDate?.toISOString()).toBe('2024-01-15T10:30:00.000Z');
@@ -392,7 +501,7 @@ describe('AchievementsService', () => {
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({});
       const freshService = TestBed.inject(AchievementsService);
-      expect(freshService.getUnlockDate('starter')).toBeUndefined();
+      expect(freshService.getUnlockDate('collector')).toBeUndefined();
     });
   });
 
@@ -411,6 +520,28 @@ describe('AchievementsService', () => {
       service.checkForNewUnlocks(releases);
 
       expect(service.unlockedCount()).toBeGreaterThan(0);
+    });
+  });
+
+  describe('badge count', () => {
+    it('should have exactly 7 badges defined', () => {
+      const releases: Release[] = [];
+      const progress = service.calculateAllProgress(releases);
+      expect(progress.length).toBe(7);
+    });
+
+    it('should have correct badge IDs', () => {
+      const releases: Release[] = [];
+      const progress = service.calculateAllProgress(releases);
+      const badgeIds = progress.map((p) => p.badge.id);
+
+      expect(badgeIds).toContain('collector');
+      expect(badgeIds).toContain('spins');
+      expect(badgeIds).toContain('coverage');
+      expect(badgeIds).toContain('genre-explorer');
+      expect(badgeIds).toContain('decade-hopper');
+      expect(badgeIds).toContain('devotion');
+      expect(badgeIds).toContain('favorite');
     });
   });
 });

@@ -75,6 +75,15 @@
   font-weight: bold;
   color: $text-primary;
   margin-bottom: 0.25rem;
+
+  .tier-name {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.125rem;
+  }
 }
 
 .badge-description {
