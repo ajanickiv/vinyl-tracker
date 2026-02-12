@@ -1,6 +1,6 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
 import { of, Subject } from 'rxjs';
-import { AppComponent } from './app';
+import { AppComponent } from './app.component';
 import { DatabaseService } from './services/database.service';
 import { CredentialsService } from './services/credentials.service';
 import { RecommendationService } from './services/recommendation.service';
