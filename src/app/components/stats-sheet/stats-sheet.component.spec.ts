@@ -95,16 +95,16 @@ describe('StatsSheetComponent', () => {
     });
   });
 
-  describe('getCollectionPlayedPercentage', () => {
+  describe('collectionPlayedPercentage', () => {
     it('should calculate correct percentage', () => {
       spectator.detectChanges();
 
       // (100 - 30) / 100 * 100 = 70%
-      expect(spectator.component.getCollectionPlayedPercentage()).toBe(70);
+      expect(spectator.component.collectionPlayedPercentage()).toBe(70);
     });
 
     it('should return 0 when no stats', () => {
-      expect(spectator.component.getCollectionPlayedPercentage()).toBe(0);
+      expect(spectator.component.collectionPlayedPercentage()).toBe(0);
     });
 
     it('should return 0 when totalReleases is 0', () => {
@@ -119,20 +119,20 @@ describe('StatsSheetComponent', () => {
 
       spectator.detectChanges();
 
-      expect(spectator.component.getCollectionPlayedPercentage()).toBe(0);
+      expect(spectator.component.collectionPlayedPercentage()).toBe(0);
     });
   });
 
-  describe('getPlayedThisYearPercentage', () => {
+  describe('playedThisYearPercentage', () => {
     it('should calculate correct percentage', () => {
       spectator.detectChanges();
 
       // 45 / 100 * 100 = 45%
-      expect(spectator.component.getPlayedThisYearPercentage()).toBe(45);
+      expect(spectator.component.playedThisYearPercentage()).toBe(45);
     });
 
     it('should return 0 when no stats', () => {
-      expect(spectator.component.getPlayedThisYearPercentage()).toBe(0);
+      expect(spectator.component.playedThisYearPercentage()).toBe(0);
     });
 
     it('should return 0 when totalReleases is 0', () => {
@@ -147,7 +147,7 @@ describe('StatsSheetComponent', () => {
 
       spectator.detectChanges();
 
-      expect(spectator.component.getPlayedThisYearPercentage()).toBe(0);
+      expect(spectator.component.playedThisYearPercentage()).toBe(0);
     });
 
     it('should return 100 when all releases played this year', () => {
@@ -162,7 +162,7 @@ describe('StatsSheetComponent', () => {
 
       spectator.detectChanges();
 
-      expect(spectator.component.getPlayedThisYearPercentage()).toBe(100);
+      expect(spectator.component.playedThisYearPercentage()).toBe(100);
     });
 
     it('should round to nearest integer', () => {
@@ -178,7 +178,7 @@ describe('StatsSheetComponent', () => {
       spectator.detectChanges();
 
       // 1/3 = 33.33... should round to 33
-      expect(spectator.component.getPlayedThisYearPercentage()).toBe(33);
+      expect(spectator.component.playedThisYearPercentage()).toBe(33);
     });
   });
 

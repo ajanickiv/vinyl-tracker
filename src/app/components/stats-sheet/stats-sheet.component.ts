@@ -1,4 +1,4 @@
-import { Component, signal, input, output, OnInit, OnDestroy } from '@angular/core';
+import { Component, computed, signal, input, output, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
 import { takeUntil, tap } from 'rxjs/operators';
@@ -23,6 +23,18 @@ export class StatsSheetComponent implements OnInit, OnDestroy {
   close = output<void>();
   filterApplied = output<void>();
   releaseSelected = output<Release>();
+
+  collectionPlayedPercentage = computed(() => {
+    const stats = this.collectionStats();
+    if (!stats || stats.totalReleases === 0) return 0;
+    return Math.round(((stats.totalReleases - stats.neverPlayed) / stats.totalReleases) * 100);
+  });
+
+  playedThisYearPercentage = computed(() => {
+    const stats = this.collectionStats();
+    if (!stats || stats.totalReleases === 0) return 0;
+    return Math.round((stats.playedThisYear / stats.totalReleases) * 100);
+  });
 
   private destroy$ = new Subject<void>();
 

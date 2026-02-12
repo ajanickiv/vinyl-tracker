@@ -51,6 +51,23 @@ export class VinylPlayerComponent implements OnDestroy {
   // Expose master fetch progress to template
   masterFetchInProgress = computed(() => this.masterReleaseService.isInProgress());
   masterFetchProgress = computed(() => this.masterReleaseService.progress());
+  masterFetchRemaining = computed(() => {
+    const p = this.masterFetchProgress();
+    return p.total - p.completed;
+  });
+
+  // Pre-computed display values for current release
+  releaseFormatString = computed(() => {
+    const release = this.currentRelease();
+    if (!release) return '';
+    return release.basicInfo.formats?.join(', ') || 'Unknown';
+  });
+
+  releaseLastPlayedDate = computed(() => {
+    const release = this.currentRelease();
+    if (!release?.lastPlayedDate) return 'Never';
+    return new Date(release.lastPlayedDate).toLocaleDateString();
+  });
 
   constructor(
     private recommendationService: RecommendationService,

@@ -192,7 +192,7 @@ describe('MenuDrawerComponent', () => {
     });
   });
 
-  describe('getTimeSinceSync', () => {
+  describe('timeSinceSync', () => {
     beforeEach(() => {
       jest.useFakeTimers();
       jest.setSystemTime(new Date('2024-01-20T10:00:00Z'));
@@ -205,7 +205,7 @@ describe('MenuDrawerComponent', () => {
     it('should return "Never" when lastSyncDate is null', () => {
       spectator.component.lastSyncDate.set(null);
 
-      const result = spectator.component.getTimeSinceSync();
+      const result = spectator.component.timeSinceSync();
 
       expect(result).toBe('Never');
     });
@@ -214,7 +214,7 @@ describe('MenuDrawerComponent', () => {
       const today = new Date('2024-01-20T08:00:00Z');
       spectator.component.lastSyncDate.set(today);
 
-      const result = spectator.component.getTimeSinceSync();
+      const result = spectator.component.timeSinceSync();
 
       expect(result).toBe('Today');
     });
@@ -223,7 +223,7 @@ describe('MenuDrawerComponent', () => {
       const yesterday = new Date('2024-01-19T10:00:00Z');
       spectator.component.lastSyncDate.set(yesterday);
 
-      const result = spectator.component.getTimeSinceSync();
+      const result = spectator.component.timeSinceSync();
 
       expect(result).toBe('Yesterday');
     });
@@ -234,7 +234,7 @@ describe('MenuDrawerComponent', () => {
       const lastNight = new Date('2024-01-19T23:00:00Z');
       spectator.component.lastSyncDate.set(lastNight);
 
-      const result = spectator.component.getTimeSinceSync();
+      const result = spectator.component.timeSinceSync();
 
       expect(result).toBe('Yesterday');
     });
@@ -243,7 +243,7 @@ describe('MenuDrawerComponent', () => {
       const threeDaysAgo = new Date('2024-01-17T10:00:00Z');
       spectator.component.lastSyncDate.set(threeDaysAgo);
 
-      const result = spectator.component.getTimeSinceSync();
+      const result = spectator.component.timeSinceSync();
 
       expect(result).toBe('3 days ago');
     });
@@ -252,7 +252,7 @@ describe('MenuDrawerComponent', () => {
       const twoWeeksAgo = new Date('2024-01-06T10:00:00Z');
       spectator.component.lastSyncDate.set(twoWeeksAgo);
 
-      const result = spectator.component.getTimeSinceSync();
+      const result = spectator.component.timeSinceSync();
 
       expect(result).toBe('2 weeks ago');
     });
@@ -261,7 +261,7 @@ describe('MenuDrawerComponent', () => {
       const twoMonthsAgo = new Date('2023-11-20T10:00:00Z');
       spectator.component.lastSyncDate.set(twoMonthsAgo);
 
-      const result = spectator.component.getTimeSinceSync();
+      const result = spectator.component.timeSinceSync();
 
       expect(result).toBe('2 months ago');
     });
@@ -697,27 +697,27 @@ describe('MenuDrawerComponent', () => {
     it('should return true for selected genre', () => {
       mockFilterService.filters.set({ ...DEFAULT_FILTERS, genres: ['Rock', 'Jazz'] });
 
-      expect(spectator.component.isGenreSelected('Rock')).toBe(true);
-      expect(spectator.component.isGenreSelected('Jazz')).toBe(true);
+      expect(spectator.component.selectedGenres().has('Rock')).toBe(true);
+      expect(spectator.component.selectedGenres().has('Jazz')).toBe(true);
     });
 
     it('should return false for unselected genre', () => {
       mockFilterService.filters.set({ ...DEFAULT_FILTERS, genres: ['Rock'] });
 
-      expect(spectator.component.isGenreSelected('Jazz')).toBe(false);
+      expect(spectator.component.selectedGenres().has('Jazz')).toBe(false);
     });
 
     it('should return true for selected decade', () => {
       mockFilterService.filters.set({ ...DEFAULT_FILTERS, decades: ['1980s', '1990s'] });
 
-      expect(spectator.component.isDecadeSelected('1980s')).toBe(true);
-      expect(spectator.component.isDecadeSelected('1990s')).toBe(true);
+      expect(spectator.component.selectedDecades().has('1980s')).toBe(true);
+      expect(spectator.component.selectedDecades().has('1990s')).toBe(true);
     });
 
     it('should return false for unselected decade', () => {
       mockFilterService.filters.set({ ...DEFAULT_FILTERS, decades: ['1980s'] });
 
-      expect(spectator.component.isDecadeSelected('1970s')).toBe(false);
+      expect(spectator.component.selectedDecades().has('1970s')).toBe(false);
     });
   });
 
@@ -1303,18 +1303,18 @@ describe('MenuDrawerComponent', () => {
       });
     });
 
-    describe('isOriginalDecadeSelected', () => {
+    describe('selectedOriginalDecades', () => {
       it('should return true for selected original decade', () => {
         mockFilterService.filters.set({ ...DEFAULT_FILTERS, originalDecades: ['1970s', '1980s'] });
 
-        expect(spectator.component.isOriginalDecadeSelected('1970s')).toBe(true);
-        expect(spectator.component.isOriginalDecadeSelected('1980s')).toBe(true);
+        expect(spectator.component.selectedOriginalDecades().has('1970s')).toBe(true);
+        expect(spectator.component.selectedOriginalDecades().has('1980s')).toBe(true);
       });
 
       it('should return false for unselected original decade', () => {
         mockFilterService.filters.set({ ...DEFAULT_FILTERS, originalDecades: ['1970s'] });
 
-        expect(spectator.component.isOriginalDecadeSelected('1990s')).toBe(false);
+        expect(spectator.component.selectedOriginalDecades().has('1990s')).toBe(false);
       });
     });
   });
