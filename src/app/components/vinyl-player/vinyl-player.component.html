@@ -159,7 +159,7 @@
   }
 
   @if (pendingToast()) {
-    <app-achievement-toast [badge]="pendingToast()!" (dismiss)="dismissToast()">
+    <app-achievement-toast [unlockEvent]="pendingToast()!" (dismiss)="dismissToast()">
     </app-achievement-toast>
   }
 </div>

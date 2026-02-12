@@ -16,7 +16,7 @@ A personal listening tracker for your Discogs vinyl collection. Get personalized
 - **Filtering** - Filter recommendations by genre, pressing decade, original decade, exclude box sets, or albums not played in 6+ months
 - **Original Release Year** - Optionally sync master release data to see when albums were first released
 - **Collection Stats** - Dedicated stats drawer with collection coverage metrics, most played album, and oldest never-played discovery
-- **Achievements** - Earn 15 badges across 6 categories for collection milestones, play activity, and music discovery
+- **Achievements** - Earn 7 tiered badges with progression from Bronze to Legendary for collection milestones, play activity, and music discovery
 - **Backup & Restore** - Export and import your play data as JSON files
 - **Local Storage** - All play data stored locally in your browser using IndexedDB
 - **Mobile First** - Optimized for mobile devices with a clean, touch-friendly interface
@@ -81,17 +81,18 @@ Your credentials are stored locally in your browser and never sent anywhere exce
 **Achievements Drawer**
 
 - Tap the trophy icon to view your achievements progress
-- 15 badges across 6 categories reward your listening habits:
-  - **Collection** - Starter (10 albums), Collector (50), Archivist (100)
-  - **Play Count** - Century (100 plays), Devoted (500), Obsessed (1000)
-  - **Coverage** - No Dust (100% of collection played)
-  - **Discovery** - Genre Explorer (5+ genres), Decade Hopper (5+ decades)
-  - **Artist** - Fan (10 plays same artist), Superfan (25), Fanatic (50)
-  - **Album** - On Repeat (10 plays same album), Worn Grooves (25), Needle Dropper (50)
-- Locked badges show grayscale icons with progress bars
-- Unlocked badges display colored icons with a copper highlight
-- A toast notification appears when you earn a new badge
-- Existing users receive retroactive credit for already-earned achievements
+- 7 badges with tiered progression reward your listening habits:
+  - **Collector** - Build your collection (Bronze: 10 → Silver: 50 → Gold: 100 → Platinum: 500 → Diamond: 1000 → Legendary: 2500)
+  - **Spins** - Total plays logged (Bronze: 100 → Silver: 500 → Gold: 1000 → Platinum: 2500 → Diamond: 5000 → Legendary: 10000)
+  - **Coverage** - Play through your collection with vinyl-themed tiers (Needle Drop: 25% → Flip Side: 50% → Inner Groove: 75% → Mint Condition: 100%)
+  - **Genre Explorer** - Play albums from 5+ different genres (non-tiered)
+  - **Decade Hopper** - Play albums from 5+ different decades (non-tiered)
+  - **Devotion** - Artist dedication (Bronze: 10 → Silver: 25 → Gold: 50 → Platinum: 100 → Diamond: 250 → Legendary: 500)
+  - **Favorite** - Album replay (Bronze: 10 → Silver: 25 → Gold: 50 → Platinum: 100 → Diamond: 200 → Legendary: 500)
+- Locked badges show grayscale icons with progress bars toward the next tier
+- Unlocked badges display tier-colored icons (bronze, silver, gold, etc.)
+- Toast notifications appear when you earn a new badge or upgrade to a higher tier
+- Existing users receive retroactive credit for already-earned achievements and tiers
 
 **Recommendation Algorithm**
 

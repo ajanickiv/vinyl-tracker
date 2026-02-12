@@ -14,7 +14,7 @@ import { AchievementsSheetComponent } from '../achievements-sheet/achievements-s
 import { AchievementToastComponent } from '../achievement-toast/achievement-toast.component';
 import { ArtistNamePipe } from '../../pipes/artist-name.pipe';
 import { SPIN_ANIMATION_DURATION_MS } from '../../constants/timing.constants';
-import { BadgeDefinition } from '../../models/achievement.model';
+import { BadgeUnlockEvent } from '../../services/achievements.service';
 
 @Component({
   selector: 'app-vinyl-player',
@@ -43,10 +43,10 @@ export class VinylPlayerComponent implements OnDestroy {
   historyOpen = signal(false);
   statsOpen = signal(false);
   achievementsOpen = signal(false);
-  pendingToast = signal<BadgeDefinition | null>(null);
+  pendingToast = signal<BadgeUnlockEvent | null>(null);
 
   private destroy$ = new Subject<void>();
-  private toastQueue: BadgeDefinition[] = [];
+  private toastQueue: BadgeUnlockEvent[] = [];
 
   // Expose master fetch progress to template
   masterFetchInProgress = computed(() => this.masterReleaseService.isInProgress());
