@@ -47,7 +47,7 @@ describe('CredentialsService', () => {
       expect(newService.credentials()).toBeNull();
       expect(consoleSpy).toHaveBeenCalledWith(
         'Failed to load credentials:',
-        expect.any(SyntaxError)
+        expect.any(SyntaxError),
       );
       consoleSpy.mockRestore();
     });
