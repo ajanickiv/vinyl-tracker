@@ -115,12 +115,12 @@ describe('AchievementsSheetComponent', () => {
 
   it('should calculate unlocked count correctly', () => {
     spectator.component.badges.set(mockBadgeProgress);
-    expect(spectator.component.getUnlockedCount()).toBe(1);
+    expect(spectator.component.unlockedCount()).toBe(1);
   });
 
   it('should calculate total count correctly', () => {
     spectator.component.badges.set(mockBadgeProgress);
-    expect(spectator.component.getTotalCount()).toBe(3);
+    expect(spectator.component.totalCount()).toBe(3);
   });
 
   it('should calculate progress percentage for locked tiered badge', () => {

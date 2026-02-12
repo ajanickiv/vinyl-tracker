@@ -2,19 +2,15 @@
   <div class="toast-content">
     <div
       class="badge-icon"
-      [style.background]="
-        getTierColor()
-          ? 'linear-gradient(135deg, ' + getTierColor() + ' 0%, ' + getTierColor() + '99 100%)'
-          : null
-      "
+      [style.background]="badgeIconBackground()"
       [innerHTML]="getBadgeIcon()"
     ></div>
     <div class="toast-text">
-      <div class="toast-title" [style.color]="getTierColor() || null">{{ getTitle() }}</div>
+      <div class="toast-title" [style.color]="tierColor() || null">{{ getTitle() }}</div>
       <div class="badge-name">
         {{ getBadgeName() }}
         @if (getTierName()) {
-          <span class="tier-name" [style.color]="getTierColor()">{{ getTierName() }}</span>
+          <span class="tier-name" [style.color]="tierColor()">{{ getTierName() }}</span>
         }
       </div>
       <div class="badge-description">{{ getDescription() }}</div>

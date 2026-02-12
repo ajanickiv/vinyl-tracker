@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { BadgeUnlockEvent } from '../../services/achievements.service';
@@ -15,6 +15,18 @@ import { BADGE_ICONS } from '../../constants/badge-icons.constants';
 export class AchievementToastComponent {
   unlockEvent = input.required<BadgeUnlockEvent>();
   dismiss = output<void>();
+
+  tierColor = computed(() => {
+    const tier = this.unlockEvent().tier;
+    if (!tier) return '';
+    return TIER_COLORS[tier.level as TierLevel | CoverageTierLevel] || '';
+  });
+
+  badgeIconBackground = computed(() => {
+    const color = this.tierColor();
+    if (!color) return null;
+    return `linear-gradient(135deg, ${color} 0%, ${color}99 100%)`;
+  });
 
   constructor(private sanitizer: DomSanitizer) {}
 
@@ -39,12 +51,6 @@ export class AchievementToastComponent {
   getTierName(): string | null {
     const tier = this.unlockEvent().tier;
     return tier ? tier.name : null;
-  }
-
-  getTierColor(): string {
-    const tier = this.unlockEvent().tier;
-    if (!tier) return '';
-    return TIER_COLORS[tier.level as TierLevel | CoverageTierLevel] || '';
   }
 
   getDescription(): string {

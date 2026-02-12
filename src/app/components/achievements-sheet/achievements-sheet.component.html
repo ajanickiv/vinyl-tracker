@@ -8,7 +8,7 @@
 
     <div class="achievements-header">
       <h2 class="header-title">Achievements</h2>
-      <div class="header-progress">{{ getUnlockedCount() }}/{{ getTotalCount() }}</div>
+      <div class="header-progress">{{ unlockedCount() }}/{{ totalCount() }}</div>
     </div>
 
     <div class="achievements-content">
@@ -16,27 +16,27 @@
         <div class="loading-state">
           <p>Loading achievements...</p>
         </div>
-      } @else if (badges().length > 0) {
+      } @else if (badgeViewModels().length > 0) {
         <div class="badges-grid">
-          @for (badge of badges(); track badge.badge.id) {
+          @for (badge of badgeViewModels(); track badge.badge.id) {
             <div
               class="badge-item"
               [class.unlocked]="badge.isUnlocked"
               [class.locked]="!badge.isUnlocked"
-              [class.max-tier]="isMaxTier(badge)"
+              [class.max-tier]="badge.maxTier"
             >
               <div
                 class="badge-icon"
                 [class.icon-unlocked]="badge.isUnlocked"
                 [class.icon-locked]="!badge.isUnlocked"
-                [style.color]="badge.isUnlocked ? getTierColor(badge) : null"
-                [innerHTML]="getBadgeIcon(badge.badge.id)"
+                [style.color]="badge.isUnlocked ? badge.tierColor : null"
+                [innerHTML]="badge.icon"
               ></div>
               <div class="badge-name">{{ badge.badge.name }}</div>
 
-              @if (isTiered(badge) && badge.isUnlocked && badge.currentTier) {
-                <div class="badge-tier" [style.color]="getTierColor(badge)">
-                  {{ getTierName(badge) }}
+              @if (badge.tiered && badge.isUnlocked && badge.currentTier) {
+                <div class="badge-tier" [style.color]="badge.tierColor">
+                  {{ badge.tierName }}
                 </div>
               }
 
@@ -47,20 +47,20 @@
                   <div class="progress-bar">
                     <div
                       class="progress-fill"
-                      [style.width.%]="getProgressPercentage(badge)"
-                      [style.background-color]="badge.isUnlocked ? getTierColor(badge) : null"
+                      [style.width.%]="badge.progressPercentage"
+                      [style.background-color]="badge.isUnlocked ? badge.tierColor : null"
                     ></div>
                   </div>
                   <div class="progress-text">
                     @if (badge.nextTier) {
-                      <span class="next-tier">{{ getNextTierName(badge) }}: </span>
+                      <span class="next-tier">{{ badge.nextTierName }}: </span>
                     }
-                    {{ formatProgress(badge) }}
+                    {{ badge.formattedProgress }}
                   </div>
                 </div>
-              } @else if (isMaxTier(badge)) {
-                <div class="badge-unlocked-text" [style.color]="getTierColor(badge)">
-                  &#x2713; {{ formatProgress(badge) }}
+              } @else if (badge.maxTier) {
+                <div class="badge-unlocked-text" [style.color]="badge.tierColor">
+                  &#x2713; {{ badge.formattedProgress }}
                 </div>
               } @else {
                 <div class="badge-unlocked-text">&#x2713; Unlocked</div>

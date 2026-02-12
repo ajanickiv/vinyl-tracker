@@ -89,8 +89,7 @@ describe('AchievementToastComponent', () => {
   });
 
   it('should return tier color for tiered unlock', () => {
-    const color = component.getTierColor();
-    expect(color).toBe('#cd7f32'); // Bronze color
+    expect(component.tierColor()).toBe('#cd7f32'); // Bronze color
   });
 
   it('should return empty string for non-tiered unlock', () => {
@@ -101,8 +100,7 @@ describe('AchievementToastComponent', () => {
     fixture.componentRef.setInput('unlockEvent', noTierEvent);
     fixture.detectChanges();
 
-    const color = component.getTierColor();
-    expect(color).toBe('');
+    expect(component.tierColor()).toBe('');
   });
 
   it('should get correct title based on isUpgrade', () => {
