@@ -54,7 +54,7 @@
                 @for (genre of availableGenres(); track genre) {
                   <button
                     class="chip"
-                    [class.selected]="isGenreSelected(genre)"
+                    [class.selected]="selectedGenres().has(genre)"
                     (click)="toggleGenre(genre)"
                   >
                     {{ genre }}
@@ -72,7 +72,7 @@
                 @for (decade of availableOriginalDecades(); track decade) {
                   <button
                     class="chip"
-                    [class.selected]="isOriginalDecadeSelected(decade)"
+                    [class.selected]="selectedOriginalDecades().has(decade)"
                     (click)="toggleOriginalDecade(decade)"
                   >
                     {{ decade }}
@@ -90,7 +90,7 @@
                 @for (decade of availableDecades(); track decade) {
                   <button
                     class="chip"
-                    [class.selected]="isDecadeSelected(decade)"
+                    [class.selected]="selectedDecades().has(decade)"
                     (click)="toggleDecade(decade)"
                   >
                     {{ decade }}
@@ -175,7 +175,7 @@
               <h3>Collection Sync</h3>
               <div class="sync-info">
                 <p class="sync-status">
-                  Last synced: <strong>{{ getTimeSinceSync() }}</strong>
+                  Last synced: <strong>{{ timeSinceSync() }}</strong>
                 </p>
                 <button class="resync-button" (click)="resync()" [disabled]="syncing()">
                   <span class="button-icon">↻</span>

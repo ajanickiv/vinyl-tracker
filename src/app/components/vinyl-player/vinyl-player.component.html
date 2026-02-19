@@ -52,7 +52,7 @@
     <div class="loading">
       <p>Loading recommendation...</p>
     </div>
-  } @else if (currentRelease()) {
+  } @else if (currentRelease(); as release) {
     <div class="player">
       <!-- Vinyl Record Player -->
       <div class="turntable-wrapper">
@@ -72,8 +72,8 @@
             <!-- Album Art - spins on play -->
             <div class="album-art" [class.spinning]="isSpinning()">
               <img
-                [src]="currentRelease()!.basicInfo.coverImage || currentRelease()!.basicInfo.thumb"
-                [alt]="currentRelease()!.basicInfo.title"
+                [src]="release.basicInfo.coverImage || release.basicInfo.thumb"
+                [alt]="release.basicInfo.title"
               />
               <div class="vinyl-texture"></div>
             </div>
@@ -95,35 +95,35 @@
 
       <!-- Album Info -->
       <div class="album-info">
-        <h2 class="artist">{{ currentRelease()!.basicInfo.artists | artistName }}</h2>
-        <h3 class="title">{{ currentRelease()!.basicInfo.title }}</h3>
+        <h2 class="artist">{{ release.basicInfo.artists | artistName }}</h2>
+        <h3 class="title">{{ release.basicInfo.title }}</h3>
         <p class="meta">
           @if (
-            currentRelease()!.basicInfo.originalYear &&
-            currentRelease()!.basicInfo.year &&
-            currentRelease()!.basicInfo.originalYear !== currentRelease()!.basicInfo.year
+            release.basicInfo.originalYear &&
+            release.basicInfo.year &&
+            release.basicInfo.originalYear !== release.basicInfo.year
           ) {
-            {{ currentRelease()!.basicInfo.originalYear }} ({{ currentRelease()!.basicInfo.year }}
+            {{ release.basicInfo.originalYear }} ({{ release.basicInfo.year }}
             pressing)
-          } @else if (currentRelease()!.basicInfo.originalYear) {
-            {{ currentRelease()!.basicInfo.originalYear }}
-          } @else if (currentRelease()!.basicInfo.year) {
-            {{ currentRelease()!.basicInfo.year }}
+          } @else if (release.basicInfo.originalYear) {
+            {{ release.basicInfo.originalYear }}
+          } @else if (release.basicInfo.year) {
+            {{ release.basicInfo.year }}
           } @else {
             Unknown year
           }
-          • {{ getFormatString(currentRelease()!) }}
+          • {{ releaseFormatString() }}
         </p>
       </div>
 
       <!-- Stats -->
       <div class="stats">
         <div class="stat">
-          <div class="stat-value">{{ currentRelease()!.playCount }}</div>
+          <div class="stat-value">{{ release.playCount }}</div>
           <div class="stat-label">Plays</div>
         </div>
         <div class="stat">
-          <div class="stat-value">{{ getFormattedDate(currentRelease()!.lastPlayedDate) }}</div>
+          <div class="stat-value">{{ releaseLastPlayedDate() }}</div>
           <div class="stat-label">Last Played</div>
         </div>
       </div>
@@ -145,9 +145,7 @@
       @if (masterFetchInProgress()) {
         <div class="master-fetch-progress">
           <span class="progress-text">Fetching release dates...</span>
-          <span class="progress-count"
-            >{{ masterFetchProgress().total - masterFetchProgress().completed }} remaining</span
-          >
+          <span class="progress-count">{{ masterFetchRemaining() }} remaining</span>
         </div>
       }
     </div>

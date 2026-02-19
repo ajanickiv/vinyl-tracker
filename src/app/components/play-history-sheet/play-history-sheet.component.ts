@@ -10,6 +10,7 @@ import { ArtistNamePipe } from '../../pipes/artist-name.pipe';
 export interface HistoryDisplayItem {
   entry: PlayHistoryEntry;
   release: Release | null;
+  relativeTime: string;
 }
 
 @Component({
@@ -92,10 +93,11 @@ export class PlayHistorySheetComponent implements OnInit, OnDestroy {
       this.releaseCache.clear();
       releases.forEach((r) => this.releaseCache.set(r.id, r));
 
-      // Map history entries to display items
+      // Map history entries to display items with pre-computed relative time
       const items: HistoryDisplayItem[] = history.map((entry) => ({
         entry,
         release: this.releaseCache.get(entry.releaseId) || null,
+        relativeTime: this.getRelativeTime(entry.playedAt),
       }));
 
       this.historyItems.set(items);

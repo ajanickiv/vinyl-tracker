@@ -1,4 +1,13 @@
-import { Component, signal, input, output, OnDestroy, isDevMode, effect } from '@angular/core';
+import {
+  Component,
+  computed,
+  signal,
+  input,
+  output,
+  OnDestroy,
+  isDevMode,
+  effect,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -56,6 +65,26 @@ export class MenuDrawerComponent implements OnDestroy {
   close = output<void>();
   dataCleared = output<void>();
   filtersChanged = output<void>();
+
+  selectedGenres = computed(() => new Set(this.filterService.filters().genres));
+  selectedDecades = computed(() => new Set(this.filterService.filters().decades));
+  selectedOriginalDecades = computed(() => new Set(this.filterService.filters().originalDecades));
+
+  timeSinceSync = computed(() => {
+    const lastSync = this.lastSyncDate();
+    if (!lastSync) return 'Never';
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const syncDay = new Date(lastSync.getFullYear(), lastSync.getMonth(), lastSync.getDate());
+    const diffDays = Math.floor((today.getTime() - syncDay.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return `${Math.floor(diffDays / 30)} months ago`;
+  });
 
   private destroy$ = new Subject<void>();
 
