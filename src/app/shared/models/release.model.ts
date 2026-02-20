@@ -8,6 +8,7 @@ export interface Release {
     masterId?: number; // Discogs master release ID
     originalYear?: number; // Original release year from master
     formats: string[];
+    discCount?: number; // sum of formats[].qty; undefined until re-synced from Discogs
     thumb?: string;
     coverImage?: string;
     labels?: string[];

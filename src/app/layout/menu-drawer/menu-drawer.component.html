@@ -117,6 +117,24 @@
               </div>
             </div>
           }
+
+          <!-- Disc Count Chips -->
+          @if (availableDiscCounts().length > 0) {
+            <div class="filter-group">
+              <p class="filter-label">Discs</p>
+              <div class="chip-container">
+                @for (count of availableDiscCounts(); track count) {
+                  <button
+                    class="chip"
+                    [class.selected]="selectedDiscCounts().has(count)"
+                    (click)="toggleDiscCount(count)"
+                  >
+                    {{ count }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
         </div>
       </div>
 

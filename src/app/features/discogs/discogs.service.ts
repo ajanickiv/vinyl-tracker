@@ -112,6 +112,8 @@ export class DiscogsService {
           const descriptions = f.descriptions ? ` (${f.descriptions.join(', ')})` : '';
           return `${f.name}${descriptions}`;
         }),
+        discCount:
+          basicInfo.formats.reduce((sum, f) => sum + (parseInt(f.qty, 10) || 0), 0) || undefined,
         thumb: basicInfo.thumb,
         coverImage: basicInfo.cover_image,
         labels: basicInfo.labels.map((l) => l.name),

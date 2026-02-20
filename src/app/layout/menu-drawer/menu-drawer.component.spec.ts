@@ -32,6 +32,8 @@ describe('MenuDrawerComponent', () => {
     setNotPlayedIn6Months: jest.Mock;
     toggleGenre: jest.Mock;
     toggleDecade: jest.Mock;
+    toggleVinylSize: jest.Mock;
+    toggleDiscCount: jest.Mock;
   };
   let mockCredentialsService: {
     getUsername: jest.Mock;
@@ -78,6 +80,8 @@ describe('MenuDrawerComponent', () => {
       setNotPlayedIn6Months: jest.fn(),
       toggleGenre: jest.fn(),
       toggleDecade: jest.fn(),
+      toggleVinylSize: jest.fn(),
+      toggleDiscCount: jest.fn(),
     };
 
     mockCredentialsService = {
@@ -1315,6 +1319,134 @@ describe('MenuDrawerComponent', () => {
         mockFilterService.filters.set({ ...DEFAULT_FILTERS, originalDecades: ['1970s'] });
 
         expect(spectator.component.selectedOriginalDecades().has('1990s')).toBe(false);
+      });
+    });
+  });
+
+  describe('disc count filter', () => {
+    const mockReleasesWithDiscCounts = [
+      {
+        id: 1,
+        instanceId: 1,
+        basicInfo: {
+          title: 'Single LP',
+          artists: ['Artist 1'],
+          year: 2020,
+          formats: ['Vinyl (LP)'],
+          discCount: 1,
+          thumb: '',
+          coverImage: '',
+          labels: [],
+          genres: ['Rock'],
+          styles: [],
+        },
+        playCount: 0,
+        dateAdded: new Date(),
+        dateAddedToCollection: new Date(),
+      },
+      {
+        id: 2,
+        instanceId: 2,
+        basicInfo: {
+          title: 'Double LP',
+          artists: ['Artist 2'],
+          year: 2015,
+          formats: ['Vinyl (LP)'],
+          discCount: 2,
+          thumb: '',
+          coverImage: '',
+          labels: [],
+          genres: ['Jazz'],
+          styles: [],
+        },
+        playCount: 0,
+        dateAdded: new Date(),
+        dateAddedToCollection: new Date(),
+      },
+      {
+        id: 3,
+        instanceId: 3,
+        basicInfo: {
+          title: 'Pre-sync record',
+          artists: ['Artist 3'],
+          year: 2010,
+          formats: ['Vinyl'],
+          discCount: undefined, // not yet synced
+          thumb: '',
+          coverImage: '',
+          labels: [],
+          genres: ['Pop'],
+          styles: [],
+        },
+        playCount: 0,
+        dateAdded: new Date(),
+        dateAddedToCollection: new Date(),
+      },
+    ];
+
+    it('should extract unique disc counts from releases', async () => {
+      mockDatabaseService.getAllReleases.mockResolvedValue(mockReleasesWithDiscCounts);
+
+      spectator.component.loadMenuData();
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const discCounts = spectator.component.availableDiscCounts();
+      expect(discCounts).toContain(1);
+      expect(discCounts).toContain(2);
+      expect(discCounts.length).toBe(2);
+    });
+
+    it('should sort disc counts numerically', async () => {
+      mockDatabaseService.getAllReleases.mockResolvedValue(mockReleasesWithDiscCounts);
+
+      spectator.component.loadMenuData();
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const discCounts = spectator.component.availableDiscCounts();
+      expect(discCounts).toEqual([1, 2]);
+    });
+
+    it('should skip releases without discCount', async () => {
+      mockDatabaseService.getAllReleases.mockResolvedValue(mockReleasesWithDiscCounts);
+
+      spectator.component.loadMenuData();
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      // Album 3 has discCount: undefined, should not appear
+      const discCounts = spectator.component.availableDiscCounts();
+      expect(discCounts.length).toBe(2);
+    });
+
+    describe('toggleDiscCount', () => {
+      it('should call filterService.toggleDiscCount and emit filtersChanged', () => {
+        const filtersChangedSpy = jest.fn();
+        spectator.component.filtersChanged.subscribe(filtersChangedSpy);
+
+        spectator.component.toggleDiscCount(2);
+
+        expect(mockFilterService.toggleDiscCount).toHaveBeenCalledWith(2);
+        expect(filtersChangedSpy).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('selectedDiscCounts', () => {
+      it('should return true for selected disc count', () => {
+        mockFilterService.filters.set({ ...DEFAULT_FILTERS, discCounts: [1, 2] });
+
+        expect(spectator.component.selectedDiscCounts().has(1)).toBe(true);
+        expect(spectator.component.selectedDiscCounts().has(2)).toBe(true);
+      });
+
+      it('should return false for unselected disc count', () => {
+        mockFilterService.filters.set({ ...DEFAULT_FILTERS, discCounts: [1] });
+
+        expect(spectator.component.selectedDiscCounts().has(3)).toBe(false);
       });
     });
   });
