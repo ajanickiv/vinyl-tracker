@@ -74,6 +74,12 @@ export class MenuDrawerComponent implements OnDestroy {
   selectedVinylSizes = computed(() => new Set(this.filterService.filters().vinylSizes));
   selectedDiscCounts = computed(() => new Set(this.filterService.filters().discCounts));
 
+  hasGenres = computed(() => this.availableGenres().length > 0);
+  hasOriginalDecades = computed(() => this.availableOriginalDecades().length > 0);
+  hasDecades = computed(() => this.availableDecades().length > 0);
+  hasVinylSizes = computed(() => this.availableVinylSizes().length > 0);
+  hasDiscCounts = computed(() => this.availableDiscCounts().length > 0);
+
   timeSinceSync = computed(() => {
     const lastSync = this.lastSyncDate();
     if (!lastSync) return 'Never';
