@@ -304,6 +304,18 @@
 // Master Fetch Progress
 // ==============================================
 
+// ==============================================
+// Filter Count
+// ==============================================
+
+.filter-count {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: $text-muted;
+}
+
 .master-fetch-progress {
   display: flex;
   justify-content: center;

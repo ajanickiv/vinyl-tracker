@@ -21,6 +21,7 @@ describe('VinylPlayerComponent', () => {
     getMultipleRecommendations: jest.Mock;
     getRecommendationByFormat: jest.Mock;
     getRecommendationByGenre: jest.Mock;
+    filteredCount: ReturnType<typeof signal<number>>;
   };
   let mockPlaybackService: {
     markAsPlayed: jest.Mock;
@@ -79,6 +80,7 @@ describe('VinylPlayerComponent', () => {
       getMultipleRecommendations: jest.fn().mockReturnValue(of([])),
       getRecommendationByFormat: jest.fn().mockReturnValue(of(null)),
       getRecommendationByGenre: jest.fn().mockReturnValue(of(null)),
+      filteredCount: signal(0),
     };
 
     mockPlaybackService = {

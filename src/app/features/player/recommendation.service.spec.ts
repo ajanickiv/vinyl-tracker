@@ -100,15 +100,6 @@ describe('RecommendationService', () => {
   describe('getRecommendation', () => {
     it('should return null for empty collection', async () => {
       const db = spectator.inject(DatabaseService);
-
-      // Mock the Dexie query chain
-      const mockWhere = jest.fn().mockReturnValue({
-        equals: jest.fn().mockReturnValue({
-          toArray: jest.fn().mockResolvedValue([]),
-        }),
-      });
-
-      (db as any).releases = { where: mockWhere };
       db.getAllReleases.mockResolvedValue([]);
 
       const result = await firstValueFrom(spectator.service.getRecommendation());
@@ -118,15 +109,7 @@ describe('RecommendationService', () => {
 
     it('should prioritize never-played items', async () => {
       const db = spectator.inject(DatabaseService);
-
-      // Mock the Dexie query chain for never-played items
-      const mockWhere = jest.fn().mockReturnValue({
-        equals: jest.fn().mockReturnValue({
-          toArray: jest.fn().mockResolvedValue([mockNeverPlayed1, mockNeverPlayed2]),
-        }),
-      });
-
-      (db as any).releases = { where: mockWhere };
+      db.getAllReleases.mockResolvedValue([mockNeverPlayed1, mockNeverPlayed2]);
 
       const result = await firstValueFrom(spectator.service.getRecommendation());
 
@@ -137,15 +120,6 @@ describe('RecommendationService', () => {
 
     it('should use weighted random when all items are played', async () => {
       const db = spectator.inject(DatabaseService);
-
-      // Mock the Dexie query chain - no never-played items
-      const mockWhere = jest.fn().mockReturnValue({
-        equals: jest.fn().mockReturnValue({
-          toArray: jest.fn().mockResolvedValue([]),
-        }),
-      });
-
-      (db as any).releases = { where: mockWhere };
       db.getAllReleases.mockResolvedValue([mockPlayed1, mockPlayed2]);
 
       const result = await firstValueFrom(spectator.service.getRecommendation());
@@ -157,15 +131,7 @@ describe('RecommendationService', () => {
 
     it('should return null on database error', async () => {
       const db = spectator.inject(DatabaseService);
-
-      // Mock the Dexie query chain to throw error
-      const mockWhere = jest.fn().mockReturnValue({
-        equals: jest.fn().mockReturnValue({
-          toArray: jest.fn().mockRejectedValue(new Error('Database error')),
-        }),
-      });
-
-      (db as any).releases = { where: mockWhere };
+      db.getAllReleases.mockRejectedValue(new Error('Database error'));
 
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
@@ -177,23 +143,22 @@ describe('RecommendationService', () => {
       consoleSpy.mockRestore();
     });
 
-    it('should query for playCount equals 0', async () => {
+    it('should set filteredCount to the number of matching releases', async () => {
       const db = spectator.inject(DatabaseService);
-
-      const mockEquals = jest.fn().mockReturnValue({
-        toArray: jest.fn().mockResolvedValue([]),
-      });
-      const mockWhere = jest.fn().mockReturnValue({
-        equals: mockEquals,
-      });
-
-      (db as any).releases = { where: mockWhere };
-      db.getAllReleases.mockResolvedValue([mockPlayed1]);
+      db.getAllReleases.mockResolvedValue([mockNeverPlayed1, mockNeverPlayed2, mockPlayed1]);
 
       await firstValueFrom(spectator.service.getRecommendation());
 
-      expect(mockWhere).toHaveBeenCalledWith('playCount');
-      expect(mockEquals).toHaveBeenCalledWith(0);
+      expect(spectator.service.filteredCount()).toBe(3);
+    });
+
+    it('should set filteredCount to 0 when no releases match filters', async () => {
+      const db = spectator.inject(DatabaseService);
+      db.getAllReleases.mockResolvedValue([]);
+
+      await firstValueFrom(spectator.service.getRecommendation());
+
+      expect(spectator.service.filteredCount()).toBe(0);
     });
   });
 
@@ -333,20 +298,10 @@ describe('RecommendationService', () => {
     it('should return multiple unique recommendations', async () => {
       const db = spectator.inject(DatabaseService);
 
-      // Mock sequence of different recommendations
-      let callCount = 0;
-      const mockWhere = jest.fn().mockImplementation(() => ({
-        equals: jest.fn().mockImplementation(() => ({
-          toArray: jest.fn().mockImplementation(() => {
-            callCount++;
-            if (callCount === 1) return Promise.resolve([mockNeverPlayed1]);
-            if (callCount === 2) return Promise.resolve([mockNeverPlayed2]);
-            return Promise.resolve([]);
-          }),
-        })),
-      }));
-
-      (db as any).releases = { where: mockWhere };
+      // Return different items on each call to simulate different picks
+      db.getAllReleases
+        .mockResolvedValueOnce([mockNeverPlayed1])
+        .mockResolvedValueOnce([mockNeverPlayed2]);
 
       const results = await firstValueFrom(spectator.service.getMultipleRecommendations(2));
 
@@ -356,14 +311,7 @@ describe('RecommendationService', () => {
 
     it('should handle count larger than available releases', async () => {
       const db = spectator.inject(DatabaseService);
-
-      const mockWhere = jest.fn().mockReturnValue({
-        equals: jest.fn().mockReturnValue({
-          toArray: jest.fn().mockResolvedValue([mockNeverPlayed1]),
-        }),
-      });
-
-      (db as any).releases = { where: mockWhere };
+      db.getAllReleases.mockResolvedValue([mockNeverPlayed1]);
 
       const results = await firstValueFrom(spectator.service.getMultipleRecommendations(5));
 
@@ -373,14 +321,6 @@ describe('RecommendationService', () => {
 
     it('should return empty array if no recommendations available', async () => {
       const db = spectator.inject(DatabaseService);
-
-      const mockWhere = jest.fn().mockReturnValue({
-        equals: jest.fn().mockReturnValue({
-          toArray: jest.fn().mockResolvedValue([]),
-        }),
-      });
-
-      (db as any).releases = { where: mockWhere };
       db.getAllReleases.mockResolvedValue([]);
 
       const results = await firstValueFrom(spectator.service.getMultipleRecommendations(3));
@@ -390,15 +330,7 @@ describe('RecommendationService', () => {
 
     it('should not return duplicate recommendations', async () => {
       const db = spectator.inject(DatabaseService);
-
-      // Always return same item
-      const mockWhere = jest.fn().mockReturnValue({
-        equals: jest.fn().mockReturnValue({
-          toArray: jest.fn().mockResolvedValue([mockNeverPlayed1]),
-        }),
-      });
-
-      (db as any).releases = { where: mockWhere };
+      db.getAllReleases.mockResolvedValue([mockNeverPlayed1]);
 
       const results = await firstValueFrom(spectator.service.getMultipleRecommendations(3));
 
@@ -422,14 +354,6 @@ describe('RecommendationService', () => {
       });
 
       const db = spectator.inject(DatabaseService);
-
-      const mockWhere = jest.fn().mockReturnValue({
-        equals: jest.fn().mockReturnValue({
-          toArray: jest.fn().mockResolvedValue([]),
-        }),
-      });
-
-      (db as any).releases = { where: mockWhere };
       db.getAllReleases.mockResolvedValue([lowPlayCount, highPlayCount]);
 
       // Run multiple times to verify low play count is more likely
@@ -458,14 +382,6 @@ describe('RecommendationService', () => {
       });
 
       const db = spectator.inject(DatabaseService);
-
-      const mockWhere = jest.fn().mockReturnValue({
-        equals: jest.fn().mockReturnValue({
-          toArray: jest.fn().mockResolvedValue([]),
-        }),
-      });
-
-      (db as any).releases = { where: mockWhere };
       db.getAllReleases.mockResolvedValue([recentlyPlayed, oldPlay]);
 
       const result = await firstValueFrom(spectator.service.getRecommendation());
@@ -482,14 +398,6 @@ describe('RecommendationService', () => {
       });
 
       const db = spectator.inject(DatabaseService);
-
-      const mockWhere = jest.fn().mockReturnValue({
-        equals: jest.fn().mockReturnValue({
-          toArray: jest.fn().mockResolvedValue([]),
-        }),
-      });
-
-      (db as any).releases = { where: mockWhere };
       db.getAllReleases.mockResolvedValue([noDate]);
 
       const result = await firstValueFrom(spectator.service.getRecommendation());
