@@ -1,6 +1,7 @@
-import { Component, signal, output, OnInit } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { CredentialsService } from '../../../core/credentials.service';
 import { DatabaseService } from '../../../core/database.service';
 
@@ -18,11 +19,10 @@ export class SetupScreenComponent implements OnInit {
   errorMessage = signal('');
   hasExistingData = signal(false);
 
-  setupComplete = output<void>();
-
   constructor(
     private credentialsService: CredentialsService,
     private db: DatabaseService,
+    private router: Router,
   ) {}
 
   async ngOnInit() {
@@ -63,6 +63,10 @@ export class SetupScreenComponent implements OnInit {
       token: tokenValue,
     });
 
-    this.setupComplete.emit();
+    if (this.hasExistingData()) {
+      this.router.navigate(['/']);
+    } else {
+      this.router.navigate(['/sync']);
+    }
   }
 }

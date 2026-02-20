@@ -1,239 +1,111 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
-import { of, Subject } from 'rxjs';
+import { provideRouter, Router } from '@angular/router';
 import { AppComponent } from './app.component';
 import { DatabaseService } from './core/database.service';
 import { CredentialsService } from './core/credentials.service';
-import { RecommendationService } from './features/player/recommendation.service';
-import { PlaybackService } from './features/player/playback.service';
 import { MasterReleaseService } from './features/discogs/master-release.service';
 import { PwaUpdateService } from './core/pwa-update.service';
 import { AchievementsService } from './features/achievements/achievements.service';
-import { SetupScreenComponent } from './features/setup/setup-screen/setup-screen.component';
-import { SyncScreenComponent } from './features/setup/sync-screen/sync-screen.component';
-import { VinylPlayerComponent } from './features/player/vinyl-player/vinyl-player.component';
 
 describe('AppComponent', () => {
   let spectator: Spectator<AppComponent>;
-  let mockCredentialsService: {
-    hasCredentials: jest.Mock;
-    getUsername: jest.Mock;
-    getToken: jest.Mock;
-  };
+  let mockCredentialsService: { hasCredentials: jest.Mock };
 
   const createComponent = createComponentFactory({
     component: AppComponent,
-    mocks: [
-      DatabaseService,
-      RecommendationService,
-      PlaybackService,
-      MasterReleaseService,
-      PwaUpdateService,
-      AchievementsService,
-    ],
+    mocks: [DatabaseService, MasterReleaseService, PwaUpdateService, AchievementsService],
     providers: [
+      provideRouter([]),
       {
         provide: CredentialsService,
         useFactory: () => {
           mockCredentialsService = {
             hasCredentials: jest.fn().mockReturnValue(false),
-            getUsername: jest.fn().mockReturnValue('testuser'),
-            getToken: jest.fn().mockReturnValue('testtoken'),
           };
           return mockCredentialsService;
         },
       },
     ],
-    overrideComponents: [
-      [SetupScreenComponent, { set: { template: '' } }],
-      [SyncScreenComponent, { set: { template: '' } }],
-      [VinylPlayerComponent, { set: { template: '' } }],
-    ],
   });
 
   beforeEach(() => {
     spectator = createComponent();
-
-    // Setup mocks for VinylPlayerComponent dependencies
-    const recommendationService = spectator.inject(RecommendationService);
-    const playbackService = spectator.inject(PlaybackService);
-
-    recommendationService.getRecommendation.mockReturnValue(of(null));
-    playbackService.getCollectionStats.mockReturnValue(
-      of({
-        totalReleases: 0,
-        totalPlays: 0,
-        neverPlayed: 0,
-      }),
-    );
-    // Add achievementUnlocked$ Subject for VinylPlayerComponent
-    (playbackService as any).achievementUnlocked$ = new Subject<any[]>();
+    const router = spectator.inject(Router);
+    jest.spyOn(router, 'navigate').mockResolvedValue(true);
   });
 
   it('should create', () => {
     expect(spectator.component).toBeTruthy();
   });
 
-  it('should initialize with hasCredentials and hasSyncedData as false when no credentials exist', () => {
-    // Note: isInitialized is true because ngOnInit runs automatically during component creation
-    expect(spectator.component.isInitialized()).toBe(true);
-    expect(spectator.component.hasCredentials()).toBe(false);
-    expect(spectator.component.hasSyncedData()).toBe(false);
+  it('should render router-outlet', () => {
+    expect(spectator.query('router-outlet')).toBeTruthy();
   });
 
   describe('ngOnInit', () => {
-    it('should set hasCredentials based on CredentialsService', async () => {
-      mockCredentialsService.hasCredentials.mockReturnValue(true);
+    it('should initialize PWA service', async () => {
+      const pwaService = spectator.inject(PwaUpdateService);
 
       await spectator.component.ngOnInit();
 
-      expect(spectator.component.hasCredentials()).toBe(true);
+      expect(pwaService.initialize).toHaveBeenCalled();
     });
 
-    it('should check collection count only when credentials exist', async () => {
-      const dbService = spectator.inject(DatabaseService);
-      mockCredentialsService.hasCredentials.mockReturnValue(true);
-      dbService.getCollectionCount.mockResolvedValue(5);
-      dbService.getAllReleases.mockResolvedValue([]);
-
-      await spectator.component.ngOnInit();
-
-      expect(dbService.getCollectionCount).toHaveBeenCalled();
-      expect(spectator.component.hasSyncedData()).toBe(true);
-    });
-
-    it('should not check collection count when credentials do not exist', async () => {
-      const dbService = spectator.inject(DatabaseService);
+    it('should navigate to /setup when no credentials', async () => {
+      const router = spectator.inject(Router);
       mockCredentialsService.hasCredentials.mockReturnValue(false);
-      dbService.getCollectionCount.mockClear(); // Clear any calls from previous tests
 
       await spectator.component.ngOnInit();
 
-      expect(dbService.getCollectionCount).not.toHaveBeenCalled();
-      expect(spectator.component.hasSyncedData()).toBe(false);
+      expect(router.navigate).toHaveBeenCalledWith(['/setup']);
     });
 
-    it('should set hasSyncedData to true when collection has items', async () => {
-      const dbService = spectator.inject(DatabaseService);
+    it('should navigate to /sync when credentials exist but no data', async () => {
+      const router = spectator.inject(Router);
+      const db = spectator.inject(DatabaseService);
       mockCredentialsService.hasCredentials.mockReturnValue(true);
-      dbService.getCollectionCount.mockResolvedValue(5);
-      dbService.getAllReleases.mockResolvedValue([]);
+      db.getCollectionCount.mockResolvedValue(0);
 
       await spectator.component.ngOnInit();
 
-      expect(spectator.component.hasSyncedData()).toBe(true);
+      expect(router.navigate).toHaveBeenCalledWith(['/sync']);
     });
 
-    it('should keep hasSyncedData as false when collection is empty', async () => {
-      const dbService = spectator.inject(DatabaseService);
+    it('should navigate to / when credentials and data exist', async () => {
+      const router = spectator.inject(Router);
+      const db = spectator.inject(DatabaseService);
       mockCredentialsService.hasCredentials.mockReturnValue(true);
-      dbService.getCollectionCount.mockResolvedValue(0);
+      db.getCollectionCount.mockResolvedValue(5);
+      db.getAllReleases.mockResolvedValue([]);
 
       await spectator.component.ngOnInit();
 
-      expect(spectator.component.hasSyncedData()).toBe(false);
+      expect(router.navigate).toHaveBeenCalledWith(['/']);
     });
 
-    it('should set isInitialized to true after initialization completes', async () => {
-      // ngOnInit runs automatically during component creation, so isInitialized is already true
-      // This test verifies the signal is set correctly after ngOnInit
-      expect(spectator.component.isInitialized()).toBe(true);
-    });
-  });
-
-  describe('onSetupComplete', () => {
-    it('should set hasCredentials to true', async () => {
-      const dbService = spectator.inject(DatabaseService);
-      dbService.getCollectionCount.mockResolvedValue(0);
-
-      await spectator.component.onSetupComplete();
-
-      expect(spectator.component.hasCredentials()).toBe(true);
-    });
-
-    it('should check collection count for existing data', async () => {
-      const dbService = spectator.inject(DatabaseService);
-      dbService.getCollectionCount.mockResolvedValue(100);
-
-      await spectator.component.onSetupComplete();
-
-      expect(dbService.getCollectionCount).toHaveBeenCalled();
-      expect(spectator.component.hasSyncedData()).toBe(true);
-    });
-
-    it('should set hasSyncedData false when no existing data', async () => {
-      const dbService = spectator.inject(DatabaseService);
-      dbService.getCollectionCount.mockResolvedValue(0);
-
-      await spectator.component.onSetupComplete();
-
-      expect(spectator.component.hasSyncedData()).toBe(false);
-    });
-  });
-
-  describe('onSyncComplete', () => {
-    it('should set hasSyncedData to true', async () => {
-      const dbService = spectator.inject(DatabaseService);
-      dbService.getAllReleases.mockResolvedValue([]);
-      expect(spectator.component.hasSyncedData()).toBe(false);
-
-      await spectator.component.onSyncComplete();
-
-      expect(spectator.component.hasSyncedData()).toBe(true);
-    });
-
-    it('should initialize achievements with releases', async () => {
-      const dbService = spectator.inject(DatabaseService);
+    it('should resume master release service and initialize achievements for returning users', async () => {
+      const db = spectator.inject(DatabaseService);
+      const masterReleaseService = spectator.inject(MasterReleaseService);
       const achievementsService = spectator.inject(AchievementsService);
       const mockReleases = [{ id: 1 }];
-      dbService.getAllReleases.mockResolvedValue(mockReleases);
+      mockCredentialsService.hasCredentials.mockReturnValue(true);
+      db.getCollectionCount.mockResolvedValue(5);
+      db.getAllReleases.mockResolvedValue(mockReleases);
 
-      await spectator.component.onSyncComplete();
+      await spectator.component.ngOnInit();
 
+      expect(masterReleaseService.resumeIfNeeded).toHaveBeenCalled();
       expect(achievementsService.initialize).toHaveBeenCalledWith(mockReleases);
     });
-  });
 
-  describe('template rendering', () => {
-    it('should display nothing when not initialized', () => {
-      spectator.component.isInitialized.set(false);
-      spectator.detectChanges();
+    it('should not check database when no credentials', async () => {
+      const db = spectator.inject(DatabaseService);
+      mockCredentialsService.hasCredentials.mockReturnValue(false);
+      db.getCollectionCount.mockClear();
 
-      expect(spectator.query('app-setup-screen')).toBeFalsy();
-      expect(spectator.query('app-sync-screen')).toBeFalsy();
-      expect(spectator.query('app-vinyl-player')).toBeFalsy();
-    });
+      await spectator.component.ngOnInit();
 
-    it('should display setup-screen when no credentials', () => {
-      spectator.component.isInitialized.set(true);
-      spectator.component.hasCredentials.set(false);
-      spectator.component.hasSyncedData.set(false);
-      spectator.detectChanges();
-
-      expect(spectator.query('app-setup-screen')).toBeTruthy();
-      expect(spectator.query('app-sync-screen')).toBeFalsy();
-      expect(spectator.query('app-vinyl-player')).toBeFalsy();
-    });
-
-    it('should display sync-screen when credentials exist but no data', () => {
-      spectator.component.isInitialized.set(true);
-      spectator.component.hasCredentials.set(true);
-      spectator.component.hasSyncedData.set(false);
-      spectator.detectChanges();
-
-      expect(spectator.query('app-setup-screen')).toBeFalsy();
-      expect(spectator.query('app-sync-screen')).toBeTruthy();
-      expect(spectator.query('app-vinyl-player')).toBeFalsy();
-    });
-
-    it('should display vinyl-player when credentials and data exist', () => {
-      spectator.component.isInitialized.set(true);
-      spectator.component.hasCredentials.set(true);
-      spectator.component.hasSyncedData.set(true);
-      spectator.detectChanges();
-
-      expect(spectator.query('app-setup-screen')).toBeFalsy();
-      expect(spectator.query('app-sync-screen')).toBeFalsy();
-      expect(spectator.query('app-vinyl-player')).toBeTruthy();
+      expect(db.getCollectionCount).not.toHaveBeenCalled();
     });
   });
 });

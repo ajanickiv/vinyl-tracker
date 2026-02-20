@@ -243,68 +243,7 @@ The build artifacts will be stored in the `dist/` directory.
 
 ### Project Structure
 
-The project uses a **feature-based** structure where each feature folder contains its own components, services, models, and constants.
-
-```
-src/
-├── app/
-│   ├── core/                          # App-wide singletons
-│   │   ├── database.service.ts        # Dexie/IndexedDB wrapper
-│   │   ├── credentials.service.ts     # Discogs credentials management
-│   │   ├── credentials.model.ts       # Discogs credentials types
-│   │   └── pwa-update.service.ts      # Service worker update handling
-│   ├── features/
-│   │   ├── player/                    # Main playback experience
-│   │   │   ├── vinyl-player/          # Main player interface
-│   │   │   ├── search-sheet/          # Collection search bottom sheet
-│   │   │   ├── play-history-sheet/    # Recent plays bottom sheet
-│   │   │   ├── playback.service.ts    # Play tracking logic
-│   │   │   ├── play-history.service.ts    # Recent plays tracking
-│   │   │   ├── recommendation.service.ts  # Recommendation algorithm
-│   │   │   ├── play-history.model.ts  # Play history entry
-│   │   │   └── play-stats.model.ts    # Play stats types
-│   │   ├── stats/                     # Stats display & export
-│   │   │   ├── stats-sheet/           # Collection stats bottom sheet
-│   │   │   ├── play-stats-export.service.ts # Backup/restore logic
-│   │   │   └── play-stats-export.model.ts   # Export/import format
-│   │   ├── achievements/              # Badges & achievements
-│   │   │   ├── achievements-sheet/    # Achievements/badges bottom sheet
-│   │   │   ├── achievement-toast/     # Badge unlock notification
-│   │   │   ├── achievements.service.ts    # Badge tracking and progress
-│   │   │   ├── achievement.model.ts       # Badge definitions and progress
-│   │   │   └── badge-icons.constants.ts   # SVG icons for badges
-│   │   ├── discogs/                   # Discogs API integration
-│   │   │   ├── discogs.service.ts     # Discogs API sync
-│   │   │   ├── master-release.service.ts  # Original year fetching
-│   │   │   └── discogs-api.model.ts   # Discogs API types
-│   │   └── setup/                     # Onboarding & sync
-│   │       ├── setup-screen/          # First-time credentials setup
-│   │       └── sync-screen/           # Collection sync UI
-│   ├── shared/                        # Used across multiple features
-│   │   ├── models/
-│   │   │   ├── release.model.ts       # Release data structure
-│   │   │   ├── filter.model.ts        # Filter configuration
-│   │   │   └── collection-stats.model.ts  # Stats types
-│   │   ├── services/
-│   │   │   └── filter.service.ts      # Filter state management
-│   │   ├── pipes/
-│   │   │   └── artist-name.pipe.ts    # Cleans Discogs artist name disambiguation
-│   │   └── constants/
-│   │       ├── timing.constants.ts    # Animation and timing values
-│   │       └── app.constants.ts       # App version
-│   ├── layout/                        # App shell components
-│   │   └── menu-drawer/              # Side menu with filters and settings
-│   ├── app.component.ts               # Root component
-│   ├── app.config.ts                  # App configuration
-│   └── app.routes.ts                  # Route definitions
-├── styles/
-│   ├── _variables.scss                # Color and design tokens
-│   └── _mixins.scss                   # Reusable style patterns
-├── environments/
-│   ├── environment.ts                 # Development config (API URL only)
-│   └── environment.prod.ts            # Production config (API URL only)
-└── index.html
-```
+The project uses a **feature-based** structure — each feature folder contains its own components, services, and models. Cross-cutting concerns live in `core/` (app-wide singletons like database and credentials) and `shared/` (reusable UI and utilities used across multiple features).
 
 ## Tech Stack
 

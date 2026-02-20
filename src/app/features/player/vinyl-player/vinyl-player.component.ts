@@ -1,5 +1,6 @@
 import { Component, signal, OnDestroy, ViewChild, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { Subject, of, timer } from 'rxjs';
 import { takeUntil, tap, catchError, switchMap } from 'rxjs/operators';
 import { RecommendationService } from '../recommendation.service';
@@ -73,6 +74,7 @@ export class VinylPlayerComponent implements OnDestroy {
     private recommendationService: RecommendationService,
     private playbackService: PlaybackService,
     private masterReleaseService: MasterReleaseService,
+    private router: Router,
   ) {
     this.loadInitialRecommendation();
     this.subscribeToAchievements();
@@ -184,8 +186,7 @@ export class VinylPlayerComponent implements OnDestroy {
   }
 
   onDataCleared(): void {
-    // Reload the page to show the sync screen
-    window.location.reload();
+    this.router.navigate(['/sync']);
   }
 
   onFiltersChanged(): void {
