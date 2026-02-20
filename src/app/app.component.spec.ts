@@ -1,16 +1,16 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
 import { of, Subject } from 'rxjs';
 import { AppComponent } from './app.component';
-import { DatabaseService } from './services/database.service';
-import { CredentialsService } from './services/credentials.service';
-import { RecommendationService } from './services/recommendation.service';
-import { PlaybackService } from './services/playback.service';
-import { MasterReleaseService } from './services/master-release.service';
-import { PwaUpdateService } from './services/pwa-update.service';
-import { AchievementsService } from './services/achievements.service';
-import { SetupScreenComponent } from './components/setup-screen/setup-screen.component';
-import { SyncScreenComponent } from './components/sync-screen/sync-screen.component';
-import { VinylPlayerComponent } from './components/vinyl-player/vinyl-player.component';
+import { DatabaseService } from './core/database.service';
+import { CredentialsService } from './core/credentials.service';
+import { RecommendationService } from './features/player/recommendation.service';
+import { PlaybackService } from './features/player/playback.service';
+import { MasterReleaseService } from './features/discogs/master-release.service';
+import { PwaUpdateService } from './core/pwa-update.service';
+import { AchievementsService } from './features/achievements/achievements.service';
+import { SetupScreenComponent } from './features/setup/setup-screen/setup-screen.component';
+import { SyncScreenComponent } from './features/setup/sync-screen/sync-screen.component';
+import { VinylPlayerComponent } from './features/player/vinyl-player/vinyl-player.component';
 
 describe('AppComponent', () => {
   let spectator: Spectator<AppComponent>;
