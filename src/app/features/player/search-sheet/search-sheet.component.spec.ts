@@ -75,8 +75,9 @@ describe('SearchSheetComponent', () => {
       expect(spectator.component.isSearching()).toBe(false);
     });
 
-    it('should load all releases on init', fakeAsync(() => {
+    it('should load all releases when opened', fakeAsync(() => {
       spectator.detectChanges();
+      spectator.setInput('isOpen', true);
       tick();
 
       expect(mockDatabaseService.getAllReleases).toHaveBeenCalled();
@@ -174,6 +175,7 @@ describe('SearchSheetComponent', () => {
   describe('search functionality', () => {
     beforeEach(fakeAsync(() => {
       spectator.detectChanges();
+      spectator.setInput('isOpen', true);
       tick(); // Wait for releases to load
     }));
 
@@ -266,11 +268,8 @@ describe('SearchSheetComponent', () => {
       for (let i = 0; i < 30; i++) {
         manyReleases.push(createMockRelease(i, `Album ${i}`, ['Artist']));
       }
-      mockDatabaseService.getAllReleases.mockResolvedValue(manyReleases);
-
-      // Reload releases
-      spectator.component.ngOnInit();
-      tick();
+      // Set releases directly since we're testing search limit, not load behavior
+      spectator.component.allReleases.set(manyReleases);
 
       const event = { target: { value: 'Album' } } as unknown as Event;
       spectator.component.onSearchInput(event);
@@ -301,7 +300,8 @@ describe('SearchSheetComponent', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       mockDatabaseService.getAllReleases.mockRejectedValue(new Error('Database error'));
 
-      spectator.component.ngOnInit();
+      spectator.detectChanges();
+      spectator.setInput('isOpen', true);
       tick();
 
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -324,10 +324,9 @@ describe('SearchSheetComponent', () => {
   });
 
   describe('sorting logic - B wins scenarios', () => {
-    beforeEach(fakeAsync(() => {
+    beforeEach(() => {
       spectator.detectChanges();
-      tick();
-    }));
+    });
 
     it('should sort B before A when B has exact title match and A does not', fakeAsync(() => {
       // Setup: B has exact match "rock", A contains "rock" but is "rock music"
@@ -335,9 +334,7 @@ describe('SearchSheetComponent', () => {
         createMockRelease(1, 'Rock Music', ['Artist A']), // A: contains query but not exact
         createMockRelease(2, 'Rock', ['Artist B']), // B: exact match
       ];
-      mockDatabaseService.getAllReleases.mockResolvedValue(sortingReleases);
-      spectator.component.ngOnInit();
-      tick();
+      spectator.component.allReleases.set(sortingReleases);
 
       const event = { target: { value: 'rock' } } as unknown as Event;
       spectator.component.onSearchInput(event);
@@ -355,9 +352,7 @@ describe('SearchSheetComponent', () => {
         createMockRelease(1, 'Full Moon Rising', ['Artist A']), // A: contains but doesn't start with
         createMockRelease(2, 'Moon Over Water', ['Artist B']), // B: starts with query
       ];
-      mockDatabaseService.getAllReleases.mockResolvedValue(sortingReleases);
-      spectator.component.ngOnInit();
-      tick();
+      spectator.component.allReleases.set(sortingReleases);
 
       const event = { target: { value: 'moon' } } as unknown as Event;
       spectator.component.onSearchInput(event);
@@ -375,9 +370,7 @@ describe('SearchSheetComponent', () => {
         createMockRelease(1, 'Featuring Queen Tribute', ['Various Artists']), // A: title contains "queen"
         createMockRelease(2, 'Greatest Hits', ['Queen']), // B: artist starts with "queen"
       ];
-      mockDatabaseService.getAllReleases.mockResolvedValue(sortingReleases);
-      spectator.component.ngOnInit();
-      tick();
+      spectator.component.allReleases.set(sortingReleases);
 
       const event = { target: { value: 'queen' } } as unknown as Event;
       spectator.component.onSearchInput(event);
@@ -395,9 +388,7 @@ describe('SearchSheetComponent', () => {
         createMockRelease(1, 'Album with Love', ['Zebra Band']), // A: artist Z
         createMockRelease(2, 'Songs of Love', ['Alpha Group']), // B: artist A
       ];
-      mockDatabaseService.getAllReleases.mockResolvedValue(sortingReleases);
-      spectator.component.ngOnInit();
-      tick();
+      spectator.component.allReleases.set(sortingReleases);
 
       const event = { target: { value: 'love' } } as unknown as Event;
       spectator.component.onSearchInput(event);
@@ -415,9 +406,7 @@ describe('SearchSheetComponent', () => {
         createMockRelease(1, 'Zebra Album', ['Same Artist']), // A: title Z
         createMockRelease(2, 'Alpha Album', ['Same Artist']), // B: title A
       ];
-      mockDatabaseService.getAllReleases.mockResolvedValue(sortingReleases);
-      spectator.component.ngOnInit();
-      tick();
+      spectator.component.allReleases.set(sortingReleases);
 
       const event = { target: { value: 'album' } } as unknown as Event;
       spectator.component.onSearchInput(event);
@@ -435,9 +424,7 @@ describe('SearchSheetComponent', () => {
         createMockRelease(1, 'Love', ['Zebra Band']), // A: exact match, artist Z
         createMockRelease(2, 'Love', ['Alpha Band']), // B: exact match, artist A
       ];
-      mockDatabaseService.getAllReleases.mockResolvedValue(sortingReleases);
-      spectator.component.ngOnInit();
-      tick();
+      spectator.component.allReleases.set(sortingReleases);
 
       const event = { target: { value: 'love' } } as unknown as Event;
       spectator.component.onSearchInput(event);
@@ -455,9 +442,7 @@ describe('SearchSheetComponent', () => {
         createMockRelease(1, 'Starlight Express', ['Zebra']),
         createMockRelease(2, 'Stardust Memories', ['Alpha']),
       ];
-      mockDatabaseService.getAllReleases.mockResolvedValue(sortingReleases);
-      spectator.component.ngOnInit();
-      tick();
+      spectator.component.allReleases.set(sortingReleases);
 
       const event = { target: { value: 'star' } } as unknown as Event;
       spectator.component.onSearchInput(event);
@@ -475,9 +460,7 @@ describe('SearchSheetComponent', () => {
         createMockRelease(1, 'Zebra Album', ['Pink Floyd']),
         createMockRelease(2, 'Alpha Album', ['Pink Panthers']),
       ];
-      mockDatabaseService.getAllReleases.mockResolvedValue(sortingReleases);
-      spectator.component.ngOnInit();
-      tick();
+      spectator.component.allReleases.set(sortingReleases);
 
       const event = { target: { value: 'pink' } } as unknown as Event;
       spectator.component.onSearchInput(event);
@@ -495,9 +478,7 @@ describe('SearchSheetComponent', () => {
         createMockRelease(1, 'My Blue Heaven', ['Zoe']),
         createMockRelease(2, 'Feeling Blue Today', ['Anna']),
       ];
-      mockDatabaseService.getAllReleases.mockResolvedValue(sortingReleases);
-      spectator.component.ngOnInit();
-      tick();
+      spectator.component.allReleases.set(sortingReleases);
 
       const event = { target: { value: 'blue' } } as unknown as Event;
       spectator.component.onSearchInput(event);
