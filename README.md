@@ -243,52 +243,66 @@ The build artifacts will be stored in the `dist/` directory.
 
 ### Project Structure
 
+The project uses a **feature-based** structure where each feature folder contains its own components, services, models, and constants.
+
 ```
 src/
 ├── app/
-│   ├── components/
-│   │   ├── vinyl-player/          # Main player interface
-│   │   ├── setup-screen/          # First-time credentials setup
-│   │   ├── sync-screen/           # Collection sync UI
-│   │   ├── menu-drawer/           # Side menu with filters and settings
-│   │   ├── search-sheet/          # Collection search bottom sheet
-│   │   ├── play-history-sheet/    # Recent plays bottom sheet
-│   │   ├── stats-sheet/           # Collection stats bottom sheet
-│   │   ├── achievements-sheet/    # Achievements/badges bottom sheet
-│   │   └── achievement-toast/     # Badge unlock notification
-│   ├── models/
-│   │   ├── release.model.ts       # Release data structure
-│   │   ├── discogs-api.model.ts   # Discogs API types
-│   │   ├── credentials.model.ts   # Discogs credentials types
-│   │   ├── collection-stats.model.ts  # Stats types
-│   │   ├── filter.model.ts        # Filter configuration
-│   │   ├── play-history.model.ts  # Play history entry
-│   │   ├── play-stats-export.model.ts # Export/import format
-│   │   └── achievement.model.ts   # Badge definitions and progress
-│   ├── services/
-│   │   ├── database.service.ts    # Dexie/IndexedDB wrapper
-│   │   ├── discogs.service.ts     # Discogs API integration
-│   │   ├── credentials.service.ts # Discogs credentials management
-│   │   ├── playback.service.ts    # Play tracking logic
-│   │   ├── recommendation.service.ts  # Recommendation algorithm
-│   │   ├── filter.service.ts      # Filter state management
-│   │   ├── play-history.service.ts    # Recent plays tracking
-│   │   ├── play-stats-export.service.ts # Backup/restore logic
-│   │   ├── master-release.service.ts # Fetches original years from Discogs master releases
-│   │   ├── pwa-update.service.ts    # Service worker update handling
-│   │   └── achievements.service.ts  # Badge tracking and progress calculation
-│   ├── pipes/
-│   │   └── artist-name.pipe.ts    # Cleans Discogs artist name disambiguation
-│   ├── constants/
-│   │   ├── timing.constants.ts    # Animation and timing values
-│   │   └── badge-icons.constants.ts # SVG icons for achievement badges
-│   └── app.ts                     # Root component
+│   ├── core/                          # App-wide singletons
+│   │   ├── database.service.ts        # Dexie/IndexedDB wrapper
+│   │   ├── credentials.service.ts     # Discogs credentials management
+│   │   ├── credentials.model.ts       # Discogs credentials types
+│   │   └── pwa-update.service.ts      # Service worker update handling
+│   ├── features/
+│   │   ├── player/                    # Main playback experience
+│   │   │   ├── vinyl-player/          # Main player interface
+│   │   │   ├── search-sheet/          # Collection search bottom sheet
+│   │   │   ├── play-history-sheet/    # Recent plays bottom sheet
+│   │   │   ├── playback.service.ts    # Play tracking logic
+│   │   │   ├── play-history.service.ts    # Recent plays tracking
+│   │   │   ├── recommendation.service.ts  # Recommendation algorithm
+│   │   │   ├── play-history.model.ts  # Play history entry
+│   │   │   └── play-stats.model.ts    # Play stats types
+│   │   ├── stats/                     # Stats display & export
+│   │   │   ├── stats-sheet/           # Collection stats bottom sheet
+│   │   │   ├── play-stats-export.service.ts # Backup/restore logic
+│   │   │   └── play-stats-export.model.ts   # Export/import format
+│   │   ├── achievements/              # Badges & achievements
+│   │   │   ├── achievements-sheet/    # Achievements/badges bottom sheet
+│   │   │   ├── achievement-toast/     # Badge unlock notification
+│   │   │   ├── achievements.service.ts    # Badge tracking and progress
+│   │   │   ├── achievement.model.ts       # Badge definitions and progress
+│   │   │   └── badge-icons.constants.ts   # SVG icons for badges
+│   │   ├── discogs/                   # Discogs API integration
+│   │   │   ├── discogs.service.ts     # Discogs API sync
+│   │   │   ├── master-release.service.ts  # Original year fetching
+│   │   │   └── discogs-api.model.ts   # Discogs API types
+│   │   └── setup/                     # Onboarding & sync
+│   │       ├── setup-screen/          # First-time credentials setup
+│   │       └── sync-screen/           # Collection sync UI
+│   ├── shared/                        # Used across multiple features
+│   │   ├── models/
+│   │   │   ├── release.model.ts       # Release data structure
+│   │   │   ├── filter.model.ts        # Filter configuration
+│   │   │   └── collection-stats.model.ts  # Stats types
+│   │   ├── services/
+│   │   │   └── filter.service.ts      # Filter state management
+│   │   ├── pipes/
+│   │   │   └── artist-name.pipe.ts    # Cleans Discogs artist name disambiguation
+│   │   └── constants/
+│   │       ├── timing.constants.ts    # Animation and timing values
+│   │       └── app.constants.ts       # App version
+│   ├── layout/                        # App shell components
+│   │   └── menu-drawer/              # Side menu with filters and settings
+│   ├── app.component.ts               # Root component
+│   ├── app.config.ts                  # App configuration
+│   └── app.routes.ts                  # Route definitions
 ├── styles/
-│   ├── _variables.scss            # Color and design tokens
-│   └── _mixins.scss               # Reusable style patterns
+│   ├── _variables.scss                # Color and design tokens
+│   └── _mixins.scss                   # Reusable style patterns
 ├── environments/
-│   ├── environment.ts             # Development config (API URL only)
-│   └── environment.prod.ts        # Production config (API URL only)
+│   ├── environment.ts                 # Development config (API URL only)
+│   └── environment.prod.ts            # Production config (API URL only)
 └── index.html
 ```
 
@@ -352,7 +366,7 @@ $color-turntable-dark: #2a6a8f;
 
 ### Recommendation Algorithm
 
-To adjust the recommendation weighting, edit `recommendation.service.ts`:
+To adjust the recommendation weighting, edit `src/app/features/player/recommendation.service.ts`:
 
 ```typescript
 // Current formula
@@ -429,7 +443,7 @@ The app is a static Angular application and can be deployed to:
 
 - The algorithm is working as designed - items with very low play counts will dominate
 - Play more of your collection to balance things out
-- Or adjust the weighting formula in `recommendation.service.ts`
+- Or adjust the weighting formula in `src/app/features/player/recommendation.service.ts`
 
 **Filters not showing genres/decades:**
 
