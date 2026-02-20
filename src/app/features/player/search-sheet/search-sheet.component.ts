@@ -1,4 +1,4 @@
-import { Component, signal, input, output, OnDestroy, OnInit } from '@angular/core';
+import { Component, signal, input, output, effect, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -27,10 +27,15 @@ export class SearchSheetComponent implements OnInit, OnDestroy {
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
 
-  constructor(private db: DatabaseService) {}
+  constructor(private db: DatabaseService) {
+    effect(() => {
+      if (this.isOpen()) {
+        this.loadAllReleases();
+      }
+    });
+  }
 
   ngOnInit(): void {
-    this.loadAllReleases();
     this.setupSearchDebounce();
   }
 
