@@ -1,4 +1,5 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
+import { Router } from '@angular/router';
 import { SetupScreenComponent } from './setup-screen.component';
 import { CredentialsService } from '../../../core/credentials.service';
 import { DatabaseService } from '../../../core/database.service';
@@ -7,7 +8,7 @@ describe('SetupScreenComponent', () => {
   let spectator: Spectator<SetupScreenComponent>;
   const createComponent = createComponentFactory({
     component: SetupScreenComponent,
-    mocks: [CredentialsService, DatabaseService],
+    mocks: [CredentialsService, DatabaseService, Router],
   });
 
   beforeEach(() => {
@@ -166,26 +167,26 @@ describe('SetupScreenComponent', () => {
       });
     });
 
-    it('should emit setupComplete when credentials are saved', () => {
-      const setupCompleteSpy = jest.fn();
-      spectator.component.setupComplete.subscribe(setupCompleteSpy);
+    it('should navigate to /sync when no existing data', () => {
+      const router = spectator.inject(Router);
       spectator.component.username.set('testuser');
       spectator.component.token.set('testtoken');
+      spectator.component.hasExistingData.set(false);
 
       spectator.component.submit();
 
-      expect(setupCompleteSpy).toHaveBeenCalledTimes(1);
+      expect(router.navigate).toHaveBeenCalledWith(['/sync']);
     });
 
-    it('should not emit setupComplete when validation fails', () => {
-      const setupCompleteSpy = jest.fn();
-      spectator.component.setupComplete.subscribe(setupCompleteSpy);
-      spectator.component.username.set('');
+    it('should navigate to / when existing data is present', () => {
+      const router = spectator.inject(Router);
+      spectator.component.username.set('testuser');
       spectator.component.token.set('testtoken');
+      spectator.component.hasExistingData.set(true);
 
       spectator.component.submit();
 
-      expect(setupCompleteSpy).not.toHaveBeenCalled();
+      expect(router.navigate).toHaveBeenCalledWith(['/']);
     });
 
     it('should not save credentials when validation fails', () => {
@@ -196,6 +197,16 @@ describe('SetupScreenComponent', () => {
       spectator.component.submit();
 
       expect(credentialsService.setCredentials).not.toHaveBeenCalled();
+    });
+
+    it('should not navigate when validation fails', () => {
+      const router = spectator.inject(Router);
+      spectator.component.username.set('');
+      spectator.component.token.set('testtoken');
+
+      spectator.component.submit();
+
+      expect(router.navigate).not.toHaveBeenCalled();
     });
   });
 });

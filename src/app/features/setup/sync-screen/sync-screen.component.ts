@@ -1,8 +1,10 @@
-import { Component, signal, output } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { DiscogsService } from '../../discogs/discogs.service';
 import { MasterReleaseService } from '../../discogs/master-release.service';
 import { DatabaseService } from '../../../core/database.service';
+import { AchievementsService } from '../../achievements/achievements.service';
 import { SYNC_TRANSITION_DELAY_MS } from '../../../shared/constants/timing.constants';
 
 @Component({
@@ -17,12 +19,12 @@ export class SyncScreenComponent {
   syncProgress = signal('');
   fetchReleaseDates = signal(true);
 
-  syncComplete = output<void>();
-
   constructor(
     private discogsService: DiscogsService,
     private masterReleaseService: MasterReleaseService,
     private db: DatabaseService,
+    private achievementsService: AchievementsService,
+    private router: Router,
   ) {}
 
   toggleFetchReleaseDates(): void {
@@ -46,9 +48,13 @@ export class SyncScreenComponent {
         await this.masterReleaseService.startBackgroundFetch();
       }
 
-      // Wait a moment to show success message
+      // Initialize achievements with the newly synced releases
+      const releases = await this.db.getAllReleases();
+      this.achievementsService.initialize(releases);
+
+      // Wait a moment to show success message, then navigate to player
       setTimeout(() => {
-        this.syncComplete.emit();
+        this.router.navigate(['/']);
       }, SYNC_TRANSITION_DELAY_MS);
     } else {
       this.syncProgress.set(`❌ Sync failed: ${result.error}`);
