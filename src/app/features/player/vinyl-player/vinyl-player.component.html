@@ -141,6 +141,11 @@
         </button>
       </div>
 
+      <!-- Filter Count -->
+      <div class="filter-count">
+        Choosing from {{ filteredCount() }} album{{ filteredCount() === 1 ? '' : 's' }}
+      </div>
+
       <!-- Master Release Fetch Progress -->
       @if (masterFetchInProgress()) {
         <div class="master-fetch-progress">

@@ -118,6 +118,13 @@ describe('FilterService', () => {
 
       expect(service.hasActiveFilters()).toBe(true);
     });
+
+    it('should return true when disc counts are selected', () => {
+      service.setExcludeBoxSets(false);
+      service.setDiscCounts([2]);
+
+      expect(service.hasActiveFilters()).toBe(true);
+    });
   });
 
   describe('matchesFilters', () => {
@@ -474,6 +481,56 @@ describe('FilterService', () => {
       });
     });
 
+    describe('disc count filter', () => {
+      beforeEach(() => {
+        service.setExcludeBoxSets(false);
+      });
+
+      it('should pass all releases when no disc counts selected', () => {
+        service.setDiscCounts([]);
+        const release = createMockRelease({
+          basicInfo: { ...createMockRelease().basicInfo, discCount: 2 },
+        });
+
+        expect(service.matchesFilters(release)).toBe(true);
+      });
+
+      it('should match release when discCount equals selected count', () => {
+        service.setDiscCounts([2]);
+        const release = createMockRelease({
+          basicInfo: { ...createMockRelease().basicInfo, discCount: 2 },
+        });
+
+        expect(service.matchesFilters(release)).toBe(true);
+      });
+
+      it('should not match release when discCount does not match any selected count', () => {
+        service.setDiscCounts([1]);
+        const release = createMockRelease({
+          basicInfo: { ...createMockRelease().basicInfo, discCount: 2 },
+        });
+
+        expect(service.matchesFilters(release)).toBe(false);
+      });
+
+      it('should match if any selected count matches release discCount', () => {
+        service.setDiscCounts([1, 2]);
+        const release = createMockRelease({
+          basicInfo: { ...createMockRelease().basicInfo, discCount: 2 },
+        });
+
+        expect(service.matchesFilters(release)).toBe(true);
+      });
+
+      it('should not match release with undefined discCount when counts are selected', () => {
+        service.setDiscCounts([1]);
+        const release = createMockRelease();
+        // createMockRelease has no discCount (undefined) - simulates pre-sync record
+
+        expect(service.matchesFilters(release)).toBe(false);
+      });
+    });
+
     describe('combined filters', () => {
       it('should require all filters to pass', () => {
         service.setExcludeBoxSets(true);
@@ -659,6 +716,39 @@ describe('FilterService', () => {
       service.toggleVinylSize('7"');
 
       expect(service.filters().vinylSizes).toEqual(['12"']);
+    });
+  });
+
+  describe('setDiscCounts', () => {
+    it('should update the discCounts filter', () => {
+      service.setDiscCounts([1, 2]);
+
+      expect(service.filters().discCounts).toEqual([1, 2]);
+    });
+
+    it('should persist to localStorage', () => {
+      service.setDiscCounts([3]);
+
+      const stored = JSON.parse(localStorage.getItem('vinyl-tracker-filters')!);
+      expect(stored.discCounts).toEqual([3]);
+    });
+  });
+
+  describe('toggleDiscCount', () => {
+    it('should add count if not present', () => {
+      service.setDiscCounts([]);
+
+      service.toggleDiscCount(2);
+
+      expect(service.filters().discCounts).toEqual([2]);
+    });
+
+    it('should remove count if already present', () => {
+      service.setDiscCounts([1, 2]);
+
+      service.toggleDiscCount(1);
+
+      expect(service.filters().discCounts).toEqual([2]);
     });
   });
 

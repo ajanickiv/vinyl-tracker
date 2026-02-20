@@ -47,7 +47,7 @@
           </div>
 
           <!-- Genre Chips -->
-          @if (availableGenres().length > 0) {
+          @if (hasGenres()) {
             <div class="filter-group">
               <p class="filter-label">Genres</p>
               <div class="chip-container">
@@ -65,7 +65,7 @@
           }
 
           <!-- Original Decade Chips (from Master Release) -->
-          @if (availableOriginalDecades().length > 0) {
+          @if (hasOriginalDecades()) {
             <div class="filter-group">
               <p class="filter-label">Release Decade</p>
               <div class="chip-container">
@@ -83,7 +83,7 @@
           }
 
           <!-- Decade Chips (Pressing Year) -->
-          @if (availableDecades().length > 0) {
+          @if (hasDecades()) {
             <div class="filter-group">
               <p class="filter-label">Pressing Decade</p>
               <div class="chip-container">
@@ -101,7 +101,7 @@
           }
 
           <!-- Vinyl Size Chips -->
-          @if (availableVinylSizes().length > 0) {
+          @if (hasVinylSizes()) {
             <div class="filter-group">
               <p class="filter-label">Size</p>
               <div class="chip-container">
@@ -112,6 +112,24 @@
                     (click)="toggleVinylSize(size)"
                   >
                     {{ size }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Disc Count Chips -->
+          @if (hasDiscCounts()) {
+            <div class="filter-group">
+              <p class="filter-label">Discs</p>
+              <div class="chip-container">
+                @for (count of availableDiscCounts(); track count) {
+                  <button
+                    class="chip"
+                    [class.selected]="selectedDiscCounts().has(count)"
+                    (click)="toggleDiscCount(count)"
+                  >
+                    {{ count }}
                   </button>
                 }
               </div>

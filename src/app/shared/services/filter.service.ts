@@ -20,7 +20,8 @@ export class FilterService {
       f.decades.length > 0 ||
       f.originalDecades.length > 0 ||
       f.notPlayedIn6Months ||
-      f.vinylSizes.length > 0
+      f.vinylSizes.length > 0 ||
+      f.discCounts.length > 0
     );
   });
 
@@ -84,6 +85,14 @@ export class FilterService {
         formats.some((f) => f.includes(size)),
       );
       if (!hasMatchingSize) {
+        return false;
+      }
+    }
+
+    // Disc count filter (if any counts selected, release must match at least one)
+    if (filters.discCounts.length > 0) {
+      const discCount = release.basicInfo.discCount;
+      if (discCount === undefined || !filters.discCounts.includes(discCount)) {
         return false;
       }
     }
@@ -173,6 +182,24 @@ export class FilterService {
     const current = this.filtersSignal().vinylSizes;
     const updated = current.includes(size) ? current.filter((s) => s !== size) : [...current, size];
     this.setVinylSizes(updated);
+  }
+
+  /**
+   * Set the selected disc counts
+   */
+  setDiscCounts(counts: number[]): void {
+    this.updateFilters({ discCounts: counts });
+  }
+
+  /**
+   * Toggle a disc count in the filter
+   */
+  toggleDiscCount(count: number): void {
+    const current = this.filtersSignal().discCounts;
+    const updated = current.includes(count)
+      ? current.filter((c) => c !== count)
+      : [...current, count];
+    this.setDiscCounts(updated);
   }
 
   /**

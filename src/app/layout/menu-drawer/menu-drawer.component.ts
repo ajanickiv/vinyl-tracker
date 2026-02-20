@@ -39,6 +39,7 @@ export class MenuDrawerComponent implements OnDestroy {
   availableDecades = signal<string[]>([]);
   availableOriginalDecades = signal<string[]>([]);
   availableVinylSizes = signal<string[]>([]);
+  availableDiscCounts = signal<number[]>([]);
 
   // Export/Import signals
   exporting = signal(false);
@@ -71,6 +72,13 @@ export class MenuDrawerComponent implements OnDestroy {
   selectedDecades = computed(() => new Set(this.filterService.filters().decades));
   selectedOriginalDecades = computed(() => new Set(this.filterService.filters().originalDecades));
   selectedVinylSizes = computed(() => new Set(this.filterService.filters().vinylSizes));
+  selectedDiscCounts = computed(() => new Set(this.filterService.filters().discCounts));
+
+  hasGenres = computed(() => this.availableGenres().length > 0);
+  hasOriginalDecades = computed(() => this.availableOriginalDecades().length > 0);
+  hasDecades = computed(() => this.availableDecades().length > 0);
+  hasVinylSizes = computed(() => this.availableVinylSizes().length > 0);
+  hasDiscCounts = computed(() => this.availableDiscCounts().length > 0);
 
   timeSinceSync = computed(() => {
     const lastSync = this.lastSyncDate();
@@ -191,6 +199,15 @@ export class MenuDrawerComponent implements OnDestroy {
           });
         });
         this.availableVinylSizes.set([...sizeSet].sort((a, b) => parseInt(a) - parseInt(b)));
+
+        // Extract unique disc counts
+        const discCountSet = new Set<number>();
+        releases.forEach((r) => {
+          if (r.basicInfo.discCount !== undefined) {
+            discCountSet.add(r.basicInfo.discCount);
+          }
+        });
+        this.availableDiscCounts.set([...discCountSet].sort((a, b) => a - b));
       })
       .catch((error) => {
         console.error('Failed to load filter options:', error);
@@ -238,6 +255,11 @@ export class MenuDrawerComponent implements OnDestroy {
 
   toggleVinylSize(size: string): void {
     this.filterService.toggleVinylSize(size);
+    this.filtersChanged.emit();
+  }
+
+  toggleDiscCount(count: number): void {
+    this.filterService.toggleDiscCount(count);
     this.filtersChanged.emit();
   }
 

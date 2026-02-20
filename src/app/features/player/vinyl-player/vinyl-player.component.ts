@@ -57,6 +57,9 @@ export class VinylPlayerComponent implements OnDestroy {
     return p.total - p.completed;
   });
 
+  // Number of albums the algorithm is choosing from
+  filteredCount = computed(() => this.recommendationService.filteredCount());
+
   // Pre-computed display values for current release
   releaseFormatString = computed(() => {
     const release = this.currentRelease();

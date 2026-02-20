@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { Observable, from, of, forkJoin } from 'rxjs';
-import { map, catchError, switchMap } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
 import { DatabaseService } from '../../core/database.service';
 import { FilterService } from '../../shared/services/filter.service';
 import { Release } from '../../shared/models/release.model';
@@ -10,6 +10,8 @@ import { DEFAULT_DAYS_SINCE_PLAYED } from '../../shared/constants/timing.constan
   providedIn: 'root',
 })
 export class RecommendationService {
+  readonly filteredCount = signal(0);
+
   constructor(
     private db: DatabaseService,
     private filterService: FilterService,
@@ -45,35 +47,26 @@ export class RecommendationService {
    * Respects active filters from FilterService
    */
   getRecommendation(): Observable<Release | null> {
-    return from(this.db.releases.where('playCount').equals(0).toArray()).pipe(
-      switchMap((neverPlayed) => {
-        // Apply filters to never-played items
-        const filteredNeverPlayed = neverPlayed.filter((r) => this.filterService.matchesFilters(r));
+    return from(this.db.getAllReleases()).pipe(
+      map((allReleases) => {
+        const filtered = allReleases.filter((r) => this.filterService.matchesFilters(r));
+        this.filteredCount.set(filtered.length);
 
-        if (filteredNeverPlayed.length > 0) {
-          console.log(
-            `Found ${filteredNeverPlayed.length} never-played items (${neverPlayed.length - filteredNeverPlayed.length} filtered out)`,
-          );
-          return of(this.pickRandom(filteredNeverPlayed));
+        if (filtered.length === 0) {
+          console.log('No releases match current filters');
+          return null;
         }
 
-        // All filtered items have been played at least once
-        return from(this.db.getAllReleases()).pipe(
-          map((allReleases) => {
-            // Apply filters to all releases
-            const filtered = allReleases.filter((r) => this.filterService.matchesFilters(r));
+        const neverPlayed = filtered.filter((r) => r.playCount === 0);
+        if (neverPlayed.length > 0) {
+          console.log(`Found ${neverPlayed.length} never-played items`);
+          return this.pickRandom(neverPlayed);
+        }
 
-            if (filtered.length === 0) {
-              console.log('No releases match current filters');
-              return null;
-            }
-
-            console.log(
-              `All filtered items played at least once, using weighted random selection (${allReleases.length - filtered.length} filtered out)`,
-            );
-            return this.weightedRandomPick(filtered);
-          }),
+        console.log(
+          `All filtered items played at least once, using weighted random selection (${allReleases.length - filtered.length} filtered out)`,
         );
+        return this.weightedRandomPick(filtered);
       }),
       catchError((error) => {
         console.error('Failed to get recommendation:', error);

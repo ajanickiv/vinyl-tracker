@@ -399,6 +399,7 @@ describe('DiscogsService', () => {
             artists: ['Test Artist'],
             year: 2020,
             formats: ['Vinyl (LP, 12")'],
+            discCount: 1,
             labels: ['Test Label'],
             genres: ['Rock'],
             styles: ['Alternative'],
@@ -521,6 +522,63 @@ describe('DiscogsService', () => {
       expect(db.addRelease).toHaveBeenCalledWith(
         expect.objectContaining({
           dateAddedToCollection: new Date('2024-01-01T00:00:00Z'),
+        }),
+      );
+    });
+
+    it('should calculate discCount as sum of all format qty values', async () => {
+      const http = spectator.inject(HttpClient);
+      const db = spectator.inject(DatabaseService);
+
+      const multiFormatRelease: DiscogsRelease = {
+        ...mockDiscogsRelease,
+        basic_information: {
+          ...mockDiscogsRelease.basic_information,
+          formats: [
+            { name: 'Vinyl', qty: '1', descriptions: ['LP'] },
+            { name: 'Vinyl', qty: '1', descriptions: ['LP'] },
+          ],
+        },
+      };
+
+      http.get.mockReturnValue(of({ ...mockCollectionResponse, releases: [multiFormatRelease] }));
+      db.getRelease.mockResolvedValue(undefined);
+      db.addRelease.mockResolvedValue(123);
+      db.setLastSyncDate.mockResolvedValue(undefined);
+      db.getCollectionCount.mockResolvedValue(1);
+
+      await spectator.service.syncCollection();
+
+      expect(db.addRelease).toHaveBeenCalledWith(
+        expect.objectContaining({
+          basicInfo: expect.objectContaining({ discCount: 2 }),
+        }),
+      );
+    });
+
+    it('should set discCount to undefined when all qty values are zero or missing', async () => {
+      const http = spectator.inject(HttpClient);
+      const db = spectator.inject(DatabaseService);
+
+      const noQtyRelease: DiscogsRelease = {
+        ...mockDiscogsRelease,
+        basic_information: {
+          ...mockDiscogsRelease.basic_information,
+          formats: [{ name: 'CD', descriptions: undefined }],
+        },
+      };
+
+      http.get.mockReturnValue(of({ ...mockCollectionResponse, releases: [noQtyRelease] }));
+      db.getRelease.mockResolvedValue(undefined);
+      db.addRelease.mockResolvedValue(123);
+      db.setLastSyncDate.mockResolvedValue(undefined);
+      db.getCollectionCount.mockResolvedValue(1);
+
+      await spectator.service.syncCollection();
+
+      expect(db.addRelease).toHaveBeenCalledWith(
+        expect.objectContaining({
+          basicInfo: expect.objectContaining({ discCount: undefined }),
         }),
       );
     });

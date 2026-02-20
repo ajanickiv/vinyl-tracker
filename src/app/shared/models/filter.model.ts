@@ -5,6 +5,7 @@ export interface RecommendationFilters {
   originalDecades: string[];
   notPlayedIn6Months: boolean;
   vinylSizes: string[];
+  discCounts: number[];
 }
 
 export const DEFAULT_FILTERS: RecommendationFilters = {
@@ -14,4 +15,5 @@ export const DEFAULT_FILTERS: RecommendationFilters = {
   originalDecades: [],
   notPlayedIn6Months: false,
   vinylSizes: [],
+  discCounts: [],
 };
