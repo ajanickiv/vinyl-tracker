@@ -99,6 +99,24 @@
               </div>
             </div>
           }
+
+          <!-- Vinyl Size Chips -->
+          @if (availableVinylSizes().length > 0) {
+            <div class="filter-group">
+              <p class="filter-label">Size</p>
+              <div class="chip-container">
+                @for (size of availableVinylSizes(); track size) {
+                  <button
+                    class="chip"
+                    [class.selected]="selectedVinylSizes().has(size)"
+                    (click)="toggleVinylSize(size)"
+                  >
+                    {{ size }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
         </div>
       </div>
 

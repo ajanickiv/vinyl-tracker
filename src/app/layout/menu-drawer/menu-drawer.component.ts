@@ -38,6 +38,7 @@ export class MenuDrawerComponent implements OnDestroy {
   availableGenres = signal<string[]>([]);
   availableDecades = signal<string[]>([]);
   availableOriginalDecades = signal<string[]>([]);
+  availableVinylSizes = signal<string[]>([]);
 
   // Export/Import signals
   exporting = signal(false);
@@ -69,6 +70,7 @@ export class MenuDrawerComponent implements OnDestroy {
   selectedGenres = computed(() => new Set(this.filterService.filters().genres));
   selectedDecades = computed(() => new Set(this.filterService.filters().decades));
   selectedOriginalDecades = computed(() => new Set(this.filterService.filters().originalDecades));
+  selectedVinylSizes = computed(() => new Set(this.filterService.filters().vinylSizes));
 
   timeSinceSync = computed(() => {
     const lastSync = this.lastSyncDate();
@@ -179,6 +181,16 @@ export class MenuDrawerComponent implements OnDestroy {
         this.availableOriginalDecades.set(
           [...originalDecadeSet].sort((a, b) => parseInt(a) - parseInt(b)),
         );
+
+        // Extract unique vinyl sizes from format strings (e.g. "Vinyl (LP, 12\")" → "12\"")
+        const SIZE_REGEX = /\b\d+"/g;
+        const sizeSet = new Set<string>();
+        releases.forEach((r) => {
+          r.basicInfo.formats?.forEach((fmt) => {
+            fmt.match(SIZE_REGEX)?.forEach((size) => sizeSet.add(size));
+          });
+        });
+        this.availableVinylSizes.set([...sizeSet].sort((a, b) => parseInt(a) - parseInt(b)));
       })
       .catch((error) => {
         console.error('Failed to load filter options:', error);
@@ -222,6 +234,11 @@ export class MenuDrawerComponent implements OnDestroy {
 
   isOriginalDecadeSelected(decade: string): boolean {
     return this.filterService.filters().originalDecades.includes(decade);
+  }
+
+  toggleVinylSize(size: string): void {
+    this.filterService.toggleVinylSize(size);
+    this.filtersChanged.emit();
   }
 
   onBackdropClick() {

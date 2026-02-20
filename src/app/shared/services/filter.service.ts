@@ -19,7 +19,8 @@ export class FilterService {
       f.genres.length > 0 ||
       f.decades.length > 0 ||
       f.originalDecades.length > 0 ||
-      f.notPlayedIn6Months
+      f.notPlayedIn6Months ||
+      f.vinylSizes.length > 0
     );
   });
 
@@ -72,6 +73,17 @@ export class FilterService {
     // Not played in 6 months filter
     if (filters.notPlayedIn6Months) {
       if (!this.isNotPlayedIn6Months(release)) {
+        return false;
+      }
+    }
+
+    // Vinyl size filter (if any sizes selected, release must match at least one)
+    if (filters.vinylSizes.length > 0) {
+      const formats = release.basicInfo.formats || [];
+      const hasMatchingSize = filters.vinylSizes.some((size) =>
+        formats.some((f) => f.includes(size)),
+      );
+      if (!hasMatchingSize) {
         return false;
       }
     }
@@ -145,6 +157,22 @@ export class FilterService {
    */
   setNotPlayedIn6Months(enabled: boolean): void {
     this.updateFilters({ notPlayedIn6Months: enabled });
+  }
+
+  /**
+   * Set the selected vinyl sizes
+   */
+  setVinylSizes(sizes: string[]): void {
+    this.updateFilters({ vinylSizes: sizes });
+  }
+
+  /**
+   * Toggle a vinyl size in the filter
+   */
+  toggleVinylSize(size: string): void {
+    const current = this.filtersSignal().vinylSizes;
+    const updated = current.includes(size) ? current.filter((s) => s !== size) : [...current, size];
+    this.setVinylSizes(updated);
   }
 
   /**

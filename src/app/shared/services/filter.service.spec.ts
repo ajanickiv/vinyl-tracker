@@ -105,6 +105,13 @@ describe('FilterService', () => {
       expect(service.hasActiveFilters()).toBe(false);
     });
 
+    it('should return true when vinyl sizes are selected', () => {
+      service.setExcludeBoxSets(false);
+      service.setVinylSizes(['12"']);
+
+      expect(service.hasActiveFilters()).toBe(true);
+    });
+
     it('should return true when notPlayedIn6Months is enabled', () => {
       service.setExcludeBoxSets(false);
       service.setNotPlayedIn6Months(true);
@@ -404,6 +411,69 @@ describe('FilterService', () => {
       });
     });
 
+    describe('vinyl size filter', () => {
+      beforeEach(() => {
+        service.setExcludeBoxSets(false);
+      });
+
+      it('should pass all releases when no sizes selected', () => {
+        service.setVinylSizes([]);
+        const release = createMockRelease({
+          basicInfo: { ...createMockRelease().basicInfo, formats: ['Vinyl (LP, 12")'] },
+        });
+
+        expect(service.matchesFilters(release)).toBe(true);
+      });
+
+      it('should match release when its format contains a selected size', () => {
+        service.setVinylSizes(['12"']);
+        const release = createMockRelease({
+          basicInfo: { ...createMockRelease().basicInfo, formats: ['Vinyl (LP, 12")'] },
+        });
+
+        expect(service.matchesFilters(release)).toBe(true);
+      });
+
+      it('should not match release when its format does not contain any selected size', () => {
+        service.setVinylSizes(['7"']);
+        const release = createMockRelease({
+          basicInfo: { ...createMockRelease().basicInfo, formats: ['Vinyl (LP, 12")'] },
+        });
+
+        expect(service.matchesFilters(release)).toBe(false);
+      });
+
+      it('should match if any selected size matches any format', () => {
+        service.setVinylSizes(['7"', '12"']);
+        const release = createMockRelease({
+          basicInfo: { ...createMockRelease().basicInfo, formats: ['Vinyl (LP, 12")'] },
+        });
+
+        expect(service.matchesFilters(release)).toBe(true);
+      });
+
+      it('should not match release with no size info when sizes are selected', () => {
+        service.setVinylSizes(['12"']);
+        const release = createMockRelease({
+          basicInfo: { ...createMockRelease().basicInfo, formats: ['Vinyl'] },
+        });
+
+        expect(service.matchesFilters(release)).toBe(false);
+      });
+
+      it('should handle releases with undefined formats', () => {
+        service.setVinylSizes(['12"']);
+        const release = createMockRelease({
+          basicInfo: {
+            ...createMockRelease().basicInfo,
+            formats: undefined as unknown as string[],
+          },
+        });
+
+        expect(service.matchesFilters(release)).toBe(false);
+      });
+    });
+
     describe('combined filters', () => {
       it('should require all filters to pass', () => {
         service.setExcludeBoxSets(true);
@@ -556,6 +626,39 @@ describe('FilterService', () => {
 
       const stored = JSON.parse(localStorage.getItem('vinyl-tracker-filters')!);
       expect(stored.notPlayedIn6Months).toBe(true);
+    });
+  });
+
+  describe('setVinylSizes', () => {
+    it('should update the vinylSizes filter', () => {
+      service.setVinylSizes(['7"', '12"']);
+
+      expect(service.filters().vinylSizes).toEqual(['7"', '12"']);
+    });
+
+    it('should persist to localStorage', () => {
+      service.setVinylSizes(['10"']);
+
+      const stored = JSON.parse(localStorage.getItem('vinyl-tracker-filters')!);
+      expect(stored.vinylSizes).toEqual(['10"']);
+    });
+  });
+
+  describe('toggleVinylSize', () => {
+    it('should add size if not present', () => {
+      service.setVinylSizes([]);
+
+      service.toggleVinylSize('12"');
+
+      expect(service.filters().vinylSizes).toEqual(['12"']);
+    });
+
+    it('should remove size if already present', () => {
+      service.setVinylSizes(['7"', '12"']);
+
+      service.toggleVinylSize('7"');
+
+      expect(service.filters().vinylSizes).toEqual(['12"']);
     });
   });
 
