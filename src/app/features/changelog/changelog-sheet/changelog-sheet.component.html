@@ -1,0 +1,29 @@
+<div class="sheet-container" [class.open]="isOpen()">
+  <div class="backdrop" (click)="onBackdropClick()"></div>
+
+  <div class="sheet">
+    <div class="drag-handle">
+      <div class="handle-bar"></div>
+    </div>
+
+    <div class="changelog-header">
+      <h2 class="header-title">What's New</h2>
+    </div>
+
+    <div class="changelog-content">
+      @for (entry of entries; track entry.version) {
+        <div class="version-block">
+          <div class="version-heading">
+            <span class="version-number">v{{ entry.version }}</span>
+            <span class="version-date">{{ entry.date }}</span>
+          </div>
+          <ul class="change-list">
+            @for (change of entry.changes; track change) {
+              <li class="change-item">{{ change }}</li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
+  </div>
+</div>

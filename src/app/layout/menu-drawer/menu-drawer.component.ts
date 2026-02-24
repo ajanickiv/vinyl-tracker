@@ -67,6 +67,7 @@ export class MenuDrawerComponent implements OnDestroy {
   close = output<void>();
   dataCleared = output<void>();
   filtersChanged = output<void>();
+  openChangelog = output<void>();
 
   selectedGenres = computed(() => new Set(this.filterService.filters().genres));
   selectedDecades = computed(() => new Set(this.filterService.filters().decades));
@@ -380,6 +381,10 @@ export class MenuDrawerComponent implements OnDestroy {
 
   toggleAdvanced(): void {
     this.advancedExpanded.set(!this.advancedExpanded());
+  }
+
+  openChangelogSheet(): void {
+    this.openChangelog.emit();
   }
 
   // Credentials editing methods
