@@ -22,6 +22,7 @@
     (close)="closeMenu()"
     (dataCleared)="onDataCleared()"
     (filtersChanged)="onFiltersChanged()"
+    (openChangelog)="openChangelog()"
   ></app-menu-drawer>
 
   <app-search-sheet
@@ -47,6 +48,8 @@
     [isOpen]="achievementsOpen()"
     (close)="closeAchievements()"
   ></app-achievements-sheet>
+
+  <app-changelog-sheet [isOpen]="changelogOpen()" (close)="closeChangelog()"></app-changelog-sheet>
 
   @if (isLoading()) {
     <div class="loading">

@@ -302,6 +302,11 @@
               </div>
             </div>
 
+            <!-- What's New -->
+            <button class="whats-new-button" (click)="openChangelogSheet()">
+              What's New in v{{ appVersion }}
+            </button>
+
             <!-- Dev Tools Section (only in dev mode) -->
             @if (isDevMode) {
               <div class="menu-section dev-section">

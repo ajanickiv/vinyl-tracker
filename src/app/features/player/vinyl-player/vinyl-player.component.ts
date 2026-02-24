@@ -6,6 +6,7 @@ import { takeUntil, tap, catchError, switchMap } from 'rxjs/operators';
 import { RecommendationService } from '../recommendation.service';
 import { PlaybackService } from '../playback.service';
 import { MasterReleaseService } from '../../discogs/master-release.service';
+import { DatabaseService } from '../../../core/database.service';
 import { Release } from '../../../shared/models/release.model';
 import { MenuDrawerComponent } from '../../../layout/menu-drawer/menu-drawer.component';
 import { SearchSheetComponent } from '../search-sheet/search-sheet.component';
@@ -13,8 +14,10 @@ import { PlayHistorySheetComponent } from '../play-history-sheet/play-history-sh
 import { StatsSheetComponent } from '../../stats/stats-sheet/stats-sheet.component';
 import { AchievementsSheetComponent } from '../../achievements/achievements-sheet/achievements-sheet.component';
 import { AchievementToastComponent } from '../../achievements/achievement-toast/achievement-toast.component';
+import { ChangelogSheetComponent } from '../../changelog/changelog-sheet/changelog-sheet.component';
 import { ArtistNamePipe } from '../../../shared/pipes/artist-name.pipe';
 import { SPIN_ANIMATION_DURATION_MS } from '../../../shared/constants/timing.constants';
+import { APP_VERSION } from '../../../shared/constants/app.constants';
 import { BadgeUnlockEvent } from '../../achievements/achievements.service';
 
 @Component({
@@ -28,6 +31,7 @@ import { BadgeUnlockEvent } from '../../achievements/achievements.service';
     StatsSheetComponent,
     AchievementsSheetComponent,
     AchievementToastComponent,
+    ChangelogSheetComponent,
     ArtistNamePipe,
   ],
   templateUrl: './vinyl-player.component.html',
@@ -44,6 +48,7 @@ export class VinylPlayerComponent implements OnDestroy {
   historyOpen = signal(false);
   statsOpen = signal(false);
   achievementsOpen = signal(false);
+  changelogOpen = signal(false);
   pendingToast = signal<BadgeUnlockEvent | null>(null);
 
   private destroy$ = new Subject<void>();
@@ -77,10 +82,12 @@ export class VinylPlayerComponent implements OnDestroy {
     private recommendationService: RecommendationService,
     private playbackService: PlaybackService,
     private masterReleaseService: MasterReleaseService,
+    private db: DatabaseService,
     private router: Router,
   ) {
     this.loadInitialRecommendation();
     this.subscribeToAchievements();
+    this.checkForChangelog();
   }
 
   private subscribeToAchievements(): void {
@@ -250,6 +257,26 @@ export class VinylPlayerComponent implements OnDestroy {
 
   closeAchievements(): void {
     this.achievementsOpen.set(false);
+  }
+
+  openChangelog(): void {
+    this.changelogOpen.set(true);
+  }
+
+  closeChangelog(): void {
+    this.changelogOpen.set(false);
+  }
+
+  private async checkForChangelog(): Promise<void> {
+    try {
+      const lastSeen = await this.db.getMetadata('lastSeenVersion');
+      if (lastSeen !== APP_VERSION) {
+        this.changelogOpen.set(true);
+        await this.db.setMetadata('lastSeenVersion', APP_VERSION);
+      }
+    } catch (error) {
+      console.error('Failed to check changelog version:', error);
+    }
   }
 
   onHistoryReleaseSelected(release: Release): void {

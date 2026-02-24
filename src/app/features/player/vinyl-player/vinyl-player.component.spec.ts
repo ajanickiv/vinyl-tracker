@@ -12,7 +12,9 @@ import { DEFAULT_FILTERS } from '../../../shared/models/filter.model';
 import { MenuDrawerComponent } from '../../../layout/menu-drawer/menu-drawer.component';
 import { SearchSheetComponent } from '../search-sheet/search-sheet.component';
 import { PlayHistorySheetComponent } from '../play-history-sheet/play-history-sheet.component';
+import { ChangelogSheetComponent } from '../../changelog/changelog-sheet/changelog-sheet.component';
 import { SPIN_ANIMATION_DURATION_MS } from '../../../shared/constants/timing.constants';
+import { APP_VERSION } from '../../../shared/constants/app.constants';
 
 describe('VinylPlayerComponent', () => {
   let spectator: Spectator<VinylPlayerComponent>;
@@ -34,6 +36,8 @@ describe('VinylPlayerComponent', () => {
   let mockDatabaseService: {
     getLastSyncDate: jest.Mock;
     getAllReleases: jest.Mock;
+    getMetadata: jest.Mock;
+    setMetadata: jest.Mock;
   };
   let mockDiscogsService: {
     syncCollection: jest.Mock;
@@ -49,6 +53,7 @@ describe('VinylPlayerComponent', () => {
       [MenuDrawerComponent, { set: { template: '' } }],
       [SearchSheetComponent, { set: { template: '' } }],
       [PlayHistorySheetComponent, { set: { template: '' } }],
+      [ChangelogSheetComponent, { set: { template: '' } }],
     ],
     detectChanges: false,
   });
@@ -96,6 +101,8 @@ describe('VinylPlayerComponent', () => {
     mockDatabaseService = {
       getLastSyncDate: jest.fn().mockResolvedValue(null),
       getAllReleases: jest.fn().mockResolvedValue([]),
+      getMetadata: jest.fn().mockResolvedValue(APP_VERSION),
+      setMetadata: jest.fn().mockResolvedValue(undefined),
     };
 
     mockDiscogsService = {
@@ -635,6 +642,75 @@ describe('VinylPlayerComponent', () => {
       spectator.component.onHistoryReleaseSelected(mockRelease);
 
       expect(spectator.component.isLoading()).toBe(false);
+    });
+  });
+
+  describe('changelog', () => {
+    it('should initialize changelogOpen as false', () => {
+      expect(spectator.component.changelogOpen()).toBe(false);
+    });
+
+    it('should set changelogOpen to true when openChangelog is called', () => {
+      spectator.component.openChangelog();
+
+      expect(spectator.component.changelogOpen()).toBe(true);
+    });
+
+    it('should set changelogOpen to false when closeChangelog is called', () => {
+      spectator.component.changelogOpen.set(true);
+
+      spectator.component.closeChangelog();
+
+      expect(spectator.component.changelogOpen()).toBe(false);
+    });
+
+    describe('checkForChangelog', () => {
+      // Call checkForChangelog directly so each test controls the mock independently
+      // of the constructor call (which already ran with getMetadata → APP_VERSION)
+
+      it('should not show changelog when lastSeenVersion matches APP_VERSION', async () => {
+        mockDatabaseService.getMetadata.mockResolvedValue(APP_VERSION);
+        mockDatabaseService.setMetadata.mockClear();
+
+        await (spectator.component as any).checkForChangelog();
+
+        expect(spectator.component.changelogOpen()).toBe(false);
+        expect(mockDatabaseService.setMetadata).not.toHaveBeenCalled();
+      });
+
+      it('should show changelog and persist version when lastSeenVersion differs', async () => {
+        mockDatabaseService.getMetadata.mockResolvedValue('1.0.0');
+
+        await (spectator.component as any).checkForChangelog();
+
+        expect(spectator.component.changelogOpen()).toBe(true);
+        expect(mockDatabaseService.setMetadata).toHaveBeenCalledWith(
+          'lastSeenVersion',
+          APP_VERSION,
+        );
+      });
+
+      it('should show changelog when no lastSeenVersion exists', async () => {
+        mockDatabaseService.getMetadata.mockResolvedValue(null);
+
+        await (spectator.component as any).checkForChangelog();
+
+        expect(spectator.component.changelogOpen()).toBe(true);
+      });
+
+      it('should not throw and should log error when getMetadata fails', async () => {
+        const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+        mockDatabaseService.getMetadata.mockRejectedValue(new Error('DB error'));
+
+        await (spectator.component as any).checkForChangelog();
+
+        expect(spectator.component.changelogOpen()).toBe(false);
+        expect(consoleSpy).toHaveBeenCalledWith(
+          'Failed to check changelog version:',
+          expect.any(Error),
+        );
+        consoleSpy.mockRestore();
+      });
     });
   });
 

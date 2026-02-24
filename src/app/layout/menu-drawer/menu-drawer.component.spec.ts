@@ -1501,4 +1501,15 @@ describe('MenuDrawerComponent', () => {
       });
     });
   });
+
+  describe('openChangelogSheet', () => {
+    it('should emit openChangelog output when called', () => {
+      const emitSpy = jest.fn();
+      spectator.component.openChangelog.subscribe(emitSpy);
+
+      spectator.component.openChangelogSheet();
+
+      expect(emitSpy).toHaveBeenCalled();
+    });
+  });
 });
