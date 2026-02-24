@@ -339,6 +339,91 @@ describe('RecommendationService', () => {
     });
   });
 
+  describe('rating multiplier', () => {
+    const sharedPlayDate = new Date('2024-01-01');
+
+    it('should select rating 3 over rating 1 when all else is equal', async () => {
+      const rating1Release = createMockRelease({
+        id: 10,
+        playCount: 5,
+        lastPlayedDate: sharedPlayDate,
+        userRating: 1,
+      });
+      const rating3Release = createMockRelease({
+        id: 11,
+        playCount: 5,
+        lastPlayedDate: sharedPlayDate,
+        userRating: 3,
+      });
+
+      const db = spectator.inject(DatabaseService);
+      db.getAllReleases.mockResolvedValue([rating1Release, rating3Release]);
+
+      // rating1 weight = base * 0.75, rating3 weight = base * 1.5
+      // total weight = base * 2.25; rating3 occupies last 1.5/2.25 = 66.7% of range
+      // Math.random = 0.5 lands in rating1's share (0–0.75/2.25 = 33.3%), so pick rating1...
+      // ...but with random = 0.4 (> 33.3%), we land in rating3's range
+      jest.spyOn(Math, 'random').mockReturnValue(0.4);
+
+      const result = await firstValueFrom(spectator.service.getRecommendation());
+
+      expect(result?.id).toBe(rating3Release.id);
+    });
+
+    it('should treat unrated albums the same as rating 2', async () => {
+      const unratedRelease = createMockRelease({
+        id: 12,
+        playCount: 5,
+        lastPlayedDate: sharedPlayDate,
+        // userRating is undefined
+      });
+      const rating2Release = createMockRelease({
+        id: 13,
+        playCount: 5,
+        lastPlayedDate: sharedPlayDate,
+        userRating: 2,
+      });
+
+      const db = spectator.inject(DatabaseService);
+      db.getAllReleases.mockResolvedValue([unratedRelease, rating2Release]);
+
+      // Both have equal weights (1.0× multiplier), so Math.random = 0.5
+      // means the second item in the weighted walk is selected
+      jest.spyOn(Math, 'random').mockReturnValue(0.5);
+
+      const result = await firstValueFrom(spectator.service.getRecommendation());
+
+      // Either can be selected — both have equal probability
+      expect([unratedRelease.id, rating2Release.id]).toContain(result?.id);
+    });
+
+    it('should apply lower weight to rating 1 so it loses to unrated with mid random', async () => {
+      const unratedRelease = createMockRelease({
+        id: 14,
+        playCount: 5,
+        lastPlayedDate: sharedPlayDate,
+        // userRating undefined → 1.0× multiplier
+      });
+      const rating1Release = createMockRelease({
+        id: 15,
+        playCount: 5,
+        lastPlayedDate: sharedPlayDate,
+        userRating: 1, // 0.75× multiplier
+      });
+
+      const db = spectator.inject(DatabaseService);
+      // Put rating1 first so it occupies first 42.9% of weight (0.75 / 1.75)
+      db.getAllReleases.mockResolvedValue([rating1Release, unratedRelease]);
+
+      // random = 0.5 lands past rating1's share (42.9%), so unrated is selected
+      jest.spyOn(Math, 'random').mockReturnValue(0.5);
+
+      const result = await firstValueFrom(spectator.service.getRecommendation());
+
+      expect(result?.id).toBe(unratedRelease.id);
+    });
+  });
+
   describe('weighted random selection', () => {
     it('should favor releases with lower play counts', async () => {
       const lowPlayCount = createMockRelease({

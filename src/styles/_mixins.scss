@@ -59,6 +59,28 @@
   }
 }
 
+// For circular dot/pip toggle buttons
+@mixin btn-dot($size: 1.5rem, $color: $color-primary) {
+  width: $size;
+  height: $size;
+  border-radius: 50%;
+  border: 2px solid $color;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    transform 0.1s;
+  padding: 0;
+
+  &.active {
+    background: $color;
+  }
+
+  &:hover {
+    transform: scale(1.15);
+  }
+}
+
 // For header buttons (menu, search, history)
 @mixin btn-header {
   background: $gradient-button-primary;

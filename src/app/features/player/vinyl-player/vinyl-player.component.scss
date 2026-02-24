@@ -267,6 +267,31 @@
 }
 
 // ==============================================
+// Rating
+// ==============================================
+
+.rating {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.rating-label {
+  @include label-uppercase;
+}
+
+.rating-dots {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.rating-dot {
+  @include btn-dot;
+}
+
+// ==============================================
 // Action Buttons
 // ==============================================
 

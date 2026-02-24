@@ -138,8 +138,9 @@ export class RecommendationService {
    * The algorithm favors releases that:
    * - Have been played fewer times (inversely proportional)
    * - Haven't been played recently (logarithmically proportional)
+   * - Have a higher user rating (multiplicative bonus)
    *
-   * **Weight Formula:** `weight = (1 / playCount) * log(daysSincePlay + 1)`
+   * **Weight Formula:** `weight = (1 / playCount) * log(daysSincePlay + 1) * ratingMultiplier`
    *
    * **Why this formula works:**
    * - `1 / playCount`: Releases played once have weight 1, played twice have 0.5, etc.
@@ -148,6 +149,8 @@ export class RecommendationService {
    *   doesn't dominate. A release played 30 days ago isn't 30x more likely than
    *   one played yesterday - the log dampens extreme values.
    * - The +1 prevents log(0) when a release was played today.
+   * - `ratingMultiplier`: User rating (0.75× for rating 1, 1.0× for rating 2 or unrated, 1.5× for rating 3).
+   *   Play count and recency still dominate; rating provides a subtle tiebreaker.
    *
    * **Selection Process:**
    * 1. Calculate weight for each release
@@ -171,10 +174,12 @@ export class RecommendationService {
       // Weight formula: higher weight = more likely to be picked
       // Inversely proportional to play count
       // Proportional to days since last play (log scale)
+      // Multiplied by user rating factor
       const playCountFactor = 1 / release.playCount;
       const recencyFactor = Math.log(daysSincePlay + 1);
+      const ratingMultiplier = this.getRatingMultiplier(release.userRating);
 
-      const weight = playCountFactor * recencyFactor;
+      const weight = playCountFactor * recencyFactor * ratingMultiplier;
 
       return weight;
     });
@@ -196,5 +201,21 @@ export class RecommendationService {
 
     // Fallback (shouldn't reach here)
     return releases[releases.length - 1];
+  }
+
+  /**
+   * Returns a weight multiplier based on the user's personal rating.
+   * Unrated and rating 2 are neutral (1.0×).
+   * Rating 1 is slightly penalized (0.75×); rating 3 is slightly boosted (1.5×).
+   */
+  private getRatingMultiplier(rating?: 1 | 2 | 3): number {
+    switch (rating) {
+      case 1:
+        return 0.75;
+      case 3:
+        return 1.5;
+      default:
+        return 1.0; // rating 2 or unrated — neutral
+    }
   }
 }

@@ -11,6 +11,7 @@ A personal listening tracker for your Discogs vinyl collection. Get personalized
 - **Sync Your Collection** - Import your entire Discogs collection with one click
 - **Smart Recommendations** - Get weighted random recommendations that prioritize unplayed and neglected albums
 - **Play Tracking** - Track play counts and last played dates for each release
+- **Personal Ratings** - Rate albums 1–3 to influence how often they're recommended
 - **Search** - Quickly find any album in your collection with real-time search
 - **Play History** - View your 10 most recent plays with quick access to replay
 - **Filtering** - Filter recommendations by genre, pressing decade, original decade, exclude box sets, or albums not played in 6+ months
@@ -41,6 +42,7 @@ Your credentials are stored locally in your browser and never sent anywhere exce
 
 - The app displays a vinyl record with album art from your collection
 - You'll see the artist, album title, year, format, play count, and last played date
+- **Rating** - Tap the three dots below the stats to rate an album 1–3; tap the current level again to clear
 - Two main actions:
   - **Mark as Played** - Logs a play (increments count, updates date) and loads the next recommendation
   - **Skip / Get Another** - Get a new recommendation without logging a play
@@ -101,7 +103,8 @@ Your credentials are stored locally in your browser and never sent anywhere exce
   - Items with **lower play counts** have higher weight
   - Items **not played recently** have higher weight
   - Recent plays still have a chance, just lower probability
-  - Formula: `weight = (1 / playCount) * log(daysSincePlay + 1)`
+  - Albums **rated 3** are 50% more likely; **rated 1** are 25% less likely; unrated = neutral
+  - Formula: `weight = (1 / playCount) * log(daysSincePlay + 1) * ratingMultiplier`
 
 **Menu Drawer**
 
