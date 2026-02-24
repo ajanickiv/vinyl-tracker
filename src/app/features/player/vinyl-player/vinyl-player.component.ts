@@ -184,6 +184,20 @@ export class VinylPlayerComponent implements OnDestroy {
     this.getNewRecommendation();
   }
 
+  setRating(level: 1 | 2 | 3): void {
+    const release = this.currentRelease();
+    if (!release || this.isSpinning()) return;
+
+    const newRating = release.userRating === level ? undefined : level;
+
+    this.playbackService
+      .setUserRating(release.id, newRating)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((updated) => {
+        if (updated) this.currentRelease.set(updated);
+      });
+  }
+
   toggleMenu(): void {
     this.menuOpen.set(!this.menuOpen());
   }

@@ -128,6 +128,31 @@
         </div>
       </div>
 
+      <!-- Rating -->
+      <div class="rating">
+        <span class="rating-label">Rating</span>
+        <div class="rating-dots">
+          <button
+            class="rating-dot"
+            [class.active]="(release.userRating ?? 0) >= 1"
+            (click)="setRating(1)"
+            aria-label="Rating 1"
+          ></button>
+          <button
+            class="rating-dot"
+            [class.active]="(release.userRating ?? 0) >= 2"
+            (click)="setRating(2)"
+            aria-label="Rating 2"
+          ></button>
+          <button
+            class="rating-dot"
+            [class.active]="(release.userRating ?? 0) >= 3"
+            (click)="setRating(3)"
+            aria-label="Rating 3"
+          ></button>
+        </div>
+      </div>
+
       <!-- Action Buttons -->
       <div class="actions">
         <button class="btn-primary" (click)="markAsPlayed()" [disabled]="isSpinning()">

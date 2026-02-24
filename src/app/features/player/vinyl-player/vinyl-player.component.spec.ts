@@ -27,6 +27,7 @@ describe('VinylPlayerComponent', () => {
     markAsPlayed: jest.Mock;
     getCollectionStats: jest.Mock;
     getPlayStats: jest.Mock;
+    setUserRating: jest.Mock;
     statsUpdated$: Subject<void>;
     achievementUnlocked$: Subject<any[]>;
   };
@@ -87,6 +88,7 @@ describe('VinylPlayerComponent', () => {
       markAsPlayed: jest.fn().mockReturnValue(of(null)),
       getCollectionStats: jest.fn().mockReturnValue(of({})),
       getPlayStats: jest.fn().mockReturnValue(of(null)),
+      setUserRating: jest.fn().mockReturnValue(of(null)),
       statsUpdated$: new Subject<void>(),
       achievementUnlocked$: new Subject<any[]>(),
     };
@@ -305,6 +307,66 @@ describe('VinylPlayerComponent', () => {
       spectator.component.skipToNext();
 
       expect(mockRecommendationService.getRecommendation).toHaveBeenCalled();
+    });
+  });
+
+  describe('setRating', () => {
+    beforeEach(() => {
+      spectator.component.currentRelease.set(mockRelease);
+    });
+
+    it('should do nothing if no current release', () => {
+      spectator.component.currentRelease.set(null);
+
+      spectator.component.setRating(3);
+
+      expect(mockPlaybackService.setUserRating).not.toHaveBeenCalled();
+    });
+
+    it('should do nothing if spinning', () => {
+      spectator.component.isSpinning.set(true);
+
+      spectator.component.setRating(3);
+
+      expect(mockPlaybackService.setUserRating).not.toHaveBeenCalled();
+    });
+
+    it('should call playbackService.setUserRating with release id and level', () => {
+      mockPlaybackService.setUserRating.mockReturnValue(of(null));
+
+      spectator.component.setRating(2);
+
+      expect(mockPlaybackService.setUserRating).toHaveBeenCalledWith(mockRelease.id, 2);
+    });
+
+    it('should toggle off (pass undefined) when tapping the current rating level', () => {
+      const ratedRelease = { ...mockRelease, userRating: 2 as const };
+      spectator.component.currentRelease.set(ratedRelease);
+      mockPlaybackService.setUserRating.mockReturnValue(of(null));
+
+      spectator.component.setRating(2);
+
+      expect(mockPlaybackService.setUserRating).toHaveBeenCalledWith(mockRelease.id, undefined);
+    });
+
+    it('should update currentRelease signal when rating is set', () => {
+      const updatedRelease = { ...mockRelease, userRating: 3 as const };
+      mockPlaybackService.setUserRating.mockReturnValue(of(updatedRelease));
+
+      spectator.component.setRating(3);
+
+      expect(spectator.component.currentRelease()?.userRating).toBe(3);
+    });
+
+    it('should update currentRelease signal when rating is cleared', () => {
+      const ratedRelease = { ...mockRelease, userRating: 3 as const };
+      spectator.component.currentRelease.set(ratedRelease);
+      const clearedRelease = { ...mockRelease, userRating: undefined };
+      mockPlaybackService.setUserRating.mockReturnValue(of(clearedRelease));
+
+      spectator.component.setRating(3);
+
+      expect(spectator.component.currentRelease()?.userRating).toBeUndefined();
     });
   });
 

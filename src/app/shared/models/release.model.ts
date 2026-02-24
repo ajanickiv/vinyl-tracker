@@ -25,4 +25,5 @@ export interface Release {
   dateAddedToCollection?: Date;
   notes?: string;
   rating?: number;
+  userRating?: 1 | 2 | 3; // Personal rating (1 = low, 3 = high)
 }

@@ -158,6 +158,29 @@ export class PlaybackService {
   }
 
   /**
+   * Set the user's personal rating (1–3) for a release.
+   * Pass undefined to clear the rating.
+   */
+  setUserRating(releaseId: number, rating: 1 | 2 | 3 | undefined): Observable<Release | null> {
+    return from(this.db.getRelease(releaseId)).pipe(
+      switchMap((release) => {
+        if (!release) {
+          console.error(`Release ${releaseId} not found`);
+          return of(null);
+        }
+        const updated = { ...release, userRating: rating };
+        return from(this.db.updateRelease(releaseId, { userRating: rating })).pipe(
+          map(() => updated),
+        );
+      }),
+      catchError((error) => {
+        console.error('Failed to set user rating:', error);
+        return of(null);
+      }),
+    );
+  }
+
+  /**
    * Get play statistics for a release
    */
   getPlayStats(releaseId: number): Observable<PlayStats | null> {

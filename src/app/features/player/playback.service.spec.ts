@@ -500,6 +500,88 @@ describe('PlaybackService', () => {
     });
   });
 
+  describe('setUserRating', () => {
+    it('should update userRating in the database', async () => {
+      const db = spectator.inject(DatabaseService);
+      db.getRelease.mockResolvedValue(mockRelease1);
+      db.updateRelease.mockResolvedValue(1);
+
+      await firstValueFrom(spectator.service.setUserRating(1, 3));
+
+      expect(db.updateRelease).toHaveBeenCalledWith(1, { userRating: 3 });
+    });
+
+    it('should return the updated release with the new rating', async () => {
+      const db = spectator.inject(DatabaseService);
+      db.getRelease.mockResolvedValue(mockRelease1);
+      db.updateRelease.mockResolvedValue(1);
+
+      const result = await firstValueFrom(spectator.service.setUserRating(1, 2));
+
+      expect(result?.userRating).toBe(2);
+    });
+
+    it('should clear the rating when called with undefined', async () => {
+      const db = spectator.inject(DatabaseService);
+      const ratedRelease = { ...mockRelease1, userRating: 3 as const };
+      db.getRelease.mockResolvedValue(ratedRelease);
+      db.updateRelease.mockResolvedValue(1);
+
+      const result = await firstValueFrom(spectator.service.setUserRating(1, undefined));
+
+      expect(result?.userRating).toBeUndefined();
+      expect(db.updateRelease).toHaveBeenCalledWith(1, { userRating: undefined });
+    });
+
+    it('should return null if release not found', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const db = spectator.inject(DatabaseService);
+      db.getRelease.mockResolvedValue(undefined);
+
+      const result = await firstValueFrom(spectator.service.setUserRating(999, 3));
+
+      expect(result).toBeNull();
+      expect(db.updateRelease).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    it('should log error if release not found', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const db = spectator.inject(DatabaseService);
+      db.getRelease.mockResolvedValue(undefined);
+
+      await firstValueFrom(spectator.service.setUserRating(999, 3));
+
+      expect(consoleSpy).toHaveBeenCalledWith('Release 999 not found');
+      consoleSpy.mockRestore();
+    });
+
+    it('should return null and log error on database failure', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const db = spectator.inject(DatabaseService);
+      db.getRelease.mockRejectedValue(new Error('Database error'));
+
+      const result = await firstValueFrom(spectator.service.setUserRating(1, 3));
+
+      expect(result).toBeNull();
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to set user rating:', expect.any(Error));
+      consoleSpy.mockRestore();
+    });
+
+    it('should preserve other release properties when setting rating', async () => {
+      const db = spectator.inject(DatabaseService);
+      db.getRelease.mockResolvedValue(mockRelease1);
+      db.updateRelease.mockResolvedValue(1);
+
+      const result = await firstValueFrom(spectator.service.setUserRating(1, 3));
+
+      expect(result?.basicInfo.title).toBe('Test Album 1');
+      expect(result?.playCount).toBe(5);
+      expect(result?.rating).toBe(5); // Discogs rating unchanged
+      expect(result?.userRating).toBe(3);
+    });
+  });
+
   describe('getPlayStats', () => {
     it('should return play stats for existing release', async () => {
       const db = spectator.inject(DatabaseService);
